@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /book-activate
+Sitemap: https://howeverycountryswears.com/sitemap.xml
