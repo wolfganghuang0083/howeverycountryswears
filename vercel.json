@@ -5,6 +5,8 @@
   "installCommand": "pnpm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/auth/:path*", "destination": "/api/auth/[...action]" },
+    { "source": "/api/trpc/:path*", "destination": "/api/trpc/[...trpc]" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
