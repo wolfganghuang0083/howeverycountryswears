@@ -4,6 +4,11 @@
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
   "framework": "vite",
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "api/_lib/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/auth/:path*", "destination": "/api/auth/[...action]" },
     { "source": "/api/trpc/:path*", "destination": "/api/trpc/[...trpc]" },

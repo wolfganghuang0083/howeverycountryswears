@@ -4,6 +4,7 @@ export interface AuthUser {
   id: number;
   openId: string;
   name: string | null;
+  displayName: string | null;
   email: string | null;
   avatarUrl: string | null;
   role: "user" | "admin";

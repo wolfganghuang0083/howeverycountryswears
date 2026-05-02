@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { SignJWT, jwtVerify } from "jose";
 import { serialize, parse } from "cookie";
-import { upsertUser } from "../../server/db";
+import { upsertUser } from "../_lib/db";
 
 const COOKIE_NAME = "hecs_session";
 const JWT_SECRET = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback-secret-change-me");
