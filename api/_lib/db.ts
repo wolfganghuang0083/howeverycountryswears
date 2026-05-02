@@ -5,7 +5,7 @@ import {
   users, submissions, votes, bookCodes,
   ratings, userBadges, countryAmbassadors, pointsHistory, reviews,
   type InsertSubmission, type InsertReview
-} from "./schema";
+} from "./schema.js";
 
 export function getDb() {
   const databaseUrl = process.env.DATABASE_URL;

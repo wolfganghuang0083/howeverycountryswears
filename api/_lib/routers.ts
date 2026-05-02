@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure, adminProcedure } from "./trpc";
+import { router, publicProcedure, protectedProcedure, adminProcedure } from "./trpc.js";
 import {
   getUserByOpenId, getUserById, updateUserDisplayName, updateUserTier,
   upsertRating, getCardRatings, getUserRatings,
@@ -12,7 +12,7 @@ import {
   getCountryAmbassadors, getAmbassadorForCountry,
   incrementCountriesVisited, incrementPhrasesListened,
   createReview, getReviewsForCard, getReviewSummaryForCountry,
-} from "./db";
+} from "./db.js";
 
 export const appRouter = router({
   // ========== AUTH ==========

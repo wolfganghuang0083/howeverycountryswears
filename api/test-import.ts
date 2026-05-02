@@ -9,10 +9,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const cookie = await import("cookie");
     
     // Test 3: Can we import from _lib?
-    const { createContext } = await import("./_lib/trpc");
+    const { createContext } = await import("./_lib/trpc.js");
     
     // Test 4: Can we import db?
-    const { getDb } = await import("./_lib/db");
+    const { getDb } = await import("./_lib/db.js");
     
     res.status(200).json({ 
       status: "ok",
