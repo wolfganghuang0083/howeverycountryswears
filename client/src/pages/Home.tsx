@@ -130,23 +130,21 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
                 : "Browse free samples from 100 countries, then unlock all 1,000 phrases, pronunciation links, and cultural context in the complete book."}
             </p>
 
-            {/* CTAs — Primary: Book, Secondary: Free Samples */}
+            {/* CTAs — Primary: Start Exploring, Secondary: Browse by Region */}
             <div className="flex flex-wrap gap-4">
               <a
-                href={AMAZON_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#explore"
                 className="flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-7 py-3.5 rounded-lg font-bold text-base border-3 border-[#1a1a1a] shadow-[4px_4px_0px_#1a1a1a] hover:shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
               >
-                <BookOpen size={20} />
-                {isZhTw ? "購買完整 100 國版本" : "Get the Full 100-Country Edition"}
+                <Sparkles size={20} />
+                {isZhTw ? "開始探索" : "Start Exploring"}
               </a>
               <a
-                href="#explore"
+                href="#regions"
                 className="flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white px-6 py-3.5 rounded-lg font-bold text-base border-2 border-white/40 hover:bg-white/25 transition-all no-underline"
               >
                 <Globe size={20} />
-                {isZhTw ? "免費試閱精選片語" : "Explore Free Samples"}
+                {isZhTw ? "依區域瀏覽" : "Browse by Region"}
               </a>
             </div>
 
@@ -254,12 +252,12 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <PhraseCard card={card} country={country} showCountryLink linkToDetail isAuthenticated={isAuthenticated} memberTier={memberTier} userRole={userRole} />
+                <PhraseCard card={card} country={country} showCountryLink linkToDetail isAuthenticated={isAuthenticated} memberTier={memberTier} userRole={userRole} freePreview={i === 0 || i === 3} />
               </motion.div>
             ))}
           </div>
 
-          {/* Contextual CTA after free samples */}
+          {/* Contextual CTA after free samples — encourage exploration */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -268,17 +266,15 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
           >
             <p className="text-[#666] mb-4 text-lg">
               {isZhTw
-                ? "喜歡這些嗎？書中還有 994 個等你發掘。"
-                : "Enjoying these? There are 994 more in the book."}
+                ? `這只是開胃菜。下方有 ${countries.length} 個國家等你探索。`
+                : `This is just the appetizer. ${countries.length} countries await below.`}
             </p>
             <a
-              href={AMAZON_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold text-base border-3 border-[#1a1a1a] shadow-[4px_4px_0px_#1a1a1a] hover:shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+              href="#regions"
+              className="inline-flex items-center gap-2 bg-[#FF1493] text-white px-6 py-3 rounded-lg font-bold text-base border-3 border-[#1a1a1a] shadow-[4px_4px_0px_#1a1a1a] hover:shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
             >
-              <BookOpen size={18} />
-              {isZhTw ? "解鎖全部 1,000 個片語" : "Unlock All 1,000 Phrases"}
+              <Globe size={18} />
+              {isZhTw ? "探索更多國家" : "Explore More Countries"}
             </a>
           </motion.div>
         </div>

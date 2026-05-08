@@ -22,6 +22,8 @@ interface PhraseCardProps {
   linkToDetail?: boolean;
   /** Number of reviews for this card */
   reviewCount?: number;
+  /** If true, allow playing pronunciation without authentication (for homepage free preview) */
+  freePreview?: boolean;
 }
 
 export default function PhraseCard({
@@ -37,6 +39,7 @@ export default function PhraseCard({
   userRating: initialUserRating,
   linkToDetail = false,
   reviewCount,
+  freePreview = false,
 }: PhraseCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -49,9 +52,9 @@ export default function PhraseCard({
 
   const isAdmin = userRole === "admin";
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
-  const isLocked = isLockedContent(country.part_id);
+  const isLocked = isLockedContent(country.part_id, country.slug);
 
-  const canPlay = isAuthenticated && (isBookBuyer || !isLocked);
+  const canPlay = freePreview || (isAuthenticated && (isBookBuyer || !isLocked));
   const canRate = isAuthenticated;
 
   const rateMutation = trpc.rating.rate.useMutation();
@@ -60,13 +63,15 @@ export default function PhraseCard({
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!isAuthenticated) { setShowPaywall(true); return; }
-    if (isLocked && !isBookBuyer) { setShowPaywall(true); return; }
+    if (!freePreview && !isAuthenticated) { setShowPaywall(true); return; }
+    if (!freePreview && isLocked && !isBookBuyer) { setShowPaywall(true); return; }
     setIsPlaying(true);
     playPronunciation(card.phrase, country.lang_code);
-    listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
+    if (isAuthenticated) {
+      listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
+    }
     setTimeout(() => setIsPlaying(false), 2000);
-  }, [card.phrase, country.lang_code, country.slug, card.number, isAuthenticated, isLocked, isBookBuyer, listenMutation]);
+  }, [card.phrase, country.lang_code, country.slug, card.number, isAuthenticated, isLocked, isBookBuyer, freePreview, listenMutation]);
 
   const handleRate = useCallback((value: number) => {
     if (!isAuthenticated) { setShowPaywall(true); return; }
@@ -107,10 +112,10 @@ export default function PhraseCard({
       return {
         title: isZhTw ? "登入即可收聽" : "Sign In to Listen",
         desc: isZhTw
-          ? "建立免費帳號即可收聽 55 個國家的發音、評分片語並賺取積分！"
-          : "Create a free account to hear pronunciations for 55 countries, rate phrases, and earn points!",
+          ? "建立免費帳號即可收聽 66 個國家的發音，評分片語，看看其他人怎麼評！"
+          : "Create a free account to hear pronunciations for 66 countries, rate phrases, and see how others rated them!",
         showLogin: true,
-        showBookCTA: true,
+        showBookCTA: false,
       };
     }
     if (isLocked && !isBookBuyer) {
@@ -162,7 +167,7 @@ export default function PhraseCard({
             <p className="text-sm text-[#666] mb-4">{paywallContent.desc}</p>
             <div className="space-y-2">
               {paywallContent.showLogin && (
-                <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.location.href = getLoginUrl(); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
+                <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.location.href = getLoginUrl(window.location.pathname + window.location.search + '#' + anchorId); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
                   <LogIn size={16} /> {isZhTw ? "免費登入" : "Sign In Free"}
                 </button>
               )}

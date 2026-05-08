@@ -160,8 +160,18 @@ export const AMAZON_LINK = "https://www.amazon.com/dp/B0GSGZ3ZJZ?tag=aitoolverif
 
 export const SITE_DOMAIN = "https://howeverycountryswears.com";
 
-/** Check if a country is in locked parts (Part 8-11) */
-export function isLockedContent(partId: number): boolean {
+/**
+ * Preview countries in paid Parts — these are free to view even though their Part is locked.
+ * Part 8 (Middle East/North Africa): Egypt
+ * Part 9 (Sub-Saharan Africa): Kenya
+ * Part 10 (Latin America): Mexico
+ * Part 11 (Pacific Islands): Samoa
+ */
+export const PREVIEW_COUNTRIES = ["egypt", "kenya", "mexico", "samoa"];
+
+/** Check if a country is in locked parts (Part 8-11) and NOT a preview country */
+export function isLockedContent(partId: number, countrySlug?: string): boolean {
+  if (countrySlug && PREVIEW_COUNTRIES.includes(countrySlug)) return false;
   return partId >= 8;
 }
 

@@ -3,16 +3,18 @@ import PhraseCard from "@/components/PhraseCard";
 import {
   getCountryBySlug,
   getAdjacentCountries,
+  getAllCountries,
   getToneColor,
   getToneLabel,
   AMAZON_LINK,
   regionColors,
   isLockedContent,
 } from "@/lib/data";
+import { getRecommendations } from "@/lib/recommendations";
 import { useParams, Link } from "wouter";
 import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, MapPin, Lock, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -29,8 +31,12 @@ export default function CountryPage() {
 
   const isAdmin = user?.role === "admin";
   const isBookBuyer = user?.memberTier === "bookBuyer" || isAdmin;
-  const isLocked = country ? isLockedContent(country.part_id) : false;
+  const isLocked = country ? isLockedContent(country.part_id, country.slug) : false;
   const canViewContent = !isLocked || isBookBuyer;
+
+  // Get recommendations for this country
+  const allCountries = getAllCountries(locale);
+  const [recommendations] = useState(() => country ? getRecommendations(country, allCountries) : {});
 
   // Fetch ratings for this country's cards
   const cardNumbers = useMemo(() => country?.cards.map(c => c.number) || [], [country]);
@@ -115,60 +121,121 @@ export default function CountryPage() {
           </div>
         </div>
 
-        {/* Locked Content */}
-        <section className="py-20 md:py-32">
-          <div className="container max-w-2xl text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[#FFF8E1] flex items-center justify-center border-3 border-[#FFE500] shadow-[4px_4px_0px_#1a1a1a]">
-                <Lock size={48} className="text-[#FF1493]" />
+        {/* Country Header - same as unlocked */}
+        <section className="relative overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{ background: `linear-gradient(135deg, ${regionColor}40, transparent 60%)` }}
+          />
+          <div className="absolute inset-0 benday-dots pointer-events-none" />
+          <div className="container relative py-10 md:py-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <div className="flex items-start gap-4 md:gap-6 mb-6">
+                <span className="text-6xl md:text-8xl leading-none">{country.flag}</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-[#999] uppercase">#{country.number}</span>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: regionColor }}>
+                      {country.region}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#FFE500] text-[#1a1a1a] border border-[#1a1a1a]">
+                      {isZhTw ? "書籍獨家" : "Book Exclusive"}
+                    </span>
+                  </div>
+                  <h1 className="font-display text-4xl md:text-6xl text-[#1a1a1a] leading-none">
+                    {country.name}
+                  </h1>
+                </div>
               </div>
-              <span className="text-6xl mb-4 block">{country.flag}</span>
-              <h1 className="font-display text-4xl md:text-5xl text-[#1a1a1a] mb-3">
-                {country.name}
-              </h1>
-              <p className="text-lg text-[#666] mb-2">
-                Part {country.part_id} — {isZhTw ? "獨家內容" : "Exclusive Content"}
-              </p>
-              <p className="text-[#888] mb-8 max-w-md mx-auto">
-                {isZhTw
-                  ? "此國家屬於我們的獨家收藏（Part 8-11）。購買書籍即可解鎖全部 100 個國家的完整發音和文化指南！"
-                  : "This country is part of our exclusive collection (Part 8-11). Get the book to unlock all 100 countries with full pronunciation and cultural guides!"}
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                {!isAuthenticated && (
-                  <a
-                    href={getLoginUrl()}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-                  >
-                    <LogIn size={18} />
-                    {t("nav.signIn")}
-                  </a>
-                )}
-                {isAuthenticated && (
-                  <Link
-                    href={localePath("/community")}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-                  >
-                    <BookOpen size={18} />
-                    {isZhTw ? "輸入書籍代碼" : "Enter Book Code"}
-                  </Link>
-                )}
-                <a
-                  href={AMAZON_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-                >
-                  <BookOpen size={18} />
-                  {isZhTw ? "在 Amazon 購買書籍" : "Get the Book on Amazon"}
-                </a>
+              <div className="max-w-3xl bg-white p-5 rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a]">
+                <h3 className="font-bold text-sm uppercase tracking-wider text-[#999] mb-2">
+                  {isZhTw ? "罵人文化" : "Swearing Culture"}
+                </h3>
+                <p className="text-[#333] leading-relaxed">{country.culture}</p>
               </div>
             </motion.div>
+          </div>
+        </section>
+
+        {/* Partial Preview - show first 3 cards */}
+        <section className="py-10 md:py-16">
+          <div className="container">
+            <h2 className="font-display text-3xl md:text-4xl text-[#1a1a1a] mb-2">
+              {isZhTw ? (
+                <>來自 <span style={{ color: regionColor }}>{country.name}</span> 的片語預覽</>
+              ) : (
+                <>Preview from <span style={{ color: regionColor }}>{country.name}</span></>
+              )}
+            </h2>
+            <p className="text-[#666] mb-8">
+              {isZhTw
+                ? `免費預覽前 3 個片語。購買書籍即可解鎖全部 10 個。`
+                : `Preview the first 3 phrases for free. Get the book to unlock all 10.`}
+            </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {country.cards.slice(0, 3).map((card, i) => (
+                <motion.div
+                  key={card.number}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <PhraseCard
+                    card={card}
+                    country={country}
+                    isAuthenticated={isAuthenticated}
+                    memberTier={user?.memberTier}
+                    userRole={user?.role}
+                  />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Fade-out overlay + CTA */}
+            <div className="relative mt-8">
+              <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+              <div className="text-center py-10 bg-gradient-to-b from-white via-[#FFF8E1]/50 to-white rounded-xl border-2 border-dashed border-[#FFE500] p-8">
+                <Lock size={32} className="text-[#FF1493] mx-auto mb-4" />
+                <h3 className="font-display text-2xl text-[#1a1a1a] mb-2">
+                  {isZhTw ? `還有 7 個片語等你解鎖` : `7 more phrases to unlock`}
+                </h3>
+                <p className="text-[#666] mb-6 max-w-md mx-auto">
+                  {isZhTw
+                    ? "購買書籍即可解鎖全部 100 個國家的完整發音和文化指南！"
+                    : "Get the book to unlock all 100 countries with full pronunciation and cultural guides!"}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  {!isAuthenticated && (
+                    <a
+                      href={getLoginUrl(localePath(`/country/${country.slug}`))}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                    >
+                      <LogIn size={18} />
+                      {t("nav.signIn")}
+                    </a>
+                  )}
+                  {isAuthenticated && (
+                    <Link
+                      href={localePath("/community")}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                    >
+                      <BookOpen size={18} />
+                      {isZhTw ? "輸入書籍代碼" : "Enter Book Code"}
+                    </Link>
+                  )}
+                  <a
+                    href={AMAZON_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                  >
+                    <BookOpen size={18} />
+                    {isZhTw ? "在 Amazon 購買書籍" : "Get the Book on Amazon"}
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </Layout>
@@ -295,20 +362,37 @@ export default function CountryPage() {
                       viewport={{ once: true }}
                       className="lg:col-span-2 bg-gradient-to-r from-[#FF1493]/10 to-[#FFE500]/10 rounded-xl border-2 border-dashed border-[#FF1493]/30 p-6 text-center"
                     >
-                      <p className="text-[#666] mb-2 text-sm">
-                        {isZhTw
-                          ? `正在探索${country.name}的髒話？書中還有 99 個國家等你發掘。`
-                          : `Enjoying ${country.name}'s profanity? There are 99 more countries in the book.`}
-                      </p>
-                      <a
-                        href={AMAZON_LINK}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-[#FF1493] font-bold text-sm hover:underline no-underline"
-                      >
-                        <BookOpen size={14} />
-                        {isZhTw ? "解鎖全部 1,000 個片語 →" : "Unlock all 1,000 phrases →"}
-                      </a>
+                      {!isAuthenticated ? (
+                        <>
+                          <p className="text-[#666] mb-2 text-sm">
+                            {isZhTw
+                              ? "免費註冊即可收聽所有發音，評分片語，並看看其他人怎麼評。"
+                              : "Sign up free to hear all pronunciations, rate phrases, and see how others rated them."}
+                          </p>
+                          <a
+                            href={getLoginUrl(localePath(`/country/${country.slug}`))}
+                            className="inline-flex items-center gap-2 text-[#FF1493] font-bold text-sm hover:underline no-underline"
+                          >
+                            <LogIn size={14} />
+                            {isZhTw ? "免費註冊 →" : "Sign Up Free →"}
+                          </a>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[#666] mb-2 text-sm">
+                            {isZhTw
+                              ? `喜歡${country.name}的髒話？探索其他國家的獨特罵罵文化。`
+                              : `Enjoying ${country.name}'s profanity? Explore other countries' unique swearing cultures.`}
+                          </p>
+                          <Link
+                            href={localePath(`/region/${country.region_slug}`)}
+                            className="inline-flex items-center gap-2 text-[#FF1493] font-bold text-sm hover:underline no-underline"
+                          >
+                            <MapPin size={14} />
+                            {isZhTw ? `探索${country.region}的更多國家 →` : `Explore more from ${country.region} →`}
+                          </Link>
+                        </>
+                      )}
                     </motion.div>
                   )}
                 </React.Fragment>
@@ -358,6 +442,70 @@ export default function CountryPage() {
         </section>
       )}
 
+      {/* Recommendations — You Might Also Like */}
+      <section className="py-10 bg-[#FAFAFA] border-t border-gray-200">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="font-display text-2xl md:text-3xl text-[#1a1a1a] mb-6 text-center">
+              {isZhTw ? "繼續探索" : "Keep Exploring"}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {recommendations.sameRegion && (
+                <Link
+                  href={localePath(`/country/${recommendations.sameRegion.country.slug}`)}
+                  className="block p-4 bg-white rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline group"
+                >
+                  <span className="text-xs font-bold text-[#32CD32] uppercase tracking-wider">
+                    {isZhTw ? "鄰國" : "Next door"}
+                  </span>
+                  <div className="flex items-center gap-2 mt-2 mb-2">
+                    <span className="text-3xl">{recommendations.sameRegion.country.flag}</span>
+                    <span className="font-bold text-[#1a1a1a] group-hover:text-[#FF1493] transition-colors">
+                      {recommendations.sameRegion.country.name}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#666] line-clamp-2">{recommendations.sameRegion.country.culture.slice(0, 80)}...</p>
+                </Link>
+              )}
+              {recommendations.similarStyle && (
+                <Link
+                  href={localePath(`/country/${recommendations.similarStyle.country.slug}`)}
+                  className="block p-4 bg-white rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline group"
+                >
+                  <span className="text-xs font-bold text-[#00BFFF] uppercase tracking-wider">
+                    {isZhTw ? "相似風格" : "Similar vibe"}
+                  </span>
+                  <div className="flex items-center gap-2 mt-2 mb-2">
+                    <span className="text-3xl">{recommendations.similarStyle.country.flag}</span>
+                    <span className="font-bold text-[#1a1a1a] group-hover:text-[#FF1493] transition-colors">
+                      {recommendations.similarStyle.country.name}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#666] line-clamp-2">{recommendations.similarStyle.country.culture.slice(0, 80)}...</p>
+                </Link>
+              )}
+              {recommendations.opposite && (
+                <Link
+                  href={localePath(`/country/${recommendations.opposite.country.slug}`)}
+                  className="block p-4 bg-white rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline group"
+                >
+                  <span className="text-xs font-bold text-[#FF1493] uppercase tracking-wider">
+                    {isZhTw ? "完全相反" : "Complete opposite"}
+                  </span>
+                  <div className="flex items-center gap-2 mt-2 mb-2">
+                    <span className="text-3xl">{recommendations.opposite.country.flag}</span>
+                    <span className="font-bold text-[#1a1a1a] group-hover:text-[#FF1493] transition-colors">
+                      {recommendations.opposite.country.name}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#666] line-clamp-2">{recommendations.opposite.country.culture.slice(0, 80)}...</p>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Navigation */}
       <section className="py-8 border-t border-gray-200">
         <div className="container">
@@ -397,33 +545,62 @@ export default function CountryPage() {
         </div>
       </section>
 
-      {/* Book CTA — Contextual */}
+      {/* Bottom CTA — Contextual based on auth state */}
       <section className="py-10 bg-[#1a1a1a]">
         <div className="container text-center">
-          <p className="text-gray-400 text-sm mb-2">
-            {isZhTw ? "網站是遊樂場。書是完整收藏。" : "The website is the playground. The book is the full collection."}
-          </p>
-          <p className="text-white font-display text-2xl md:text-3xl mb-2">
-            {isZhTw ? (
-              <>擁有全部 <span className="text-[#FFE500]">100 個國家</span>的完整指南</>
-            ) : (
-              <>Own the complete guide to all <span className="text-[#FFE500]">100 countries</span></>
-            )}
-          </p>
-          <p className="text-gray-400 text-sm mb-6">
-            {isZhTw
-              ? "1,000+ 個片語 · 每個詞條附發音連結 · 深度文化背景"
-              : "1,000+ phrases · pronunciation for every entry · deep cultural context"}
-          </p>
-          <a
-            href={AMAZON_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-          >
-            <BookOpen size={18} />
-            {isZhTw ? "在 Amazon 購買完整版" : "Buy the Complete Edition on Amazon"}
-          </a>
+          {!isAuthenticated ? (
+            <>
+              <p className="text-gray-400 text-sm mb-2">
+                {isZhTw ? "免費註冊即可收聽發音" : "Sign up free to hear pronunciations"}
+              </p>
+              <p className="text-white font-display text-2xl md:text-3xl mb-2">
+                {isZhTw ? (
+                  <>免費收聽 <span className="text-[#FFE500]">66 個國家</span>的發音</>
+                ) : (
+                  <>Hear pronunciations from <span className="text-[#FFE500]">66 countries</span> for free</>
+                )}
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                {isZhTw
+                  ? "評分片語，看看其他人怎麼評，探索全球罵罵文化"
+                  : "Rate phrases, see how others rated them, explore global swearing cultures"}
+              </p>
+              <a
+                href={getLoginUrl(localePath(`/country/${country.slug}`))}
+                className="inline-flex items-center gap-2 bg-[#FF1493] text-white px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+              >
+                <LogIn size={18} />
+                {isZhTw ? "免費註冊" : "Sign Up Free"}
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-400 text-sm mb-2">
+                {isZhTw ? "網站是遊樂場。書是完整收藏。" : "The website is the playground. The book is the full collection."}
+              </p>
+              <p className="text-white font-display text-2xl md:text-3xl mb-2">
+                {isZhTw ? (
+                  <>擁有全部 <span className="text-[#FFE500]">100 個國家</span>的完整指南</>
+                ) : (
+                  <>Own the complete guide to all <span className="text-[#FFE500]">100 countries</span></>
+                )}
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                {isZhTw
+                  ? "1,000+ 個片語 · 每個詞條附發音連結 · 深度文化背景"
+                  : "1,000+ phrases · pronunciation for every entry · deep cultural context"}
+              </p>
+              <a
+                href={AMAZON_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+              >
+                <BookOpen size={18} />
+                {isZhTw ? "在 Amazon 購買完整版" : "Buy the Complete Edition on Amazon"}
+              </a>
+            </>
+          )}
         </div>
       </section>
     </Layout>

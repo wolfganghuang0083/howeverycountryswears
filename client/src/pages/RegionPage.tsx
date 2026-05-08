@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout";
-import { getPartBySlug, regionColors, AMAZON_LINK, isLockedContent } from "@/lib/data";
+import { getPartBySlug, regionColors, AMAZON_LINK, isLockedContent, PREVIEW_COUNTRIES } from "@/lib/data";
 import { useParams, Link } from "wouter";
 import { ArrowRight, BookOpen, Lock, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
@@ -53,6 +53,9 @@ export default function RegionPage() {
 
   const color = regionColors[part.slug] || "#FF1493";
   const isLocked = isLockedContent(part.id);
+  const hasPreviewCountries = isLocked && part.countries.some(c => PREVIEW_COUNTRIES.includes(c.slug));
+  const previewCountriesInPart = isLocked ? part.countries.filter(c => PREVIEW_COUNTRIES.includes(c.slug)) : [];
+  const lockedCountriesInPart = isLocked ? part.countries.filter(c => !PREVIEW_COUNTRIES.includes(c.slug)) : [];
   const canView = !isLocked || isBookBuyer;
 
   return (
@@ -98,26 +101,88 @@ export default function RegionPage() {
       {/* Content: either locked or country grid */}
       {!canView ? (
         <section className="py-16 md:py-24">
-          <div className="container max-w-2xl text-center">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+          <div className="container">
+            {/* If there are preview countries, show them first */}
+            {hasPreviewCountries && (
+              <div className="max-w-4xl mx-auto mb-12">
+                <h2 className="font-display text-2xl text-[#1a1a1a] mb-2 text-center">
+                  {isZhTw ? "免費預覽" : "Free Preview"}
+                </h2>
+                <p className="text-[#666] text-center mb-6">
+                  {isZhTw
+                    ? `先免費體驗這個區域的風味！`
+                    : `Get a taste of this region for free!`}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {previewCountriesInPart.map((country, i) => {
+                    const previewCard = country.cards[0];
+                    return (
+                      <motion.div
+                        key={country.slug}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 }}
+                      >
+                        <Link
+                          href={localePath(`/country/${country.slug}`)}
+                          className="block bg-white rounded-xl border-2 border-[#32CD32] shadow-[4px_4px_0px_#32CD32] hover:shadow-[2px_2px_0px_#32CD32] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline overflow-hidden group"
+                        >
+                          <div className="p-5">
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className="text-4xl">{country.flag}</span>
+                              <div>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#32CD32] text-white">
+                                  {isZhTw ? "免費" : "FREE"}
+                                </span>
+                                <h3 className="font-bold text-lg text-[#1a1a1a] group-hover:text-[#FF1493] transition-colors leading-tight">
+                                  {country.name}
+                                </h3>
+                              </div>
+                            </div>
+                            {previewCard && (
+                              <div className="bg-[#FAFAFA] rounded-lg p-3 mb-3 border border-gray-100">
+                                <p className="font-noto font-bold text-[#1a1a1a] text-sm">
+                                  {previewCard.emoji} "{previewCard.phrase}"
+                                </p>
+                                <p className="text-xs text-[#666] mt-1">{previewCard.literal}</p>
+                              </div>
+                            )}
+                            <p className="text-xs text-[#666] line-clamp-2 mb-3">{country.culture}</p>
+                            <div className="flex items-center gap-1 text-xs font-semibold text-[#32CD32]">
+                              {isZhTw ? "免費查看全部 10 個片語" : "View all 10 phrases — FREE"} <ArrowRight size={12} />
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Locked countries section */}
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="max-w-2xl mx-auto text-center">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FFF8E1] flex items-center justify-center border-3 border-[#FFE500] shadow-[4px_4px_0px_#1a1a1a]">
                 <Lock size={40} className="text-[#FF1493]" />
               </div>
               <h2 className="font-display text-3xl text-[#1a1a1a] mb-3">
-                {isZhTw ? "獨家內容" : "Exclusive Content"}
+                {isZhTw ? "更多獨家內容" : "More Exclusive Content"}
               </h2>
               <p className="text-[#666] mb-2">
-                Part {part.id} {isZhTw ? "包含" : "contains"} {part.countries.length} {isZhTw ? "個國家，共" : "countries with"} {part.countries.length * 10} {isZhTw ? "個片語。" : "phrases."}
+                {isZhTw
+                  ? `還有 ${lockedCountriesInPart.length} 個國家等你解鎖！`
+                  : `${lockedCountriesInPart.length} more countries to unlock!`}
               </p>
               <p className="text-[#888] mb-8 max-w-md mx-auto">
                 {isZhTw
-                  ? "此區域為書籍持有者專屬。購買書籍即可解鎖全部 100 個國家！"
-                  : "This region is exclusive to book owners. Get the book to unlock all 100 countries!"}
+                  ? "購買書籍即可解鎖全部 100 個國家！"
+                  : "Get the book to unlock all 100 countries!"}
               </p>
 
-              {/* Show country flags as a teaser */}
+              {/* Show locked country flags as a teaser */}
               <div className="flex flex-wrap justify-center gap-3 mb-8">
-                {part.countries.map(c => (
+                {lockedCountriesInPart.map(c => (
                   <div key={c.slug} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full border border-gray-200">
                     <span className="text-xl">{c.flag}</span>
                     <span className="text-sm font-semibold text-[#999]">{c.name}</span>
@@ -129,7 +194,7 @@ export default function RegionPage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 {!isAuthenticated && (
                   <a
-                    href={getLoginUrl()}
+                    href={getLoginUrl(localePath(`/region/${part.slug}`))}
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                   >
                     <LogIn size={18} />
