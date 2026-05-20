@@ -19,6 +19,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { useLocale } from "@/contexts/LocaleContext";
+import { trackCountryView, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick, trackPurchaseClick, trackRecommendationClick, trackCountryScrollDepth, trackCountriesExploredMilestone, PREVIEW_COUNTRIES as ANALYTICS_PREVIEW_COUNTRIES } from "@/lib/analytics";
 
 export default function CountryPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -56,6 +57,34 @@ export default function CountryPage() {
       visitMutation.mutate({ countrySlug: country.slug });
     }
   }, [slug, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // GA4: Track country view
+  useEffect(() => {
+    if (country) {
+      trackCountryView({
+        country: country.slug,
+        part_id: country.part_id,
+        is_preview_country: ANALYTICS_PREVIEW_COUNTRIES.includes(country.slug),
+        is_locked: isLocked && !isBookBuyer,
+      });
+    }
+  }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // GA4: Track scroll depth
+  useEffect(() => {
+    if (!country || !canViewContent) return;
+    let tracked50 = false;
+    let tracked100 = false;
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight <= 0) return;
+      const pct = Math.round((window.scrollY / scrollHeight) * 100);
+      if (pct >= 50 && !tracked50) { tracked50 = true; trackCountryScrollDepth(country.slug, 50); }
+      if (pct >= 95 && !tracked100) { tracked100 = true; trackCountryScrollDepth(country.slug, 100); }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [slug, canViewContent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (country) {
@@ -209,6 +238,7 @@ export default function CountryPage() {
                   {!isAuthenticated && (
                     <a
                       href={getLoginUrl(localePath(`/country/${country.slug}`))}
+                      onClick={() => trackPaywallLoginClick({ country: country.slug, context: "country_page" })}
                       className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                     >
                       <LogIn size={18} />
@@ -228,6 +258,7 @@ export default function CountryPage() {
                     href={AMAZON_LINK}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => { trackPaywallBookClick({ country: country.slug, context: "country_page", phrases_previewed: 3 }); trackPurchaseClick("country_page_paywall", country.slug); }}
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                   >
                     <BookOpen size={18} />

@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useLocale } from "@/contexts/LocaleContext";
+import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick } from "@/lib/analytics";
 
 interface PhraseCardProps {
   card: Card;
@@ -63,10 +64,12 @@ export default function PhraseCard({
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!freePreview && !isAuthenticated) { setShowPaywall(true); return; }
-    if (!freePreview && isLocked && !isBookBuyer) { setShowPaywall(true); return; }
+    if (!freePreview && !isAuthenticated) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
+    if (!freePreview && isLocked && !isBookBuyer) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
     setIsPlaying(true);
     playPronunciation(card.phrase, country.lang_code);
+    trackPhrasePlay({ country: country.slug, phrase_index: card.number, is_free_preview: freePreview, is_locked: isLocked });
+    trackFirstPlay();
     if (isAuthenticated) {
       listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
     }
@@ -77,6 +80,7 @@ export default function PhraseCard({
     if (!isAuthenticated) { setShowPaywall(true); return; }
     setCurrentUserRating(value);
     rateMutation.mutate({ countrySlug: country.slug, cardNumber: card.number, value });
+    trackPhraseRate({ country: country.slug, phrase_index: card.number, rating_value: value });
   }, [country.slug, card.number, isAuthenticated, rateMutation]);
 
   const anchorId = `phrase-${card.number}`;
@@ -167,7 +171,7 @@ export default function PhraseCard({
             <p className="text-sm text-[#666] mb-4">{paywallContent.desc}</p>
             <div className="space-y-2">
               {paywallContent.showLogin && (
-                <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.location.href = getLoginUrl(window.location.pathname + window.location.search + '#' + anchorId); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
+                <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); trackPaywallLoginClick({ country: country.slug, context: "phrase_card" }); window.location.href = getLoginUrl(window.location.pathname + window.location.search + '#' + anchorId); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
                   <LogIn size={16} /> {isZhTw ? "免費登入" : "Sign In Free"}
                 </button>
               )}
@@ -178,7 +182,7 @@ export default function PhraseCard({
                       <BookOpen size={16} /> {isZhTw ? "輸入書籍代碼" : "Enter Book Code"}
                     </button>
                   )}
-                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(AMAZON_LINK, '_blank'); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
+                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); trackPaywallBookClick({ country: country.slug, context: "phrase_card" }); window.open(AMAZON_LINK, '_blank'); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
                     <BookOpen size={16} /> {isZhTw ? "在 Amazon 購買書籍" : "Get the Book on Amazon"}
                   </button>
                 </>
@@ -307,16 +311,16 @@ export default function PhraseCard({
           {/* Round icon action buttons */}
           {!compact && (
             <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-              <IconBtn onClick={handleCopyLink} title={copied ? t("card.copyLink") : (isZhTw ? "複製連結" : "Copy Link")} highlight={copied}>
+              <IconBtn onClick={(e) => { handleCopyLink(e); trackPhraseShare({ country: country.slug, phrase_index: card.number, platform: "copy" }); trackFirstShare(); }} title={copied ? t("card.copyLink") : (isZhTw ? "複製連結" : "Copy Link")} highlight={copied}>
                 <Link2 size={16} />
               </IconBtn>
-              <IconBtn onClick={(e) => { e.stopPropagation(); e.preventDefault(); shareToTwitter(shareText, shareUrl); }} title={isZhTw ? "分享到 X / Twitter" : "Share on X / Twitter"}>
+              <IconBtn onClick={(e) => { e.stopPropagation(); e.preventDefault(); shareToTwitter(shareText, shareUrl); trackPhraseShare({ country: country.slug, phrase_index: card.number, platform: "twitter" }); trackFirstShare(); }} title={isZhTw ? "分享到 X / Twitter" : "Share on X / Twitter"}>
                 <Twitter size={16} />
               </IconBtn>
-              <IconBtn onClick={(e) => { e.stopPropagation(); e.preventDefault(); shareToFacebook(shareUrl, shareText); }} title={isZhTw ? "分享到 Facebook" : "Share on Facebook"}>
+              <IconBtn onClick={(e) => { e.stopPropagation(); e.preventDefault(); shareToFacebook(shareUrl, shareText); trackPhraseShare({ country: country.slug, phrase_index: card.number, platform: "facebook" }); trackFirstShare(); }} title={isZhTw ? "分享到 Facebook" : "Share on Facebook"}>
                 <Facebook size={16} />
               </IconBtn>
-              <IconBtn onClick={(e) => { e.stopPropagation(); e.preventDefault(); shareToWhatsApp(shareText, shareUrl); }} title={isZhTw ? "分享到 WhatsApp" : "Share on WhatsApp"}>
+              <IconBtn onClick={(e) => { e.stopPropagation(); e.preventDefault(); shareToWhatsApp(shareText, shareUrl); trackPhraseShare({ country: country.slug, phrase_index: card.number, platform: "whatsapp" }); trackFirstShare(); }} title={isZhTw ? "分享到 WhatsApp" : "Share on WhatsApp"}>
                 <MessageCircle size={16} />
               </IconBtn>
             </div>

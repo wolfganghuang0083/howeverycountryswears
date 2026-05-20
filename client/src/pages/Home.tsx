@@ -7,6 +7,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocale } from "@/contexts/LocaleContext";
+import { trackPurchaseClick } from "@/lib/analytics";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -521,6 +522,7 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
                 href={AMAZON_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackPurchaseClick("homepage_bottom")}
                 className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-8 py-4 rounded-lg font-bold text-lg border-3 border-white shadow-[4px_4px_0px_white] hover:shadow-[2px_2px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
               >
                 <BookOpen size={22} />

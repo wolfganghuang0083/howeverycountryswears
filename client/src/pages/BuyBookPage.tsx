@@ -4,6 +4,7 @@ import { BookOpen, Globe, Volume2, Star, Users, Languages, CheckCircle, ArrowRig
 import { motion } from "framer-motion";
 import { useEffect } from "react";
 import { useLocale } from "@/contexts/LocaleContext";
+import { trackBookPageView, trackPurchaseClick } from "@/lib/analytics";
 
 const BOOK_COVER = "https://d2xsxph8kpxj0f.cloudfront.net/310519663213089248/DxiapP3ZDvXs6SvszhZhBd/Swear-Book-Cover-PopArt-V2-eBook_52a815e1.webp";
 
@@ -46,6 +47,7 @@ export default function BuyBookPage() {
     document.title = isZhTw
       ? "購買書籍 — 全球髒話文化指南 | 1,000 個片語 · 100 個國家"
       : "Get the Book — How Every Country Swears | 1,000 Phrases · 100 Countries";
+    trackBookPageView();
     return () => {
       document.title = isZhTw
         ? "全球髒話文化指南 — 1,000 個片語，100 個國家"
@@ -142,6 +144,7 @@ export default function BuyBookPage() {
                 href={AMAZON_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackPurchaseClick("buy_page_hero")}
                 className="inline-flex items-center gap-3 bg-[#FFE500] text-[#1a1a1a] px-8 py-4 rounded-xl font-bold text-lg border-3 border-[#1a1a1a] shadow-[5px_5px_0px_#FF1493] hover:shadow-[2px_2px_0px_#FF1493] hover:translate-x-[3px] hover:translate-y-[3px] transition-all no-underline"
               >
                 <BookOpen size={24} />
@@ -211,6 +214,7 @@ export default function BuyBookPage() {
                 href={AMAZON_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackPurchaseClick("buy_page_why_buy")}
                 className="inline-flex items-center gap-2 bg-[#FF1493] text-white px-7 py-3.5 rounded-lg font-bold text-base border-3 border-[#1a1a1a] shadow-[4px_4px_0px_#1a1a1a] hover:shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
               >
                 <BookOpen size={20} />
@@ -480,6 +484,7 @@ export default function BuyBookPage() {
               href={AMAZON_LINK}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackPurchaseClick("buy_page_footer")}
               className="inline-flex items-center gap-3 bg-[#FFE500] text-[#1a1a1a] px-10 py-5 rounded-xl font-bold text-xl border-3 border-[#1a1a1a] shadow-[6px_6px_0px_#1a1a1a] hover:shadow-[3px_3px_0px_#1a1a1a] hover:translate-x-[3px] hover:translate-y-[3px] transition-all no-underline"
             >
               <BookOpen size={28} />

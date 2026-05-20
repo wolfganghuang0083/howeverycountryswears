@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useLocale } from "@/contexts/LocaleContext";
+import { trackRegionView, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick, trackPurchaseClick, trackPreviewCountryEntry } from "@/lib/analytics";
 
 export default function RegionPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,6 +26,10 @@ export default function RegionPage() {
       document.title = isZhTw
         ? `${part.title} — 各國髒話 | 全球髒話文化指南`
         : `${part.title} — Swear Words by Region | How Every Country Swears`;
+      trackRegionView({ region: part.slug, part_id: part.id, is_locked: isLockedContent(part.id) && !isBookBuyer });
+      if (isLockedContent(part.id) && !isBookBuyer) {
+        trackPaywallView({ context: "region_page" });
+      }
     }
     return () => {
       document.title = isZhTw
@@ -195,6 +200,7 @@ export default function RegionPage() {
                 {!isAuthenticated && (
                   <a
                     href={getLoginUrl(localePath(`/region/${part.slug}`))}
+                    onClick={() => trackPaywallLoginClick({ context: "region_page" })}
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FF1493] text-white rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                   >
                     <LogIn size={18} />
@@ -214,6 +220,7 @@ export default function RegionPage() {
                   href={AMAZON_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => { trackPaywallBookClick({ context: "region_page" }); trackPurchaseClick("region_page", part.slug); }}
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                 >
                   <BookOpen size={18} />
