@@ -1,23 +1,22 @@
 /**
  * GA4 Analytics Module
- * Uses dataLayer.push() for GTM integration
- * All events are forwarded to GA4 via GTM Configuration Tag
+ * Uses gtag() for direct GA4 event sending
+ * Measurement ID: G-GVS8FVW8NN
  */
 
 declare global {
   interface Window {
-    dataLayer: Record<string, unknown>[];
+    gtag: (...args: unknown[]) => void;
+    dataLayer: unknown[];
   }
 }
 
 export const PREVIEW_COUNTRIES = ["egypt", "kenya", "mexico", "samoa"];
 
-function pushEvent(eventName: string, params?: Record<string, unknown>) {
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    event: eventName,
-    ...params,
-  });
+function trackEvent(eventName: string, params?: Record<string, unknown>) {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", eventName, params);
+  }
 }
 
 // ============================================================
@@ -26,12 +25,12 @@ function pushEvent(eventName: string, params?: Record<string, unknown>) {
 
 /** User completes OAuth sign-up */
 export function trackSignUp(method: string = "oauth") {
-  pushEvent("sign_up", { method });
+  trackEvent("sign_up", { method });
 }
 
 /** User clicks Amazon purchase link */
 export function trackPurchaseClick(context: string, country?: string) {
-  pushEvent("purchase_click", {
+  trackEvent("purchase_click", {
     context, // e.g. "country_page", "paywall", "buy_page", "footer", "hero"
     country,
   });
@@ -39,7 +38,7 @@ export function trackPurchaseClick(context: string, country?: string) {
 
 /** User views the Buy Book page */
 export function trackBookPageView() {
-  pushEvent("book_page_view");
+  trackEvent("book_page_view");
 }
 
 // ============================================================
@@ -53,7 +52,7 @@ export function trackPhrasePlay(params: {
   is_free_preview: boolean;
   is_locked: boolean;
 }) {
-  pushEvent("phrase_play", params);
+  trackEvent("phrase_play", params);
 }
 
 /** User views a country page */
@@ -63,7 +62,7 @@ export function trackCountryView(params: {
   is_preview_country: boolean;
   is_locked: boolean;
 }) {
-  pushEvent("country_view", params);
+  trackEvent("country_view", params);
 }
 
 /** User views a region page */
@@ -72,12 +71,12 @@ export function trackRegionView(params: {
   part_id: number;
   is_locked: boolean;
 }) {
-  pushEvent("region_view", params);
+  trackEvent("region_view", params);
 }
 
 /** User scrolls to depth milestone on country page */
 export function trackCountryScrollDepth(country: string, depthPercent: number) {
-  pushEvent("country_scroll_depth", {
+  trackEvent("country_scroll_depth", {
     country,
     depth_percent: depthPercent,
   });
@@ -93,7 +92,7 @@ export function trackPhraseShare(params: {
   phrase_index: number;
   platform: "twitter" | "facebook" | "whatsapp" | "copy";
 }) {
-  pushEvent("phrase_share", params);
+  trackEvent("phrase_share", params);
 }
 
 /** User rates a phrase */
@@ -102,12 +101,12 @@ export function trackPhraseRate(params: {
   phrase_index: number;
   rating_value: number;
 }) {
-  pushEvent("phrase_rate", params);
+  trackEvent("phrase_rate", params);
 }
 
 /** User uses search */
 export function trackSearchUse(searchTerm: string, resultsCount: number) {
-  pushEvent("search_use", {
+  trackEvent("search_use", {
     search_term: searchTerm,
     results_count: resultsCount,
   });
@@ -119,7 +118,7 @@ export function trackRecommendationClick(params: {
   to_country: string;
   recommendation_type: "same_region" | "similar_style" | "contrast";
 }) {
-  pushEvent("recommendation_click", params);
+  trackEvent("recommendation_click", params);
 }
 
 // ============================================================
@@ -131,7 +130,7 @@ export function trackPaywallView(params: {
   country?: string;
   context: "country_page" | "phrase_card" | "region_page";
 }) {
-  pushEvent("paywall_view", params);
+  trackEvent("paywall_view", params);
 }
 
 /** User clicks Sign In on paywall */
@@ -139,7 +138,7 @@ export function trackPaywallLoginClick(params: {
   country?: string;
   context: "country_page" | "phrase_card" | "region_page";
 }) {
-  pushEvent("paywall_login_click", params);
+  trackEvent("paywall_login_click", params);
 }
 
 /** User clicks Get the Book on paywall */
@@ -148,7 +147,7 @@ export function trackPaywallBookClick(params: {
   context: "country_page" | "phrase_card" | "region_page";
   phrases_previewed?: number;
 }) {
-  pushEvent("paywall_book_click", params);
+  trackEvent("paywall_book_click", params);
 }
 
 /** User enters a preview country from a locked region */
@@ -156,7 +155,7 @@ export function trackPreviewCountryEntry(params: {
   country: string;
   source_region: string;
 }) {
-  pushEvent("preview_country_entry", params);
+  trackEvent("preview_country_entry", params);
 }
 
 // ============================================================
@@ -193,7 +192,7 @@ export function trackCountriesExploredMilestone(count: number) {
       const milestones = getMilestones();
       if (!milestones.has(key)) {
         saveMilestone(key);
-        pushEvent("countries_explored_milestone", {
+        trackEvent("countries_explored_milestone", {
           milestone_count: threshold,
           actual_count: count,
         });
@@ -207,7 +206,7 @@ export function trackFirstPlay() {
   const milestones = getMilestones();
   if (!milestones.has("first_play")) {
     saveMilestone("first_play");
-    pushEvent("first_play");
+    trackEvent("first_play");
   }
 }
 
@@ -216,6 +215,6 @@ export function trackFirstShare() {
   const milestones = getMilestones();
   if (!milestones.has("first_share")) {
     saveMilestone("first_share");
-    pushEvent("first_share");
+    trackEvent("first_share");
   }
 }
