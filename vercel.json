@@ -19,7 +19,7 @@
       "destination": "/api/trpc/[...trpc]"
     },
     {
-      "source": "/((?!api/|blog(?:/|$)).*)",
+      "source": "/((?!api/|(?:es|zh-tw)/blog(?:/|$)|blog(?:/|$)).*)",
       "destination": "/index.html"
     }
   ]

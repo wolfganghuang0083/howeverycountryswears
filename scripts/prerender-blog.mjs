@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * HECS Blog B1 — MDX → manifest JSON + static HTML (body + BlogPosting JSON-LD).
+ * HECS Blog — MDX → manifest JSON + static HTML (body + BlogPosting JSON-LD + hreflang).
  * Usage:
  *   node scripts/prerender-blog.mjs manifest
  *   node scripts/prerender-blog.mjs html
@@ -15,6 +15,7 @@ const CONTENT = path.join(ROOT, "content", "blog");
 const MANIFEST = path.join(ROOT, "client", "src", "data", "blog-posts.json");
 const DIST = path.join(ROOT, "dist");
 const SITE = "https://howeverycountryswears.com";
+const METHOD_SLUG = "recognition-not-permission-study-profanity";
 
 function escapeHtml(s) {
   return String(s)
@@ -34,7 +35,29 @@ function unquote(s) {
   return s;
 }
 
-/** Minimal YAML frontmatter parser for locked v0.2 shape. */
+function slugifyHeading(text) {
+  return (
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "section"
+  );
+}
+
+function stripTags(html) {
+  return html
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .trim();
+}
+
+/** Minimal YAML frontmatter parser for locked v0.2 shape + countries/translations. */
 function parseFrontmatter(raw) {
   if (!raw.startsWith("---")) throw new Error("missing frontmatter");
   const end = raw.indexOf("\n---", 3);
@@ -81,6 +104,37 @@ function parseFrontmatter(raw) {
       }
       continue;
     }
+    if (line.match(/^countries:\s*$/)) {
+      data.countries = [];
+      i++;
+      while (i < lines.length) {
+        const lm = lines[i].match(/^\s*-\s+(\S+)\s*$/);
+        if (!lm) break;
+        data.countries.push(lm[1].replace(/^\/country\//, ""));
+        i++;
+      }
+      continue;
+    }
+    if (line.match(/^translations:\s*$/)) {
+      data.translations = [];
+      i++;
+      while (i < lines.length) {
+        const lm = lines[i].match(/^\s*-\s*lang:\s*(\S+)\s*$/);
+        if (!lm) break;
+        const lang = unquote(lm[1].trim());
+        i++;
+        let slug = "";
+        if (i < lines.length) {
+          const sm = lines[i].match(/^\s+slug:\s*(.*)$/);
+          if (sm) {
+            slug = unquote(sm[1].trim());
+            i++;
+          }
+        }
+        if (lang && slug) data.translations.push({ lang, slug });
+      }
+      continue;
+    }
     const km = line.match(/^([A-Za-z][A-Za-z0-9_]*)\s*:\s*(.*)$/);
     if (!km) {
       i++;
@@ -102,6 +156,7 @@ function mdToHtml(md) {
   const out = [];
   let i = 0;
   let inTable = false;
+  const usedIds = new Map();
 
   const inline = (t) => {
     t = escapeHtml(t);
@@ -110,6 +165,14 @@ function mdToHtml(md) {
     t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
     t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
     return t;
+  };
+
+  const headingId = (text) => {
+    let id = slugifyHeading(text);
+    const n = usedIds.get(id) || 0;
+    usedIds.set(id, n + 1);
+    if (n > 0) id = `${id}-${n + 1}`;
+    return id;
   };
 
   while (i < lines.length) {
@@ -147,7 +210,12 @@ function mdToHtml(md) {
     if (/^#{1,6}\s+/.test(line)) {
       const level = line.match(/^(#+)/)[1].length;
       const text = line.replace(/^#+\s+/, "");
-      out.push(`<h${level}>${inline(text)}</h${level}>`);
+      if (level === 2 || level === 3) {
+        const id = headingId(text);
+        out.push(`<h${level} id="${id}">${inline(text)}</h${level}>`);
+      } else {
+        out.push(`<h${level}>${inline(text)}</h${level}>`);
+      }
       i++;
       continue;
     }
@@ -192,6 +260,41 @@ function mdToHtml(md) {
   return out.join("\n");
 }
 
+function extractTocFromHtml(html) {
+  const toc = [];
+  const re = /<h([23])\s+[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let m;
+  while ((m = re.exec(html))) {
+    toc.push({
+      level: Number(m[1]),
+      id: m[2],
+      text: stripTags(m[3]),
+    });
+  }
+  return toc;
+}
+
+function deriveCountries(data) {
+  if (Array.isArray(data.countries) && data.countries.length) {
+    return data.countries.map((c) => String(c).replace(/^\/country\//, ""));
+  }
+  const links = Array.isArray(data.countryLinks) ? data.countryLinks : [];
+  return links
+    .map((l) => String(l).replace(/^\/country\//, ""))
+    .filter(Boolean);
+}
+
+function deriveCountryLinks(countries, countryLinks) {
+  if (Array.isArray(countryLinks) && countryLinks.length) return countryLinks;
+  return countries.map((id) => `/country/${id}`);
+}
+
+function postPath(post) {
+  const lang = post.lang || "en";
+  if (lang === "es") return `/es/blog/${post.slug}`;
+  return `/blog/${post.slug}`;
+}
+
 function loadPosts() {
   if (!fs.existsSync(CONTENT)) {
     throw new Error(`Missing content dir: ${CONTENT}`);
@@ -212,8 +315,13 @@ function loadPosts() {
       const description = data.description || "";
       const html = mdToHtml(body);
       const faq = Array.isArray(data.faq) ? data.faq : [];
-      const countryLinks = Array.isArray(data.countryLinks)
-        ? data.countryLinks
+      const countries = deriveCountries(data);
+      const countryLinks = deriveCountryLinks(
+        countries,
+        Array.isArray(data.countryLinks) ? data.countryLinks : [],
+      );
+      const translations = Array.isArray(data.translations)
+        ? data.translations
         : [];
       posts.push({
         slug,
@@ -223,9 +331,12 @@ function loadPosts() {
         date: data.date || "",
         lang: data.lang || "en",
         draft,
+        countries,
         countryLinks,
+        translations,
         faq,
         html,
+        toc: extractTocFromHtml(html),
       });
     } catch (e) {
       errors.push({ file, reason: String(e.message || e) });
@@ -235,8 +346,11 @@ function loadPosts() {
     console.error(JSON.stringify(errors, null, 2));
     throw new Error(`Failed to parse ${errors.length} MDX file(s)`);
   }
-  // newest first for index
-  posts.sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.slug.localeCompare(b.slug));
+  posts.sort(
+    (a, b) =>
+      String(b.date).localeCompare(String(a.date)) ||
+      a.slug.localeCompare(b.slug),
+  );
   return posts;
 }
 
@@ -248,7 +362,7 @@ function blogPostingLd(post) {
     description: post.description,
     datePublished: post.date || undefined,
     inLanguage: post.lang || "en",
-    url: `${SITE}/blog/${post.slug}/`,
+    url: `${SITE}${postPath(post)}/`,
     isAccessibleForFree: true,
     creativeWorkStatus: post.draft ? "Draft" : "Published",
   };
@@ -267,7 +381,6 @@ function blogPostingLd(post) {
 
 function writeManifest(posts) {
   fs.mkdirSync(path.dirname(MANIFEST), { recursive: true });
-  // Keep html for CSR render; faq rendered from structured data in React
   const payload = posts.map((p) => ({
     slug: p.slug,
     title: p.title,
@@ -276,7 +389,9 @@ function writeManifest(posts) {
     date: p.date,
     lang: p.lang,
     draft: p.draft,
+    countries: p.countries,
     countryLinks: p.countryLinks,
+    translations: p.translations,
     faq: p.faq,
     html: p.html,
   }));
@@ -284,7 +399,34 @@ function writeManifest(posts) {
   console.log(`wrote ${MANIFEST} (${payload.length} posts)`);
 }
 
-function injectIntoShell(shellHtml, { title, description, canonical, jsonLd, bodyInner }) {
+function hreflangTags(post) {
+  const alts = [
+    { lang: post.lang || "en", slug: post.slug },
+    ...(post.translations || []),
+  ];
+  const seen = new Set();
+  const tags = [];
+  for (const t of alts) {
+    if (seen.has(t.lang)) continue;
+    seen.add(t.lang);
+    const href = `${SITE}${postPath({ lang: t.lang, slug: t.slug })}/`;
+    tags.push(
+      `<link rel="alternate" hreflang="${escapeHtml(t.lang)}" href="${escapeHtml(href)}" />`,
+    );
+  }
+  if (seen.has("en")) {
+    const en = alts.find((a) => a.lang === "en") || alts[0];
+    tags.push(
+      `<link rel="alternate" hreflang="x-default" href="${escapeHtml(`${SITE}${postPath({ lang: en.lang, slug: en.slug })}/`)}" />`,
+    );
+  }
+  return tags.join("\n");
+}
+
+function injectIntoShell(
+  shellHtml,
+  { title, description, canonical, jsonLd, bodyInner, hreflang, draft },
+) {
   let html = shellHtml;
   html = html.replace(
     /<title>[^<]*<\/title>/i,
@@ -312,19 +454,21 @@ function injectIntoShell(shellHtml, { title, description, canonical, jsonLd, bod
       `<link rel="canonical" href="${escapeHtml(canonical)}" />\n</head>`,
     );
   }
-  // Drafts: noindex on Preview-safe static HTML (still renderable)
-  const robots =
-    '<meta name="robots" content="noindex,nofollow" />\n';
-  if (!/name="robots"/.test(html)) {
-    html = html.replace(/<\/head>/i, `${robots}</head>`);
+  if (hreflang) {
+    html = html.replace(/<\/head>/i, `${hreflang}\n</head>`);
+  }
+  // Drafts: noindex on Preview-safe static HTML (still renderable).
+  // Do NOT put drafts into production sitemap logic.
+  if (draft) {
+    const robots = '<meta name="robots" content="noindex,nofollow" />\n';
+    if (!/name="robots"/.test(html)) {
+      html = html.replace(/<\/head>/i, `${robots}</head>`);
+    }
   }
   const ldTag = `<script type="application/ld+json">\n${JSON.stringify(jsonLd, null, 2)}\n</script>\n`;
   html = html.replace(/<\/head>/i, `${ldTag}</head>`);
 
-  // Put crawlable body inside #root so View Source / non-JS crawlers see content.
-  // React will replace #root on hydrate.
-  const rootInner =
-    `<div id="blog-ssg" data-blog-prerender="true">\n${bodyInner}\n</div>`;
+  const rootInner = `<div id="blog-ssg" data-blog-prerender="true">\n${bodyInner}\n</div>`;
   if (/<div id="root"><\/div>/.test(html)) {
     html = html.replace(
       /<div id="root"><\/div>/,
@@ -336,15 +480,89 @@ function injectIntoShell(shellHtml, { title, description, canonical, jsonLd, bod
       `<div id="root">${rootInner}</div>`,
     );
   } else {
-    html = html.replace(
-      /<body([^>]*)>/i,
-      `<body$1>\n${rootInner}\n`,
-    );
+    html = html.replace(/<body([^>]*)>/i, `<body$1>\n${rootInner}\n`);
   }
   return html;
 }
 
-function articleBodyHtml(post) {
+function tocHtml(post) {
+  if (!post.toc?.length) return "";
+  const label = post.lang === "es" ? "En esta página" : "On this page";
+  const items = post.toc
+    .map(
+      (t) =>
+        `<li style="margin-left:${t.level === 3 ? "1rem" : "0"}"><a href="#${escapeHtml(t.id)}">${escapeHtml(t.text)}</a></li>`,
+    )
+    .join("\n");
+  return `<nav aria-label="${escapeHtml(label)}"><h2>${escapeHtml(label)}</h2><ol>${items}</ol></nav>`;
+}
+
+function ctaHtml(post, allPosts) {
+  const countries = (post.countries || []).slice(0, 2);
+  const method = allPosts.find((p) => p.slug === METHOD_SLUG);
+  const isEs = post.lang === "es";
+  const countryLinks = countries
+    .map(
+      (id) =>
+        `<li><a href="/country/${escapeHtml(id)}">${escapeHtml(id)}</a></li>`,
+    )
+    .join("");
+  const methodLink = method
+    ? `<p><a href="${escapeHtml(postPath(method))}/">${isEs ? "Método: Reconocimiento ≠ permiso" : "Method: Recognition ≠ permission"}</a></p>`
+    : "";
+  return (
+    `<aside aria-label="${isEs ? "Siguiente paso" : "Next steps"}">` +
+    `<h2>${isEs ? "Siguiente paso" : "Next steps"}</h2>` +
+    (countries.length
+      ? `<nav aria-label="Countries"><ul>${countryLinks}</ul></nav>`
+      : "") +
+    `<p><a href="/get-the-book">${isEs ? "Conseguir el libro" : "Get the book"}</a></p>` +
+    methodLink +
+    `</aside>`
+  );
+}
+
+function countryTagsHtml(post) {
+  const countries = post.countries || [];
+  if (!countries.length) return "";
+  const indexBase = post.lang === "es" ? "/es/blog" : "/blog";
+  return (
+    `<nav aria-label="Country tags"><ul>` +
+    countries
+      .map(
+        (c) =>
+          `<li><a href="${indexBase}?country=${encodeURIComponent(c)}">${escapeHtml(c)}</a></li>`,
+      )
+      .join("") +
+    `</ul></nav>`
+  );
+}
+
+function langSwitchHtml(post) {
+  const alts = [
+    { lang: post.lang || "en", slug: post.slug, current: true },
+    ...(post.translations || []),
+  ];
+  const seen = new Set();
+  const unique = alts.filter((t) => {
+    if (seen.has(t.lang)) return false;
+    seen.add(t.lang);
+    return true;
+  });
+  if (unique.length < 2) return "";
+  const links = unique
+    .map((t) => {
+      const href = postPath({ lang: t.lang, slug: t.slug });
+      if (t.slug === post.slug && t.lang === (post.lang || "en")) {
+        return `<strong>${escapeHtml(t.lang)}</strong>`;
+      }
+      return `<a href="${escapeHtml(href)}/">${escapeHtml(t.lang)}</a>`;
+    })
+    .join(" · ");
+  return `<nav aria-label="Language">${links}</nav>`;
+}
+
+function articleBodyHtml(post, allPosts) {
   const draftBanner = post.draft
     ? `<p class="blog-draft-banner" style="background:#fff3cd;border:1px solid #ffc107;padding:.5rem .75rem;border-radius:4px">Draft — Preview only; not Production Publish</p>`
     : "";
@@ -357,22 +575,19 @@ function articleBodyHtml(post) {
           )
           .join("\n")}</section>`
       : "";
-  const links =
-    post.countryLinks.length > 0
-      ? `<nav aria-label="Related countries"><h2>Related countries</h2><ul>${post.countryLinks
-          .map((l) => `<li><a href="${escapeHtml(l)}">${escapeHtml(l)}</a></li>`)
-          .join("")}</ul></nav>`
-      : "";
   return (
     `<article class="blog-post">` +
     draftBanner +
+    langSwitchHtml(post) +
     `<p class="pill"><span>${escapeHtml(post.pill)}</span></p>` +
+    countryTagsHtml(post) +
     `<h1>${escapeHtml(post.title)}</h1>` +
     `<p><time datetime="${escapeHtml(post.date)}">${escapeHtml(post.date)}</time></p>` +
     `<p class="lede">${escapeHtml(post.description)}</p>` +
+    tocHtml(post) +
     post.html +
     faqHtml +
-    links +
+    ctaHtml(post, allPosts) +
     `</article>`
   );
 }
@@ -384,36 +599,68 @@ function writeHtml(posts) {
   }
   const shell = fs.readFileSync(shellPath, "utf8");
   fs.mkdirSync(path.join(DIST, "blog"), { recursive: true });
+  fs.mkdirSync(path.join(DIST, "es", "blog"), { recursive: true });
 
   for (const post of posts) {
-    const dir = path.join(DIST, "blog", post.slug);
+    const rel = postPath(post).replace(/^\//, "");
+    const dir = path.join(DIST, ...rel.split("/"));
     fs.mkdirSync(dir, { recursive: true });
     const html = injectIntoShell(shell, {
       title: `${post.title} · HECS Blog`,
       description: post.description,
-      canonical: `${SITE}/blog/${post.slug}/`,
+      canonical: `${SITE}${postPath(post)}/`,
       jsonLd: blogPostingLd(post),
-      bodyInner: articleBodyHtml(post),
+      bodyInner: articleBodyHtml(post, posts),
+      hreflang: hreflangTags(post),
+      draft: post.draft,
     });
     fs.writeFileSync(path.join(dir, "index.html"), html, "utf8");
-    console.log(`wrote dist/blog/${post.slug}/index.html`);
+    console.log(`wrote dist/${rel}/index.html`);
   }
 
+  // EN index — all EN posts (drafts ok on Preview; production sitemap excludes drafts separately)
+  writeIndexHtml(shell, posts.filter((p) => (p.lang || "en") === "en"), {
+    dir: path.join(DIST, "blog"),
+    pathPrefix: "/blog",
+    canonical: `${SITE}/blog/`,
+    lang: "en",
+  });
+  // ES index
+  writeIndexHtml(shell, posts.filter((p) => p.lang === "es"), {
+    dir: path.join(DIST, "es", "blog"),
+    pathPrefix: "/es/blog",
+    canonical: `${SITE}/es/blog/`,
+    lang: "es",
+  });
+  console.log(`OK blog html posts=${posts.length}`);
+}
+
+function writeIndexHtml(shell, posts, { dir, pathPrefix, canonical, lang }) {
+  fs.mkdirSync(dir, { recursive: true });
   const listItems = posts
-    .map(
-      (p) =>
-        `<li><a href="/blog/${escapeHtml(p.slug)}/"><strong>${escapeHtml(p.title)}</strong></a> ` +
+    .map((p) => {
+      const tags = (p.countries || [])
+        .map((c) => `<span class="tag">${escapeHtml(c)}</span>`)
+        .join(" ");
+      return (
+        `<li><a href="${pathPrefix}/${escapeHtml(p.slug)}/"><strong>${escapeHtml(p.title)}</strong></a> ` +
         `<span>${escapeHtml(p.pill || "")}</span> ` +
         `<time datetime="${escapeHtml(p.date)}">${escapeHtml(p.date)}</time>` +
         (p.draft ? ` <em>(draft)</em>` : "") +
-        `<br/><span>${escapeHtml(p.description || "")}</span></li>`,
-    )
+        (tags ? ` ${tags}` : "") +
+        `<br/><span>${escapeHtml(p.description || "")}</span></li>`
+      );
+    })
     .join("\n");
 
   const indexBody =
     `<section class="blog-index">` +
     `<h1>HECS Blog</h1>` +
-    `<p>Essays on recognition, risk labeling, and global profanity culture. Draft posts may appear on Preview.</p>` +
+    `<p>${
+      lang === "es"
+        ? "Ensayos sobre reconocimiento, etiquetas de riesgo y cultura global de la blasfemia. Los borradores pueden aparecer en Preview."
+        : "Essays on recognition, risk labeling, and global profanity culture. Draft posts may appear on Preview."
+    }</p>` +
     `<ul>\n${listItems}\n</ul>` +
     `</section>`;
 
@@ -421,25 +668,29 @@ function writeHtml(posts) {
     "@context": "https://schema.org",
     "@type": "Blog",
     name: "How Every Country Swears — Blog",
-    url: `${SITE}/blog/`,
+    url: canonical,
+    inLanguage: lang,
     blogPost: posts.map((p) => ({
       "@type": "BlogPosting",
       headline: p.title,
-      url: `${SITE}/blog/${p.slug}/`,
+      url: `${SITE}${postPath(p)}/`,
     })),
   };
 
   const indexHtml = injectIntoShell(shell, {
     title: "Blog · How Every Country Swears",
     description:
-      "Essays on recognition, risk labeling, and global profanity culture from How Every Country Swears.",
-    canonical: `${SITE}/blog/`,
+      lang === "es"
+        ? "Ensayos sobre reconocimiento, etiquetas de riesgo y cultura global de la blasfemia."
+        : "Essays on recognition, risk labeling, and global profanity culture from How Every Country Swears.",
+    canonical,
     jsonLd: indexLd,
     bodyInner: indexBody,
+    hreflang: "",
+    draft: true, // index on Preview may list drafts — keep noindex for pilot safety
   });
-  fs.writeFileSync(path.join(DIST, "blog", "index.html"), indexHtml, "utf8");
-  console.log("wrote dist/blog/index.html");
-  console.log(`OK blog html posts=${posts.length}`);
+  fs.writeFileSync(path.join(dir, "index.html"), indexHtml, "utf8");
+  console.log(`wrote ${path.relative(ROOT, path.join(dir, "index.html"))}`);
 }
 
 const mode = process.argv[2] || "all";
