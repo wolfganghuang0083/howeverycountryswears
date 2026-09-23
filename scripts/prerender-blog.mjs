@@ -849,15 +849,15 @@ function writeHtml(posts) {
     console.log(`wrote dist/${rel}/index.html`);
   }
 
-  // EN index — all EN posts (drafts ok on Preview; production sitemap excludes drafts separately)
-  writeIndexHtml(shell, posts.filter((p) => (p.lang || "en") === "en"), {
+  // EN / ES indexes — published posts only in static shell (no draft badges / Preview copy)
+  const published = posts.filter((p) => !p.draft);
+  writeIndexHtml(shell, published.filter((p) => (p.lang || "en") === "en"), {
     dir: path.join(DIST, "blog"),
     pathPrefix: "/blog",
     canonical: `${SITE}/blog/`,
     lang: "en",
   });
-  // ES index
-  writeIndexHtml(shell, posts.filter((p) => p.lang === "es"), {
+  writeIndexHtml(shell, published.filter((p) => p.lang === "es"), {
     dir: path.join(DIST, "es", "blog"),
     pathPrefix: "/es/blog",
     canonical: `${SITE}/es/blog/`,
@@ -889,8 +889,8 @@ function writeIndexHtml(shell, posts, { dir, pathPrefix, canonical, lang }) {
     `<h1>HECS Blog</h1>` +
     `<p>${
       lang === "es"
-        ? "Ensayos sobre reconocimiento, etiquetas de riesgo y cultura global de la blasfemia. Los borradores pueden aparecer en Preview."
-        : "Essays on recognition, risk labeling, and global profanity culture. Draft posts may appear on Preview."
+        ? "Ensayos sobre reconocimiento, etiquetas de riesgo y cultura global de la blasfemia."
+        : "Essays on recognition, risk labeling, and global profanity culture."
     }</p>` +
     `<ul>\n${listItems}\n</ul>` +
     `</section>`;
@@ -918,7 +918,7 @@ function writeIndexHtml(shell, posts, { dir, pathPrefix, canonical, lang }) {
     jsonLd: indexLd,
     bodyInner: indexBody,
     hreflang: "",
-    draft: true, // index on Preview may list drafts — keep noindex for pilot safety
+    draft: false, // production blog index is public; posts already draft:false
   });
   fs.writeFileSync(path.join(dir, "index.html"), indexHtml, "utf8");
   console.log(`wrote ${path.relative(ROOT, path.join(dir, "index.html"))}`);
