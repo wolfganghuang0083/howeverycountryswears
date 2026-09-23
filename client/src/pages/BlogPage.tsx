@@ -19,7 +19,7 @@ export default function BlogPage() {
   }, [searchString]);
 
   const posts = getBlogPostsForLocale(locale, {
-    includeDrafts: true,
+    includeDrafts: import.meta.env.PROD ? false : true,
     country: countryFilter,
   });
 

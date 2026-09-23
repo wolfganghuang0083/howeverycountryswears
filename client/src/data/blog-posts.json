@@ -6,7 +6,7 @@
     "pill": "Compare",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "japan",
       "korea"
@@ -48,7 +48,7 @@
     "pill": "Compare",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "germany",
       "netherlands"
@@ -84,7 +84,7 @@
     "pill": "Scene",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "spain"
     ],
@@ -122,7 +122,7 @@
     "pill": "Pronounce",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "netherlands",
       "spain"
@@ -162,7 +162,7 @@
     "pill": "Method",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "japan",
       "spain"
@@ -202,7 +202,7 @@
     "pill": "Author",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "netherlands"
     ],
@@ -240,7 +240,7 @@
     "pill": "Scene",
     "date": "2026-09-16",
     "lang": "es",
-    "draft": true,
+    "draft": false,
     "countries": [
       "mexico",
       "spain"
@@ -287,7 +287,7 @@
     "pill": "Country",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "mexico",
       "spain"
@@ -327,7 +327,7 @@
     "pill": "Method",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "spain"
     ],
@@ -365,7 +365,7 @@
     "pill": "Country",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "mexico",
       "spain"
@@ -414,7 +414,7 @@
     "pill": "Scene",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "mexico",
       "spain"
@@ -455,7 +455,7 @@
     "pill": "Compare",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "netherlands",
       "spain"
@@ -495,7 +495,7 @@
     "pill": "Pronounce",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "netherlands",
       "spain"
@@ -535,7 +535,7 @@
     "pill": "Scene",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "japan",
       "netherlands"
@@ -575,7 +575,7 @@
     "pill": "Author",
     "date": "2026-09-16",
     "lang": "en",
-    "draft": true,
+    "draft": false,
     "countries": [
       "spain"
     ],

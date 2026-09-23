@@ -1,8 +1,14 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import { getAllCountries, getAllParts, regionColors, AMAZON_LINK, type Country } from "@/lib/data";
+import {
+  getBlogIndexPath,
+  getBlogPostPath,
+  getBlogPostsForLocale,
+  getPostCountries,
+} from "@/lib/blog";
 import { Link } from "wouter";
-import { ArrowRight, BookOpen, Volume2, Globe, MapPin, Gift, Sparkles, Users, Star } from "lucide-react";
+import { ArrowRight, BookOpen, Volume2, Globe, MapPin, Gift, Sparkles, Users, Star, PenLine } from "lucide-react";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -98,6 +104,34 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
       return { country: c, card };
     }).filter(Boolean) as { country: Country; card: any }[];
   }, [countries]);
+
+  const latestBlogPosts = useMemo(() => {
+    return getBlogPostsForLocale(locale, {
+      includeDrafts: import.meta.env.PROD ? false : true,
+    }).slice(0, 6);
+  }, [locale]);
+
+  const blogCountryChips = useMemo(() => {
+    const preferred = ["spain", "mexico", "japan", "netherlands", "korea"];
+    const seen = new Set<string>();
+    const chips: string[] = [];
+    for (const slug of preferred) {
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      chips.push(slug);
+    }
+    for (const post of latestBlogPosts) {
+      for (const c of getPostCountries(post)) {
+        const key = c.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        chips.push(key);
+        if (chips.length >= 8) break;
+      }
+      if (chips.length >= 8) break;
+    }
+    return chips;
+  }, [latestBlogPosts]);
 
   return (
     <Layout>
@@ -423,6 +457,118 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ===== BLOG MODULE — Guides & essays ===== */}
+      <section id="blog" className="py-16 md:py-24 bg-[#FAFAFA]">
+        <div className="container max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 mb-3">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#FFE500]/30 border-2 border-[#1a1a1a]">
+                  <PenLine size={18} className="text-[#FF1493]" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#FF1493]">
+                  {isZhTw ? "指南與短文" : "Guides & essays"}
+                </span>
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl text-[#1a1a1a]">
+                {isZhTw ? (
+                  <>認識風險標籤，<span className="text-[#FF1493]">不是背台詞</span></>
+                ) : (
+                  <>Recognition guides, <span className="text-[#FF1493]">not scripts</span></>
+                )}
+              </h2>
+              <p className="text-[#666] mt-2 max-w-2xl">
+                {isZhTw
+                  ? "國家入口、比較文與方法短文——幫你聽懂文化，而不是練習罵人。"
+                  : "Country hubs, compare essays, and method notes — so you can hear culture without rehearsing offense."}
+              </p>
+            </div>
+            <Link
+              href={getBlogIndexPath(locale)}
+              className="inline-flex items-center gap-2 text-sm font-bold text-[#FF1493] no-underline hover:underline shrink-0"
+            >
+              {isZhTw ? "瀏覽全部文章" : "Browse all"}
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+
+          {blogCountryChips.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {blogCountryChips.map((country) => (
+                <Link
+                  key={country}
+                  href={getBlogIndexPath(locale, country)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide bg-white border-2 border-[#1a1a1a] rounded-full px-3 py-1.5 text-[#1a1a1a] no-underline shadow-[2px_2px_0px_#1a1a1a] hover:shadow-[0px_0px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                >
+                  <MapPin size={12} className="text-[#FF1493]" />
+                  {country}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
+          {latestBlogPosts.length === 0 ? (
+            <div className="bg-white rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] p-6 text-center text-[#666]">
+              {isZhTw ? "文章即將上線。" : "Posts coming soon."}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {latestBlogPosts.map((post) => {
+                const href =
+                  post.lang === "es" || post.lang === "en"
+                    ? getBlogPostPath(post)
+                    : localePath(`/blog/${post.slug}`);
+                const countries = getPostCountries(post);
+                return (
+                  <motion.div
+                    key={`${post.lang}-${post.slug}`}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                  >
+                    <Link
+                      href={href}
+                      className="block h-full no-underline bg-white rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] p-5 hover:shadow-[0px_0px_0px_#1a1a1a] hover:translate-x-[3px] hover:translate-y-[3px] transition-all"
+                    >
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        {post.pill ? (
+                          <span className="inline-block text-[10px] font-bold uppercase tracking-wide bg-[#FFE500] border border-[#1a1a1a] rounded-full px-2 py-0.5 text-[#1a1a1a]">
+                            {post.pill}
+                          </span>
+                        ) : null}
+                        {post.date ? (
+                          <time dateTime={post.date} className="text-[10px] text-[#999]">
+                            {post.date}
+                          </time>
+                        ) : null}
+                      </div>
+                      <h3 className="font-display text-xl text-[#1a1a1a] mb-2 leading-snug">
+                        {post.title}
+                      </h3>
+                      <p className="text-sm text-[#555] leading-relaxed line-clamp-3 mb-3">
+                        {post.description}
+                      </p>
+                      {countries.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {countries.slice(0, 3).map((c) => (
+                            <span
+                              key={c}
+                              className="inline-block text-[10px] font-bold uppercase tracking-wide bg-[#FAFAFA] border border-[#ccc] rounded-full px-2 py-0.5 text-[#444]"
+                            >
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

@@ -177,7 +177,7 @@ export function extractToc(html: string): TocItem[] {
 
 /** Preview may render drafts; production sitemap should exclude them. */
 export function getAllBlogPosts(opts?: { includeDrafts?: boolean }): BlogPost[] {
-  const includeDrafts = opts?.includeDrafts ?? true;
+  const includeDrafts = opts?.includeDrafts ?? (import.meta.env.PROD ? false : true);
   return allPosts.filter((p) => includeDrafts || !p.draft);
 }
 
@@ -270,7 +270,7 @@ export function getRelatedPosts(
 ): BlogPost[] {
   const min = opts?.min ?? 3;
   const max = opts?.max ?? 5;
-  const all = getAllBlogPosts({ includeDrafts: opts?.includeDrafts ?? true });
+  const all = getAllBlogPosts({ includeDrafts: opts?.includeDrafts ?? (import.meta.env.PROD ? false : true) });
   const lang = post.lang || "en";
   const sameLang = all.filter((p) => (p.lang || "en") === lang);
   const enPool = all.filter((p) => (p.lang || "en") === "en");
