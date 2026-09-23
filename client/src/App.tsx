@@ -14,6 +14,7 @@ const PhrasePage = lazy(() => import("./pages/PhrasePage"));
 const RankingsPage = lazy(() => import("./pages/RankingsPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const BuyBookPage = lazy(() => import("./pages/BuyBookPage"));
@@ -43,6 +44,7 @@ function Router() {
         <Route path="/rankings/:category" component={RankingsPage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/blog" component={BlogPage} />
+        <Route path="/blog/:slug" component={BlogPostPage} />
         <Route path="/community" component={CommunityPage} />
         <Route path="/dashboard" component={DashboardPage} />
         <Route path="/get-the-book" component={BuyBookPage} />
@@ -57,6 +59,7 @@ function Router() {
         <Route path="/zh-tw/rankings/:category" component={RankingsPage} />
         <Route path="/zh-tw/about" component={AboutPage} />
         <Route path="/zh-tw/blog" component={BlogPage} />
+        <Route path="/zh-tw/blog/:slug" component={BlogPostPage} />
         <Route path="/zh-tw/community" component={CommunityPage} />
         <Route path="/zh-tw/dashboard" component={DashboardPage} />
         <Route path="/zh-tw/get-the-book" component={BuyBookPage} />

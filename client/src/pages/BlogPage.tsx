@@ -1,45 +1,80 @@
 import Layout from "@/components/Layout";
+import { getAllBlogPosts } from "@/lib/blog";
+import { Link } from "wouter";
 import { PenLine } from "lucide-react";
 import { useEffect } from "react";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export default function BlogPage() {
+  const { localePath } = useLocale();
+  const posts = getAllBlogPosts({ includeDrafts: true });
+
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = "Blog · How Every Country Swears";
   }, []);
 
   return (
     <Layout>
-      <section className="py-20 md:py-32">
-        <div className="container text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#FFE500]/20 mb-6">
-            <PenLine size={36} className="text-[#FF1493]" />
+      <section className="py-12 md:py-20">
+        <div className="container max-w-3xl">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#FFE500]/20">
+              <PenLine size={28} className="text-[#FF1493]" />
+            </div>
+            <div>
+              <h1 className="font-display text-4xl md:text-5xl text-[#1a1a1a]">
+                Blog
+              </h1>
+              <p className="text-[#666] mt-1">
+                Recognition, risk labeling, and global profanity culture.
+              </p>
+            </div>
           </div>
-          <h1 className="font-display text-4xl md:text-6xl text-[#1a1a1a] mb-4">
-            Blog
-          </h1>
-          <p className="text-[#666] text-lg max-w-lg mx-auto mb-8">
-            Coming soon! We're working on in-depth articles about swearing culture
-            around the world. Stay tuned for fascinating stories about global profanity.
-          </p>
-          <div className="bg-[#FAFAFA] rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] p-6 max-w-md mx-auto">
-            <p className="text-sm text-[#444]">
-              Upcoming topics include:
-            </p>
-            <ul className="text-sm text-[#666] mt-3 space-y-2 text-left">
-              <li className="flex items-start gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#FF1493] shrink-0 mt-1.5" />
-                Top 10 Funniest Swear Words in Europe
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#FFE500] shrink-0 mt-1.5" />
-                Why the Dutch Swear with Diseases
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#00BFFF] shrink-0 mt-1.5" />
-                The Science of Why Swearing Feels Good
-              </li>
+
+          {posts.length === 0 ? (
+            <div className="bg-[#FAFAFA] rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] p-6 text-center text-[#666]">
+              No posts yet. Check back soon.
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {posts.map((post) => (
+                <li key={post.slug}>
+                  <Link
+                    href={localePath(`/blog/${post.slug}`)}
+                    className="block no-underline bg-white rounded-xl border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] p-5 hover:shadow-[0px_0px_0px_#1a1a1a] hover:translate-x-[3px] hover:translate-y-[3px] transition-all"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {post.pill ? (
+                        <span className="inline-block text-xs font-bold uppercase tracking-wide bg-[#FFE500] border border-[#1a1a1a] rounded-full px-2.5 py-0.5 text-[#1a1a1a]">
+                          {post.pill}
+                        </span>
+                      ) : null}
+                      {post.draft ? (
+                        <span className="inline-block text-xs font-bold uppercase tracking-wide bg-[#fff3cd] border border-[#ffc107] rounded-full px-2.5 py-0.5 text-[#664d03]">
+                          Draft
+                        </span>
+                      ) : null}
+                      {post.date ? (
+                        <time
+                          dateTime={post.date}
+                          className="text-xs text-[#999]"
+                        >
+                          {post.date}
+                        </time>
+                      ) : null}
+                    </div>
+                    <h2 className="font-display text-2xl text-[#1a1a1a] mb-2">
+                      {post.title}
+                    </h2>
+                    <p className="text-sm text-[#555] leading-relaxed">
+                      {post.description}
+                    </p>
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          )}
         </div>
       </section>
     </Layout>
