@@ -1,4 +1,6 @@
-import { Card, getRiskColor, getRiskLevel, type Country, SITE_DOMAIN, AMAZON_LINK, isLockedContent } from "@/lib/data";
+import { Card, getRiskColor, getRiskLevel, type Country, SITE_DOMAIN, AMAZON_LINK, isLockedContent, isEnSphereCountry } from "@/lib/data";
+import { paywallCopy } from "@shared/schemeAConfig";
+import { getClientLandingArm } from "@/lib/schemeAArm";
 import { playPronunciation, shareToTwitter, shareToFacebook, shareToWhatsApp } from "@/lib/pronunciation";
 import { Volume2, Lock, BookOpen, LogIn, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
@@ -7,7 +9,7 @@ import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useLocale } from "@/contexts/LocaleContext";
-import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick } from "@/lib/analytics";
+import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick, trackExperimentExposure, trackMembershipUnlockClick, trackUnlockOpen } from "@/lib/analytics";
 
 interface PhraseCardProps {
   card: Card;
@@ -49,6 +51,12 @@ export default function PhraseCard({
   const [currentUserRating, setCurrentUserRating] = useState(initialUserRating || 0);
   const [hoverRating, setHoverRating] = useState(0);
 
+  const isEnSphere = isEnSphereCountry(country.slug);
+  const { data: unlockStatus } = trpc.unlock.myStatus.useQuery(undefined, {
+    enabled: isEnSphere && !freePreview,
+    staleTime: 30_000,
+  });
+
   useEffect(() => {
     if (!showPaywall) return;
     const onKey = (e: KeyboardEvent) => {
@@ -66,13 +74,22 @@ export default function PhraseCard({
   const riskColor = getRiskColor(card.risk);
   const { locale, t, localePath } = useLocale();
   const isZhTw = locale === "zh-tw";
+  const arm = getClientLandingArm();
 
   const isAdmin = userRole === "admin";
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(country.part_id, country.slug);
-
-  const canPlay = freePreview || (isAuthenticated && (isBookBuyer || !isLocked));
+  const hasEnSphereUnlock = !!unlockStatus?.canPlayEnSphereAudio || isBookBuyer;
+  /** Scheme A: gate EN sphere audio unless pack or bookBuyer; text stays visible. */
+  const enSphereAudioLocked = isEnSphere && !freePreview && !hasEnSphereUnlock;
+  const canPlay = freePreview || (isAuthenticated && (isBookBuyer || !isLocked) && !enSphereAudioLocked);
   const canRate = isAuthenticated;
+
+  useEffect(() => {
+    if (enSphereAudioLocked) {
+      trackExperimentExposure({ surface: "gated_play", country: country.slug, arm });
+    }
+  }, [enSphereAudioLocked, country.slug]);
 
   const rateMutation = trpc.rating.rate.useMutation();
   const listenMutation = trpc.tracking.listenPhrase.useMutation();
@@ -82,15 +99,19 @@ export default function PhraseCard({
     e.preventDefault();
     if (!freePreview && !isAuthenticated) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
     if (!freePreview && isLocked && !isBookBuyer) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
+    if (enSphereAudioLocked) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); trackExperimentExposure({ surface: "gated_play", country: country.slug, arm }); return; }
     setIsPlaying(true);
     playPronunciation(card.phrase, country.lang_code);
-    trackPhrasePlay({ country: country.slug, phrase_index: card.number, is_free_preview: freePreview, is_locked: isLocked });
+    trackPhrasePlay({ country: country.slug, phrase_index: card.number, is_free_preview: freePreview, is_locked: isLocked || enSphereAudioLocked });
     trackFirstPlay();
+    if (isEnSphere && hasEnSphereUnlock) {
+      trackUnlockOpen({ country: country.slug, phrase_index: card.number, arm });
+    }
     if (isAuthenticated) {
       listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
     }
     setTimeout(() => setIsPlaying(false), 2000);
-  }, [card.phrase, country.lang_code, country.slug, card.number, isAuthenticated, isLocked, isBookBuyer, freePreview, listenMutation]);
+  }, [card.phrase, country.lang_code, country.slug, card.number, isAuthenticated, isLocked, isBookBuyer, freePreview, listenMutation, enSphereAudioLocked, isEnSphere, hasEnSphereUnlock]);
 
   const handleRate = useCallback((value: number) => {
     if (!isAuthenticated) { setShowPaywall(true); return; }
@@ -136,6 +157,18 @@ export default function PhraseCard({
           : "Create a free account to hear pronunciations for 66 countries, rate phrases, and see how others rated them!",
         showLogin: true,
         showBookCTA: false,
+        showPackCTA: false,
+      };
+    }
+    if (enSphereAudioLocked) {
+      const pc = paywallCopy(locale, arm);
+      return {
+        title: pc.title,
+        desc: pc.desc,
+        showLogin: false,
+        showBookCTA: false,
+        showPackCTA: true,
+        packCtaLabel: pc.ctaPack,
       };
     }
     if (isLocked && !isBookBuyer) {
@@ -146,6 +179,7 @@ export default function PhraseCard({
           : `This country is in Part ${country.part_id} — exclusive content for book owners. Get the book to unlock all 100 countries!`,
         showLogin: false,
         showBookCTA: true,
+        showPackCTA: false,
       };
     }
     return {
@@ -153,6 +187,7 @@ export default function PhraseCard({
       desc: isZhTw ? "購買書籍以解鎖所有功能。" : "Get the book to unlock all features.",
       showLogin: false,
       showBookCTA: true,
+      showPackCTA: false,
     };
   };
 
@@ -214,6 +249,18 @@ export default function PhraseCard({
                   >
                     <LogIn size={16} /> {isZhTw ? "免費登入" : "Sign In Free"}
                   </button>
+                )}
+                {"showPackCTA" in paywallContent && paywallContent.showPackCTA && (
+                  <Link
+                    href={localePath(`/pack/en-sphere?arm=${arm}`)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      trackMembershipUnlockClick({ country: country.slug, surface: "phrase_paywall", arm });
+                    }}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                  >
+                    <Lock size={16} /> {(paywallContent as { packCtaLabel?: string }).packCtaLabel || "Unlock pack"}
+                  </Link>
                 )}
                 {paywallContent.showBookCTA && (
                   <>

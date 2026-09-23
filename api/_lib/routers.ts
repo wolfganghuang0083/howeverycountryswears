@@ -12,7 +12,19 @@ import {
   getCountryAmbassadors, getAmbassadorForCountry,
   incrementCountriesVisited, incrementPhrasesListened,
   createReview, getReviewsForCard, getReviewSummaryForCountry,
+  setUserEmail, userHasPackUnlock, listUserPackUnlocks, insertPackUnlock, devGrantPackUnlock,
 } from "./db.js";
+import { TRPCError } from "@trpc/server";
+import {
+  RECUR_PRODUCTS,
+  UNLOCK_ID_EN_SPHERE,
+  EXPERIMENT_ID_EN_SPHERE,
+  VARIANT_ID_PRICE_699,
+  SCHEME_A_PRICE,
+  resolveEnSphereProductId,
+  packCopy,
+} from "../../shared/schemeAConfig.js";
+import { recurConfigured, recurMode, recurProductReady } from "./recur.js";
 
 export const appRouter = router({
   // ========== AUTH ==========
@@ -283,6 +295,163 @@ export const appRouter = router({
       .input(z.object({ countrySlug: z.string().min(1) }))
       .query(async ({ input }) => {
         return getAmbassadorForCountry(input.countrySlug);
+      }),
+  }),
+
+  // ========== SCHEME A — Recur pack unlock ==========
+  unlock: router({
+    /** Current user unlock state for EN sphere (and bookBuyer shortcut). */
+    myStatus: publicProcedure.query(async ({ ctx }) => {
+      const product = RECUR_PRODUCTS.en_sphere;
+      const configured = recurConfigured();
+      const productReady = recurProductReady();
+      const mode = recurMode();
+      if (!ctx.user) {
+        return {
+          authenticated: false,
+          hasPackEnSphere: false,
+          isBookBuyer: false,
+          canPlayEnSphereAudio: false,
+          configured,
+          productReady,
+          mode,
+          price: SCHEME_A_PRICE,
+          unlockId: UNLOCK_ID_EN_SPHERE,
+          experimentId: EXPERIMENT_ID_EN_SPHERE,
+          variantId: VARIANT_ID_PRICE_699,
+        };
+      }
+      const isBookBuyer = ctx.user.memberTier === "bookBuyer" || ctx.user.role === "admin";
+      const hasPack = await userHasPackUnlock(ctx.user.userId, UNLOCK_ID_EN_SPHERE);
+      return {
+        authenticated: true,
+        hasPackEnSphere: hasPack,
+        isBookBuyer,
+        canPlayEnSphereAudio: hasPack || isBookBuyer,
+        configured,
+        productReady,
+        mode,
+        price: SCHEME_A_PRICE,
+        unlockId: UNLOCK_ID_EN_SPHERE,
+        experimentId: EXPERIMENT_ID_EN_SPHERE,
+        variantId: VARIANT_ID_PRICE_699,
+        productSlug: product.slug,
+      };
+    }),
+
+    listMine: protectedProcedure.query(async ({ ctx }) => {
+      return listUserPackUnlocks(ctx.user.userId);
+    }),
+
+    /**
+     * Create Recur Hosted Checkout session (ONE_TIME / PAYMENT).
+     * externalCustomerId = openId (iron rule). Requires login.
+     */
+    createCheckout: protectedProcedure
+      .input(z.object({
+        pack: z.literal("en_sphere").optional().default("en_sphere"),
+        email: z.string().email().max(320),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!recurConfigured()) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: packCopy("en").paymentNotConfigured,
+          });
+        }
+        const productId = resolveEnSphereProductId(process.env.RECUR_PRODUCT_ID_EN_SPHERE);
+        if (!productId || productId === "REPLACE_ME_HECS_EN_SPHERE") {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: packCopy("en").paymentNotConfigured,
+          });
+        }
+
+        const already = await userHasPackUnlock(ctx.user.userId, UNLOCK_ID_EN_SPHERE);
+        if (already && recurMode() === "live") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: packCopy("en").alreadyUnlocked });
+        }
+
+        if (!ctx.user.email) {
+          try { await setUserEmail(ctx.user.userId, input.email); }
+          catch (e) { console.error("[unlock.createCheckout] setUserEmail best-effort failed:", e); }
+        }
+
+        const h = ctx.headers;
+        const proto = (typeof h["x-forwarded-proto"] === "string" ? h["x-forwarded-proto"] : "https").split(",")[0].trim();
+        const hostRaw = h["x-forwarded-host"] ?? h.host ?? "";
+        const host = (Array.isArray(hostRaw) ? hostRaw[0] : hostRaw).split(",")[0].trim();
+        const originHeader = typeof h.origin === "string" && /^https?:\/\//.test(h.origin) ? h.origin : "";
+        const origin = originHeader || (host ? `${proto}://${host}` : "https://howeverycountryswears.com");
+
+        const successUrl = `${origin}/unlock/success?pack=en_sphere&session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${origin}/pack/en-sphere`;
+        const externalId = ctx.user.openId;
+        const product = RECUR_PRODUCTS.en_sphere;
+
+        const secret = process.env.RECUR_SECRET_KEY!;
+        const resp = await fetch("https://api.recur.tw/v1/checkout/sessions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${secret}`,
+          },
+          body: JSON.stringify({
+            productId,
+            successUrl,
+            cancelUrl,
+            externalCustomerId: externalId,
+            customerName: ctx.user.name || undefined,
+            customerEmail: input.email,
+            mode: product.mode,
+            metadata: {
+              openId: externalId,
+              unlock_id: UNLOCK_ID_EN_SPHERE,
+              experiment_id: EXPERIMENT_ID_EN_SPHERE,
+              variant_id: VARIANT_ID_PRICE_699,
+            },
+          }),
+        });
+
+        if (!resp.ok) {
+          const bodyText = await resp.text().catch(() => "");
+          console.error(`[unlock.createCheckout] session HTTP ${resp.status}`, bodyText.slice(0, 200));
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Checkout unavailable — please try again later.",
+          });
+        }
+
+        const session: any = await resp.json();
+        const url = typeof session?.url === "string" ? session.url : "";
+        if (!url) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Checkout session missing url" });
+        }
+
+        return {
+          mode: "url" as const,
+          url,
+          sessionId: typeof session?.id === "string" ? session.id : null,
+          value: SCHEME_A_PRICE.value,
+          currency: SCHEME_A_PRICE.currency,
+          unlock_id: UNLOCK_ID_EN_SPHERE,
+          experiment_id: EXPERIMENT_ID_EN_SPHERE,
+          variant_id: VARIANT_ID_PRICE_699,
+        };
+      }),
+
+    /** Preview SSO testing only — gated by RECUR_MODE!==live && HECS_ALLOW_DEV_UNLOCK=1 */
+    devGrantPackUnlock: protectedProcedure
+      .input(z.object({ unlockId: z.literal("pack_en_sphere").optional().default("pack_en_sphere") }))
+      .mutation(async ({ ctx, input }) => {
+        if (recurMode() === "live" || process.env.HECS_ALLOW_DEV_UNLOCK !== "1") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Dev unlock disabled" });
+        }
+        const result = await devGrantPackUnlock(ctx.user.userId, input.unlockId);
+        if (!result.ok) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Grant failed" });
+        }
+        return { success: true, duplicate: result.duplicate };
       }),
   }),
 });

@@ -29,3 +29,16 @@
 3. Amazon CTA (About, phrase footer, etc.) → `purchase_click` + `book_cta_click`.
 4. Blog “Get the book” → same with `context=blog_cta`, `destination=/get-the-book`.
 5. Signed-in session → one `login_success` per tab session (not every navigation).
+
+
+## Scheme A (Recur EN sphere) — additive
+
+| Event | When | Params |
+|---|---|---|
+| `experiment_exposure` | Pack page or gated Play/banner shown (once/session) | `experiment_id`, `variant_id`, `unlock_id`, `arm`, `surface` |
+| `membership_unlock_click` | Unlock CTA click | same ids + `arm` + `country`/`surface` |
+| `begin_checkout` | Hosted checkout URL returned | `value=219`, `currency=TWD`, `arm`, ids |
+| `purchase` | `/unlock/success` once per session_id | `value=219`, `currency=TWD`, `arm`, `transaction_id` |
+| `unlock_open` | Play after node active (EN sphere audio) | `arm`, `country`, `phrase_index` |
+
+Config: `shared/schemeAConfig.ts`. Docs: `docs/scheme-a-recur.md`.

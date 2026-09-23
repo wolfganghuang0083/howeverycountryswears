@@ -19,6 +19,8 @@ const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const BuyBookPage = lazy(() => import("./pages/BuyBookPage"));
 const HiddenRegisterPage = lazy(() => import("./pages/HiddenRegisterPage"));
+const PackEnSpherePage = lazy(() => import("./pages/PackEnSpherePage"));
+const UnlockSuccessPage = lazy(() => import("./pages/UnlockSuccessPage"));
 
 function LoadingFallback() {
   return (
@@ -48,6 +50,8 @@ function Router() {
         <Route path="/community" component={CommunityPage} />
         <Route path="/dashboard" component={DashboardPage} />
         <Route path="/get-the-book" component={BuyBookPage} />
+        <Route path="/pack/en-sphere" component={PackEnSpherePage} />
+        <Route path="/unlock/success" component={UnlockSuccessPage} />
         <Route path="/book-activate" component={HiddenRegisterPage} />
 
         {/* Chinese (zh-tw) routes */}
@@ -63,6 +67,8 @@ function Router() {
         <Route path="/zh-tw/community" component={CommunityPage} />
         <Route path="/zh-tw/dashboard" component={DashboardPage} />
         <Route path="/zh-tw/get-the-book" component={BuyBookPage} />
+        <Route path="/zh-tw/pack/en-sphere" component={PackEnSpherePage} />
+        <Route path="/zh-tw/unlock/success" component={UnlockSuccessPage} />
 
         {/* Spanish (es) routes — blog pilot + minimal site chrome */}
         <Route path="/es" component={Home} />
@@ -77,6 +83,8 @@ function Router() {
         <Route path="/es/community" component={CommunityPage} />
         <Route path="/es/dashboard" component={DashboardPage} />
         <Route path="/es/get-the-book" component={BuyBookPage} />
+        <Route path="/es/pack/en-sphere" component={PackEnSpherePage} />
+        <Route path="/es/unlock/success" component={UnlockSuccessPage} />
 
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />

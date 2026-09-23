@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and, desc, sql } from "drizzle-orm";
 import {
   users, submissions, votes, bookCodes,
-  ratings, userBadges, countryAmbassadors, pointsHistory, reviews,
+  ratings, userBadges, countryAmbassadors, pointsHistory, reviews, packUnlocks,
   type InsertSubmission, type InsertReview
 } from "./schema.js";
 
@@ -371,4 +371,73 @@ export async function getReviewSummaryForCountry(countrySlug: string) {
     .where(eq(reviews.countrySlug, countrySlug))
     .groupBy(reviews.cardNumber);
   return results;
+}
+
+// ========== PACK UNLOCKS (Scheme A Recur) ==========
+export async function setUserEmail(userId: number, email: string) {
+  const db = getDb();
+  await db.update(users).set({ email, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
+/** Idempotent insert by recurEventId unique. Also unique on (userId, unlockId) — re-buy no-ops. */
+export async function insertPackUnlock(opts: {
+  userId: number;
+  unlockId: string;
+  recurEventId: string;
+  transactionId?: string | null;
+  productId?: string | null;
+}): Promise<{ ok: true; duplicate: boolean } | { ok: false; reason: string }> {
+  try {
+    const db = getDb();
+    const existingByEvent = await db.select({ id: packUnlocks.id }).from(packUnlocks)
+      .where(eq(packUnlocks.recurEventId, opts.recurEventId)).limit(1);
+    if (existingByEvent.length > 0) return { ok: true, duplicate: true };
+
+    const existingByUser = await db.select({ id: packUnlocks.id }).from(packUnlocks)
+      .where(and(eq(packUnlocks.userId, opts.userId), eq(packUnlocks.unlockId, opts.unlockId))).limit(1);
+    if (existingByUser.length > 0) {
+      // User already unlocked — still record this event id for idempotency of retries by inserting
+      // would violate user_unlock unique; treat as duplicate success (already unlocked).
+      return { ok: true, duplicate: true };
+    }
+
+    await db.insert(packUnlocks).values({
+      userId: opts.userId,
+      unlockId: opts.unlockId,
+      recurEventId: opts.recurEventId,
+      transactionId: opts.transactionId ?? null,
+      productId: opts.productId ?? null,
+    });
+    return { ok: true, duplicate: false };
+  } catch (e: any) {
+    // Unique race → duplicate
+    const msg = String(e?.message || e);
+    if (/unique|duplicate/i.test(msg)) return { ok: true, duplicate: true };
+    console.error("[packUnlocks] insert failed:", msg);
+    return { ok: false, reason: "db_unavailable" };
+  }
+}
+
+export async function userHasPackUnlock(userId: number, unlockId: string): Promise<boolean> {
+  const db = getDb();
+  const rows = await db.select({ id: packUnlocks.id }).from(packUnlocks)
+    .where(and(eq(packUnlocks.userId, userId), eq(packUnlocks.unlockId, unlockId))).limit(1);
+  return rows.length > 0;
+}
+
+export async function listUserPackUnlocks(userId: number) {
+  const db = getDb();
+  return db.select().from(packUnlocks).where(eq(packUnlocks.userId, userId));
+}
+
+/** Preview-only grant (sandbox). Caller must gate on RECUR_MODE!==live && HECS_ALLOW_DEV_UNLOCK=1. */
+export async function devGrantPackUnlock(userId: number, unlockId: string) {
+  const eventId = `dev_grant_${unlockId}_${userId}_${Date.now()}`;
+  return insertPackUnlock({
+    userId,
+    unlockId,
+    recurEventId: eventId,
+    transactionId: eventId,
+    productId: "dev_grant",
+  });
 }

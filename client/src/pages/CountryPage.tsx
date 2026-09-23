@@ -9,9 +9,12 @@ import {
   AMAZON_LINK,
   regionColors,
   isLockedContent,
+  isEnSphereCountry,
 } from "@/lib/data";
+import { countryBannerCopy } from "@shared/schemeAConfig";
+import { getClientLandingArm } from "@/lib/schemeAArm";
 import { getRecommendations } from "@/lib/recommendations";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useSearch } from "wouter";
 import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, MapPin, Lock, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 import React, { useEffect, useMemo, useState } from "react";
@@ -19,10 +22,12 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { useLocale } from "@/contexts/LocaleContext";
-import { trackCountryView, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick, trackPurchaseClick, trackRecommendationClick, trackCountryScrollDepth, trackCountriesExploredMilestone, PREVIEW_COUNTRIES as ANALYTICS_PREVIEW_COUNTRIES } from "@/lib/analytics";
+import { trackCountryView, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick, trackPurchaseClick, trackRecommendationClick, trackCountryScrollDepth, trackCountriesExploredMilestone, trackExperimentExposure, trackMembershipUnlockClick, PREVIEW_COUNTRIES as ANALYTICS_PREVIEW_COUNTRIES } from "@/lib/analytics";
 
 export default function CountryPage() {
   const { slug } = useParams<{ slug: string }>();
+  const search = useSearch();
+  const arm = getClientLandingArm(search);
   const { locale, t, localePath } = useLocale();
   const isZhTw = locale === "zh-tw";
 
@@ -34,6 +39,18 @@ export default function CountryPage() {
   const isBookBuyer = user?.memberTier === "bookBuyer" || isAdmin;
   const isLocked = country ? isLockedContent(country.part_id, country.slug) : false;
   const canViewContent = !isLocked || isBookBuyer;
+  const isEnSphere = !!(country && isEnSphereCountry(country.slug));
+  const { data: unlockStatus } = trpc.unlock.myStatus.useQuery(undefined, {
+    enabled: isEnSphere,
+    staleTime: 30_000,
+  });
+  const enSphereAudioLocked = isEnSphere && !unlockStatus?.canPlayEnSphereAudio && !isBookBuyer;
+
+  useEffect(() => {
+    if (enSphereAudioLocked && country) {
+      trackExperimentExposure({ surface: "country_banner", country: country.slug, arm });
+    }
+  }, [enSphereAudioLocked, country?.slug, arm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get recommendations for this country
   const allCountries = getAllCountries(locale);
@@ -351,6 +368,26 @@ export default function CountryPage() {
           </motion.div>
         </div>
       </section>
+
+
+      {/* Scheme A — EN sphere audio unlock banner (copy from schemeAConfig placeholders) */}
+      {enSphereAudioLocked && (
+        <section className="border-y-2 border-[#1a1a1a] bg-[#FFF8E1]">
+          <div className="container py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <h3 className="font-display text-xl text-[#1a1a1a]">{countryBannerCopy(locale, arm).title}</h3>
+              <p className="text-sm text-[#666]">{countryBannerCopy(locale, arm).body}</p>
+            </div>
+            <Link
+              href={localePath(`/pack/en-sphere?arm=${arm}`)}
+              onClick={() => trackMembershipUnlockClick({ country: country.slug, surface: "country_banner", arm })}
+              className="inline-flex items-center justify-center px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] no-underline shrink-0"
+            >
+              {countryBannerCopy(locale, arm).cta}
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Phrase Cards */}
       <section className="py-10 md:py-16">

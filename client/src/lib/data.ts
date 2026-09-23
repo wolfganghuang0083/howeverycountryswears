@@ -180,3 +180,7 @@ export const FREE_PARTS = [1, 2, 3, 4, 5, 6, 7];
 export const LOCKED_PARTS = [8, 9, 10, 11];
 
 export { data as siteData };
+
+
+/** Scheme A: EN sphere countries gate audio (not phrase text). Import countries from config. */
+export { isEnSphereCountry } from "@shared/schemeAConfig";

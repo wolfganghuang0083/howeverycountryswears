@@ -148,3 +148,19 @@ export const reviews = pgTable("reviews", {
 });
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = typeof reviews.$inferInsert;
+
+// ========== PACK UNLOCKS (Scheme A Recur — separate from bookBuyer) ==========
+export const packUnlocks = pgTable("pack_unlocks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  unlockId: varchar("unlock_id", { length: 64 }).notNull(),
+  recurEventId: varchar("recur_event_id", { length: 128 }).notNull(),
+  transactionId: varchar("transaction_id", { length: 128 }),
+  productId: varchar("product_id", { length: 128 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("pack_unlocks_recur_event_id_idx").on(table.recurEventId),
+  uniqueIndex("pack_unlocks_user_unlock_idx").on(table.userId, table.unlockId),
+]);
+export type PackUnlock = typeof packUnlocks.$inferSelect;
+export type InsertPackUnlock = typeof packUnlocks.$inferInsert;

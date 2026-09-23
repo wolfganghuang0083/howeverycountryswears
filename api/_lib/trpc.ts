@@ -19,13 +19,16 @@ export interface UserPayload {
 
 export interface Context {
   user: UserPayload | null;
+  /** Request headers for origin derivation (createCheckout). */
+  headers: Record<string, string | string[] | undefined>;
 }
 
 export async function createContext(req: VercelRequest): Promise<Context> {
   const cookies = parse(req.headers.cookie || "");
   const token = cookies[COOKIE_NAME];
+  const headers = req.headers as Record<string, string | string[] | undefined>;
 
-  if (!token) return { user: null };
+  if (!token) return { user: null, headers };
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
@@ -39,9 +42,10 @@ export async function createContext(req: VercelRequest): Promise<Context> {
         role: (payload.role as string) || "user",
         memberTier: (payload.memberTier as string) || "regular",
       },
+      headers,
     };
   } catch {
-    return { user: null };
+    return { user: null, headers };
   }
 }
 

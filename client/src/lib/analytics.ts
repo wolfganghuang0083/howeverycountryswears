@@ -7,6 +7,15 @@
  * (see docs/analytics-p0-map.md). Call sites should prefer wrappers below.
  */
 
+import {
+  EXPERIMENT_ID_EN_SPHERE,
+  VARIANT_ID_PRICE_699,
+  UNLOCK_ID_EN_SPHERE,
+  SCHEME_A_PRICE,
+  type LandingArm,
+} from "@shared/schemeAConfig";
+import { getClientLandingArm } from "@/lib/schemeAArm";
+
 declare global {
   interface Window {
     gtag: (...args: unknown[]) => void;
@@ -340,4 +349,107 @@ export function trackFirstShare() {
     saveMilestone("first_share");
     trackEvent("first_share");
   }
+}
+
+// ============================================================
+// SCHEME A — Recur unlock experiment (locked event names)
+// value/currency from SCHEME_A_PRICE (TWD 219); variant_id is label only.
+// ============================================================
+
+const EXPOSURE_SESSION_KEY = "hecs_a_en_sphere_exposure";
+
+function schemeABase(arm?: LandingArm) {
+  const resolved = arm ?? getClientLandingArm();
+  return {
+    experiment_id: EXPERIMENT_ID_EN_SPHERE,
+    variant_id: VARIANT_ID_PRICE_699,
+    unlock_id: UNLOCK_ID_EN_SPHERE,
+    arm: resolved,
+  };
+}
+
+/** Fire experiment_exposure once per browser session when Pack surface or gated Play is shown. */
+export function trackExperimentExposure(params?: {
+  surface?: "pack_page" | "country_banner" | "gated_play";
+  country?: string;
+  arm?: LandingArm;
+}) {
+  if (typeof window === "undefined") return;
+  try {
+    if (sessionStorage.getItem(EXPOSURE_SESSION_KEY)) return;
+    sessionStorage.setItem(EXPOSURE_SESSION_KEY, "1");
+  } catch {
+    // fall through once if sessionStorage blocked
+  }
+  trackEvent("experiment_exposure", {
+    ...schemeABase(params?.arm),
+    surface: params?.surface,
+    country: params?.country,
+    page_type: getPageTypeFromPath(),
+  });
+}
+
+export function trackMembershipUnlockClick(params?: {
+  country?: string;
+  surface?: string;
+  arm?: LandingArm;
+}) {
+  trackEvent("membership_unlock_click", {
+    ...schemeABase(params?.arm),
+    country: params?.country,
+    surface: params?.surface,
+    page_type: getPageTypeFromPath(),
+  });
+}
+
+export function trackBeginCheckout(params?: {
+  session_id?: string | null;
+  arm?: LandingArm;
+}) {
+  trackEvent("begin_checkout", {
+    ...schemeABase(params?.arm),
+    value: SCHEME_A_PRICE.value,
+    currency: SCHEME_A_PRICE.currency,
+    session_id: params?.session_id ?? undefined,
+    page_type: getPageTypeFromPath(),
+  });
+}
+
+const PURCHASE_SESSION_KEY = "hecs_a_en_sphere_purchase";
+
+/** Fire purchase once per session when success page loads with transaction/session id. */
+export function trackPurchaseOnce(params: {
+  transaction_id?: string | null;
+  session_id?: string | null;
+  arm?: LandingArm;
+}) {
+  if (typeof window === "undefined") return;
+  const tid = params.transaction_id || params.session_id || "unknown";
+  const key = `${PURCHASE_SESSION_KEY}:${tid}`;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    /* continue once */
+  }
+  trackEvent("purchase", {
+    ...schemeABase(params?.arm),
+    value: SCHEME_A_PRICE.value,
+    currency: SCHEME_A_PRICE.currency,
+    transaction_id: tid,
+    page_type: "unlock_success",
+  });
+}
+
+export function trackUnlockOpen(params: {
+  country: string;
+  phrase_index?: number;
+  arm?: LandingArm;
+}) {
+  trackEvent("unlock_open", {
+    ...schemeABase(params?.arm),
+    country: params.country,
+    phrase_index: params.phrase_index,
+    page_type: getPageTypeFromPath(),
+  });
 }
