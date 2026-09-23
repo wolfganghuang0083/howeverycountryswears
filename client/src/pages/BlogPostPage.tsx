@@ -16,11 +16,12 @@ import {
 } from "@/lib/blog";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, BookOpen, Compass, List } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useLocale } from "@/contexts/LocaleContext";
 import NotFound from "@/pages/NotFound";
 import BlogPhraseEmbeds from "@/components/BlogPhraseEmbeds";
 import type { Locale } from "@/lib/i18n";
+import { trackBlogRead, trackPurchaseClick } from "@/lib/analytics";
 
 const SITE = "https://howeverycountryswears.com";
 
@@ -89,6 +90,13 @@ function BlogCta({ post, localePath }: { post: BlogPost; localePath: (p: string)
       <div className="flex flex-wrap gap-3 pt-1">
         <Link
           href={localePath("/get-the-book")}
+          onClick={() =>
+            trackPurchaseClick("blog_cta", post.countries?.[0], {
+              destination: "/get-the-book",
+              content_id: post.slug,
+              page_type: "blog",
+            })
+          }
           className="inline-flex items-center gap-2 text-sm font-bold no-underline bg-[#FF1493] text-white border-2 border-[#1a1a1a] rounded-full px-4 py-2 shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#1a1a1a]"
         >
           <BookOpen size={16} />
@@ -252,6 +260,48 @@ export default function BlogPostPage() {
       head
         .querySelectorAll('link[data-blog-hreflang], link[data-blog-canonical]')
         .forEach((el) => el.remove());
+    };
+  }, [post]);
+
+  // blog_read once per post view: 30s on page OR 50% scroll depth
+  const blogReadFired = useRef(false);
+  useEffect(() => {
+    if (!post) return;
+    blogReadFired.current = false;
+    const started = Date.now();
+    let scrolled50 = false;
+
+    const fire = () => {
+      if (blogReadFired.current) return;
+      blogReadFired.current = true;
+      const read_seconds = Math.round((Date.now() - started) / 1000);
+      trackBlogRead({
+        post_id: post.slug,
+        category: post.pill || undefined,
+        country: post.countries?.[0],
+        read_seconds,
+      });
+    };
+
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight;
+      // Short pages: rely on 30s timer only (avoid instant blog_read at 0s)
+      if (scrollable <= 0) return;
+      const pct = (window.scrollY / scrollable) * 100;
+      if (pct >= 50 && !scrolled50) {
+        scrolled50 = true;
+        fire();
+      }
+    };
+
+    const timer = window.setTimeout(fire, 30_000);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [post]);
 

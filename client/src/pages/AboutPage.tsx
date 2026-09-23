@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import { AMAZON_LINK } from "@/lib/data";
+import { trackPurchaseClick } from "@/lib/analytics";
 import { BookOpen, Mail, Globe, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
@@ -92,6 +93,7 @@ export default function AboutPage() {
                 href={AMAZON_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackPurchaseClick("about_hero")}
                 className="inline-flex items-center gap-2 mt-8 bg-[#FF1493] text-white px-6 py-3 rounded-lg font-bold border-2 border-[#1a1a1a] shadow-[4px_4px_0px_#1a1a1a] hover:shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
               >
                 <BookOpen size={18} />
@@ -199,6 +201,7 @@ export default function AboutPage() {
               href={AMAZON_LINK}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackPurchaseClick("about_footer")}
               className="flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
             >
               <BookOpen size={18} />

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AMAZON_LINK } from "@/lib/data";
+import { trackPurchaseClick } from "@/lib/analytics";
 import { useLocale } from "@/contexts/LocaleContext";
 
 // ========== VOTE BUTTON ==========
@@ -453,7 +454,7 @@ function BookCodeRedeem({ onSuccess }: { onSuccess: () => void }) {
       )}
       <p className="text-xs text-[#999] mt-3">
         {isZhTw ? "還沒有書？" : "Don't have a book?"}{" "}
-        <a href={AMAZON_LINK} target="_blank" rel="noopener noreferrer" className="text-[#FF1493] font-bold hover:underline">
+        <a href={AMAZON_LINK} target="_blank" rel="noopener noreferrer" onClick={() => trackPurchaseClick("community_redeem")} className="text-[#FF1493] font-bold hover:underline">
           {isZhTw ? "在 Amazon 購買" : "Get it on Amazon"}
         </a>
       </p>
@@ -638,6 +639,7 @@ export default function CommunityPage() {
                   href={AMAZON_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackPurchaseClick("community_unlock")}
                   className="mt-5 w-full flex items-center justify-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-4 py-2.5 rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                 >
                   <BookOpen size={16} /> {isZhTw ? "購書解鎖完整權限" : "Get the Book to Unlock"}
@@ -780,6 +782,7 @@ export default function CommunityPage() {
                 href={AMAZON_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackPurchaseClick("community_sidebar")}
                 className="block bg-[#1a1a1a] rounded-xl border-3 border-[#FFE500] p-5 text-center no-underline hover:scale-[1.02] transition-transform"
               >
                 <BookOpen size={32} className="mx-auto text-[#FFE500] mb-2" />
