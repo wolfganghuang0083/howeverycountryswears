@@ -72,6 +72,27 @@ content:
           - name: slug
             label: Slug
             type: string
+      - name: faqHeading
+        label: FAQ heading
+        type: string
+        description: Visible FAQ section title (never bare "FAQ"); required in writing workflow
+      - name: ctaHeading
+        label: CTA heading
+        type: string
+        description: Visible end-CTA title (never bare "Next Steps" / "CTA")
+      - name: nextHeading
+        label: Next heading
+        type: string
+        description: Alias for ctaHeading if preferred in copy workflow
+      - name: relatedHeading
+        label: Related heading
+        type: string
+        description: Visible related-reading title (default Keep reading / Sigue leyendo)
+      - name: related
+        label: Related slugs
+        type: string
+        list: true
+        description: Optional exact-order related post slugs (clamped 3–5)
       - name: faq
         label: FAQ
         type: object

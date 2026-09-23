@@ -115,6 +115,17 @@ function parseFrontmatter(raw) {
       }
       continue;
     }
+    if (line.match(/^related:\s*$/)) {
+      data.related = [];
+      i++;
+      while (i < lines.length) {
+        const lm = lines[i].match(/^\s*-\s+(\S+)\s*$/);
+        if (!lm) break;
+        data.related.push(unquote(lm[1].trim()));
+        i++;
+      }
+      continue;
+    }
     if (line.match(/^translations:\s*$/)) {
       data.translations = [];
       i++;
@@ -335,6 +346,11 @@ function loadPosts() {
         countryLinks,
         translations,
         faq,
+        faqHeading: data.faqHeading || "",
+        ctaHeading: data.ctaHeading || "",
+        nextHeading: data.nextHeading || "",
+        relatedHeading: data.relatedHeading || "",
+        related: Array.isArray(data.related) ? data.related : [],
         html,
         toc: extractTocFromHtml(html),
       });
@@ -393,6 +409,11 @@ function writeManifest(posts) {
     countryLinks: p.countryLinks,
     translations: p.translations,
     faq: p.faq,
+    faqHeading: p.faqHeading || undefined,
+    ctaHeading: p.ctaHeading || undefined,
+    nextHeading: p.nextHeading || undefined,
+    relatedHeading: p.relatedHeading || undefined,
+    related: Array.isArray(p.related) && p.related.length ? p.related : undefined,
     html: p.html,
   }));
   fs.writeFileSync(MANIFEST, JSON.stringify(payload, null, 2) + "\n", "utf8");
@@ -497,10 +518,137 @@ function tocHtml(post) {
   return `<nav aria-label="${escapeHtml(label)}"><h2>${escapeHtml(label)}</h2><ol>${items}</ol></nav>`;
 }
 
+function titleCaseCountry(id) {
+  if (!id) return "";
+  return String(id)
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function getFaqHeading(post) {
+  const custom = String(post.faqHeading || "").trim();
+  if (custom && !/^faq$/i.test(custom)) return custom;
+  const isEs = post.lang === "es";
+  const countries = post.countries || [];
+  const primary = countries[0] ? titleCaseCountry(countries[0]) : "";
+  const pill = String(post.pill || "").toLowerCase();
+  if (isEs) {
+    if (pill === "scene" && primary) return `Lo que se malentiende en ${primary}`;
+    if (pill === "compare") return "Comparar sin copiar — chequeos rápidos";
+    if (pill === "method") return "Cómo usar este método — chequeos";
+    if (pill === "pronounce") return "Oír antes de decir — chequeos";
+    if (pill === "country" && primary) return `Leer el mapa de ${primary} — chequeos`;
+    if (pill === "author") return "Sobre esta guía — chequeos";
+    return primary
+      ? `Lo que preguntan sobre ${primary}`
+      : "Chequeos rápidos antes de repetir";
+  }
+  if (pill === "scene" && primary) {
+    return `What tourists get wrong — ${primary} quick checks`;
+  }
+  if (pill === "compare") return "Compare without copying — quick checks";
+  if (pill === "method") return "How to use this method — quick checks";
+  if (pill === "pronounce") return "Hearing vs saying — quick checks";
+  if (pill === "country" && primary) {
+    return `Reading the ${primary} map — quick checks`;
+  }
+  if (pill === "author") return "About this guide — quick checks";
+  if (primary) return `What readers ask about ${primary}`;
+  return "What readers ask — quick checks";
+}
+
+function getCtaHeading(post) {
+  const custom = String(post.ctaHeading || post.nextHeading || "").trim();
+  if (custom && !/^(next\s*steps?|cta|siguiente\s*paso)$/i.test(custom)) {
+    return custom;
+  }
+  const isEs = post.lang === "es";
+  const countries = post.countries || [];
+  if (isEs) {
+    if (countries.length) return "Sigue con las guías de país";
+    return "Por dónde seguir";
+  }
+  if (countries.length) {
+    const labels = countries.slice(0, 2).map(titleCaseCountry).join(" & ");
+    return `Open the ${labels} guide${countries.length > 1 ? "s" : ""}`;
+  }
+  return "Where to go next";
+}
+
+function getRelatedHeading(post) {
+  const custom = String(post.relatedHeading || "").trim();
+  if (custom && !/^related$/i.test(custom)) return custom;
+  return post.lang === "es" ? "Sigue leyendo" : "Keep reading";
+}
+
+function countryOverlap(a, b) {
+  const set = new Set((a.countries || []).map((c) => String(c).toLowerCase()));
+  return (b.countries || []).filter((c) => set.has(String(c).toLowerCase())).length;
+}
+
+function relatedSort(a, b, current) {
+  const ov = countryOverlap(current, b) - countryOverlap(current, a);
+  if (ov !== 0) return ov;
+  const pillA = a.pill && current.pill && a.pill === current.pill ? 1 : 0;
+  const pillB = b.pill && current.pill && b.pill === current.pill ? 1 : 0;
+  if (pillB !== pillA) return pillB - pillA;
+  return (
+    String(b.date).localeCompare(String(a.date)) || a.slug.localeCompare(b.slug)
+  );
+}
+
+function getRelatedPosts(post, allPosts, min = 3, max = 5) {
+  const lang = post.lang || "en";
+  const sameLang = allPosts.filter((p) => (p.lang || "en") === lang);
+  const enPool = allPosts.filter((p) => (p.lang || "en") === "en");
+  const out = [];
+  const seen = new Set([post.slug]);
+  const bySlug = new Map(allPosts.map((p) => [p.slug, p]));
+
+  const override = Array.isArray(post.related) ? post.related : [];
+  const usedOverride = override.length > 0;
+  for (const slug of override) {
+    if (!slug || seen.has(slug)) continue;
+    const p = bySlug.get(slug);
+    if (!p) continue;
+    out.push(p);
+    seen.add(slug);
+    if (out.length >= max) return out.slice(0, max);
+  }
+
+  const pick = (pool, need) =>
+    pool
+      .filter((p) => p.slug !== post.slug && !seen.has(p.slug))
+      .sort((a, b) => relatedSort(a, b, post))
+      .slice(0, Math.max(0, need));
+
+  // Auto-fill: always fill toward max when no override; with override only pad up to min.
+  const target = usedOverride ? Math.max(out.length, min) : max;
+  for (const p of pick(sameLang, target - out.length)) {
+    out.push(p);
+    seen.add(p.slug);
+  }
+  if (out.length < min && lang !== "en") {
+    for (const p of pick(enPool, min - out.length)) {
+      out.push(p);
+      seen.add(p.slug);
+    }
+  }
+  if (out.length < min) {
+    for (const p of pick(allPosts, min - out.length)) {
+      out.push(p);
+      seen.add(p.slug);
+    }
+  }
+  return out.slice(0, max);
+}
+
 function ctaHtml(post, allPosts) {
   const countries = (post.countries || []).slice(0, 2);
   const method = allPosts.find((p) => p.slug === METHOD_SLUG);
   const isEs = post.lang === "es";
+  const heading = getCtaHeading(post);
   const countryLinks = countries
     .map(
       (id) =>
@@ -511,14 +659,42 @@ function ctaHtml(post, allPosts) {
     ? `<p><a href="${escapeHtml(postPath(method))}/">${isEs ? "Método: Reconocimiento ≠ permiso" : "Method: Recognition ≠ permission"}</a></p>`
     : "";
   return (
-    `<aside aria-label="${isEs ? "Siguiente paso" : "Next steps"}">` +
-    `<h2>${isEs ? "Siguiente paso" : "Next steps"}</h2>` +
+    `<aside aria-label="${escapeHtml(heading)}">` +
+    `<h2>${escapeHtml(heading)}</h2>` +
     (countries.length
       ? `<nav aria-label="Countries"><ul>${countryLinks}</ul></nav>`
       : "") +
     `<p><a href="/get-the-book">${isEs ? "Conseguir el libro" : "Get the book"}</a></p>` +
     methodLink +
     `</aside>`
+  );
+}
+
+function relatedHtml(post, allPosts) {
+  const related = getRelatedPosts(post, allPosts);
+  if (!related.length) return "";
+  const heading = getRelatedHeading(post);
+  const items = related
+    .map((r) => {
+      const href = postPath(r);
+      return (
+        `<li><a href="${escapeHtml(href)}/"><strong>${escapeHtml(r.title)}</strong></a>` +
+        (r.pill ? ` <span>${escapeHtml(r.pill)}</span>` : "") +
+        (r.date
+          ? ` <time datetime="${escapeHtml(r.date)}">${escapeHtml(r.date)}</time>`
+          : "") +
+        (r.description
+          ? `<br/><span>${escapeHtml(r.description)}</span>`
+          : "") +
+        `</li>`
+      );
+    })
+    .join("\n");
+  return (
+    `<section aria-label="${escapeHtml(heading)}">` +
+    `<h2>${escapeHtml(heading)}</h2>` +
+    `<ul>\n${items}\n</ul>` +
+    `</section>`
   );
 }
 
@@ -566,9 +742,10 @@ function articleBodyHtml(post, allPosts) {
   const draftBanner = post.draft
     ? `<p class="blog-draft-banner" style="background:#fff3cd;border:1px solid #ffc107;padding:.5rem .75rem;border-radius:4px">Draft — Preview only; not Production Publish</p>`
     : "";
+  const faqHeading = getFaqHeading(post);
   const faqHtml =
     post.faq.length > 0
-      ? `<section aria-label="FAQ"><h2>FAQ</h2>${post.faq
+      ? `<section aria-label="${escapeHtml(faqHeading)}"><h2>${escapeHtml(faqHeading)}</h2>${post.faq
           .map(
             (f) =>
               `<div><h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p></div>`,
@@ -588,6 +765,7 @@ function articleBodyHtml(post, allPosts) {
     post.html +
     faqHtml +
     ctaHtml(post, allPosts) +
+    relatedHtml(post, allPosts) +
     `</article>`
   );
 }

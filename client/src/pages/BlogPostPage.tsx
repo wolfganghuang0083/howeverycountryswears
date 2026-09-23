@@ -4,8 +4,12 @@ import {
   getBlogPost,
   getBlogPostPath,
   getCtaCountries,
+  getCtaHeading,
+  getFaqHeading,
   getMethodPost,
   getPostCountries,
+  getRelatedHeading,
+  getRelatedPosts,
   withHeadingIds,
   type BlogPost,
   type TocItem,
@@ -54,14 +58,13 @@ function BlogCta({ post, localePath }: { post: BlogPost; localePath: (p: string)
   const countries = getCtaCountries(post, 2);
   const method = getMethodPost();
   const isEs = post.lang === "es";
+  const heading = getCtaHeading(post);
   return (
     <aside
-      aria-label={isEs ? "Siguiente paso" : "Next steps"}
+      aria-label={heading}
       className="mt-12 rounded-xl border-2 border-[#1a1a1a] bg-white shadow-[4px_4px_0px_#1a1a1a] p-5 space-y-4"
     >
-      <h2 className="font-display text-xl text-[#1a1a1a] m-0">
-        {isEs ? "Siguiente paso" : "Next steps"}
-      </h2>
+      <h2 className="font-display text-xl text-[#1a1a1a] m-0">{heading}</h2>
       {countries.length > 0 ? (
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-[#666] mb-2 flex items-center gap-1">
@@ -100,6 +103,51 @@ function BlogCta({ post, localePath }: { post: BlogPost; localePath: (p: string)
         ) : null}
       </div>
     </aside>
+  );
+}
+
+function BlogRelated({ post }: { post: BlogPost }) {
+  const related = useMemo(() => getRelatedPosts(post), [post]);
+  if (related.length === 0) return null;
+  const heading = getRelatedHeading(post);
+  return (
+    <section
+      aria-label={heading}
+      className="mt-12 pt-8 border-t-2 border-[#1a1a1a]"
+    >
+      <h2 className="font-display text-2xl text-[#1a1a1a] mb-4">{heading}</h2>
+      <ul className="m-0 p-0 list-none space-y-3">
+        {related.map((r) => (
+          <li key={r.slug}>
+            <Link
+              href={getBlogPostPath(r)}
+              className="block no-underline rounded-xl border-2 border-[#1a1a1a] bg-[#FAFAFA] shadow-[2px_2px_0px_#1a1a1a] p-4 hover:bg-[#FFF0F5]"
+            >
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                {r.pill ? (
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-wide bg-[#FFE500] border border-[#1a1a1a] rounded-full px-2 py-0.5">
+                    {r.pill}
+                  </span>
+                ) : null}
+                {r.date ? (
+                  <time dateTime={r.date} className="text-xs text-[#999]">
+                    {r.date}
+                  </time>
+                ) : null}
+              </div>
+              <span className="font-bold text-[#1a1a1a] text-base leading-snug">
+                {r.title}
+              </span>
+              {r.description ? (
+                <p className="text-sm text-[#555] mt-1 mb-0 line-clamp-2">
+                  {r.description}
+                </p>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -212,6 +260,7 @@ export default function BlogPostPage() {
 
   const countries = getPostCountries(post);
   const backHref = getBlogIndexPath(locale as Locale);
+  const faqHeading = getFaqHeading(post);
 
   return (
     <Layout>
@@ -285,7 +334,9 @@ export default function BlogPostPage() {
 
           {post.faq.length > 0 ? (
             <section className="mt-12 pt-8 border-t-2 border-[#1a1a1a]">
-              <h2 className="font-display text-2xl text-[#1a1a1a] mb-4">FAQ</h2>
+              <h2 className="font-display text-2xl text-[#1a1a1a] mb-4">
+                {faqHeading}
+              </h2>
               <div className="space-y-4">
                 {post.faq.map((f) => (
                   <div
@@ -303,6 +354,7 @@ export default function BlogPostPage() {
           ) : null}
 
           <BlogCta post={post} localePath={localePath} />
+          <BlogRelated post={post} />
         </div>
       </article>
     </Layout>

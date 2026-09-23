@@ -16,6 +16,15 @@ export type BlogPost = {
   countryLinks: string[];
   translations: BlogTranslation[];
   faq: BlogFaq[];
+  /** Optional visible FAQ section title (never bare "FAQ"). */
+  faqHeading?: string;
+  /** Optional CTA / next-block title (never bare "Next Steps"). */
+  ctaHeading?: string;
+  nextHeading?: string;
+  /** Optional related-reading section title. */
+  relatedHeading?: string;
+  /** Optional exact-order related slug override (clamped 3–5). */
+  related?: string[];
   html: string;
 };
 
@@ -39,6 +48,11 @@ function deriveCountryLinks(countries: string[], countryLinks?: string[]): strin
   return countries.map((id) => `/country/${id}`);
 }
 
+function asStringList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((x) => String(x).trim()).filter(Boolean);
+}
+
 function normalizePost(raw: Record<string, unknown>): BlogPost {
   const countryLinks = Array.isArray(raw.countryLinks)
     ? (raw.countryLinks as string[])
@@ -51,6 +65,11 @@ function normalizePost(raw: Record<string, unknown>): BlogPost {
   const translations = Array.isArray(raw.translations)
     ? (raw.translations as BlogTranslation[]).filter((t) => t?.lang && t?.slug)
     : [];
+  const faqHeading = raw.faqHeading != null ? String(raw.faqHeading).trim() : "";
+  const ctaHeading = raw.ctaHeading != null ? String(raw.ctaHeading).trim() : "";
+  const nextHeading = raw.nextHeading != null ? String(raw.nextHeading).trim() : "";
+  const relatedHeading =
+    raw.relatedHeading != null ? String(raw.relatedHeading).trim() : "";
   return {
     slug: String(raw.slug || ""),
     title: String(raw.title || ""),
@@ -63,6 +82,11 @@ function normalizePost(raw: Record<string, unknown>): BlogPost {
     countryLinks: links,
     translations,
     faq: Array.isArray(raw.faq) ? (raw.faq as BlogFaq[]) : [],
+    faqHeading: faqHeading || undefined,
+    ctaHeading: ctaHeading || undefined,
+    nextHeading: nextHeading || undefined,
+    relatedHeading: relatedHeading || undefined,
+    related: asStringList(raw.related),
     html: String(raw.html || ""),
   };
 }
@@ -163,4 +187,163 @@ export function getPostCountries(post: BlogPost): string[] {
 
 export function getCtaCountries(post: BlogPost, max = 2): string[] {
   return getPostCountries(post).slice(0, max);
+}
+
+function countryOverlap(a: BlogPost, b: BlogPost): number {
+  const set = new Set(getPostCountries(a).map((c) => c.toLowerCase()));
+  return getPostCountries(b).filter((c) => set.has(c.toLowerCase())).length;
+}
+
+function relatedSort(a: BlogPost, b: BlogPost, current: BlogPost): number {
+  const ov = countryOverlap(current, b) - countryOverlap(current, a);
+  if (ov !== 0) return ov;
+  const pillA = a.pill && current.pill && a.pill === current.pill ? 1 : 0;
+  const pillB = b.pill && current.pill && b.pill === current.pill ? 1 : 0;
+  if (pillB !== pillA) return pillB - pillA;
+  return (
+    String(b.date).localeCompare(String(a.date)) || a.slug.localeCompare(b.slug)
+  );
+}
+
+function pickAutoRelated(
+  current: BlogPost,
+  pool: BlogPost[],
+  need: number,
+  exclude: Set<string>,
+): BlogPost[] {
+  const candidates = pool
+    .filter((p) => p.slug !== current.slug && !exclude.has(p.slug))
+    .sort((a, b) => relatedSort(a, b, current));
+  return candidates.slice(0, Math.max(0, need));
+}
+
+/**
+ * Related reading: 3–5 posts.
+ * Override `related: [slug,…]` wins (exact order), then pad/clamp to 3–5.
+ * Else: same-lang preferred → country overlap → same pill → newest date; fall back to EN.
+ */
+export function getRelatedPosts(
+  post: BlogPost,
+  opts?: { min?: number; max?: number; includeDrafts?: boolean },
+): BlogPost[] {
+  const min = opts?.min ?? 3;
+  const max = opts?.max ?? 5;
+  const all = getAllBlogPosts({ includeDrafts: opts?.includeDrafts ?? true });
+  const lang = post.lang || "en";
+  const sameLang = all.filter((p) => (p.lang || "en") === lang);
+  const enPool = all.filter((p) => (p.lang || "en") === "en");
+
+  const out: BlogPost[] = [];
+  const seen = new Set<string>([post.slug]);
+
+  const override = (post.related || []).map((s) => String(s).trim()).filter(Boolean);
+  const usedOverride = override.length > 0;
+  if (usedOverride) {
+    for (const slug of override) {
+      if (seen.has(slug)) continue;
+      const p = getBlogPost(slug);
+      if (!p) continue;
+      out.push(p);
+      seen.add(slug);
+      if (out.length >= max) return out.slice(0, max);
+    }
+  }
+
+  // Auto-fill: always fill toward max when no override; with override only pad up to min.
+  const target = usedOverride ? Math.max(out.length, min) : max;
+  if (out.length < target) {
+    for (const p of pickAutoRelated(post, sameLang, target - out.length, seen)) {
+      out.push(p);
+      seen.add(p.slug);
+    }
+  }
+  if (out.length < min && lang !== "en") {
+    for (const p of pickAutoRelated(post, enPool, min - out.length, seen)) {
+      out.push(p);
+      seen.add(p.slug);
+    }
+  }
+  if (out.length < min) {
+    for (const p of pickAutoRelated(post, all, min - out.length, seen)) {
+      out.push(p);
+      seen.add(p.slug);
+    }
+  }
+
+  return out.slice(0, max);
+}
+
+function titleCaseCountry(id: string): string {
+  if (!id) return "";
+  return id
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** Visible FAQ heading — never bare "FAQ". */
+export function getFaqHeading(post: BlogPost): string {
+  const custom = (post.faqHeading || "").trim();
+  if (custom && !/^faq$/i.test(custom)) return custom;
+  const isEs = post.lang === "es";
+  const countries = getPostCountries(post);
+  const primary = countries[0] ? titleCaseCountry(countries[0]) : "";
+  const pill = (post.pill || "").toLowerCase();
+
+  if (isEs) {
+    if (pill === "scene" && primary) return `Lo que se malentiende en ${primary}`;
+    if (pill === "compare") return "Comparar sin copiar — chequeos rápidos";
+    if (pill === "method") return "Cómo usar este método — chequeos";
+    if (pill === "pronounce") return "Oír antes de decir — chequeos";
+    if (pill === "country" && primary) return `Leer el mapa de ${primary} — chequeos`;
+    if (pill === "author") return "Sobre esta guía — chequeos";
+    return primary
+      ? `Lo que preguntan sobre ${primary}`
+      : "Chequeos rápidos antes de repetir";
+  }
+
+  if (pill === "scene" && primary) {
+    return `What tourists get wrong — ${primary} quick checks`;
+  }
+  if (pill === "compare") return "Compare without copying — quick checks";
+  if (pill === "method") return "How to use this method — quick checks";
+  if (pill === "pronounce") return "Hearing vs saying — quick checks";
+  if (pill === "country" && primary) {
+    return `Reading the ${primary} map — quick checks`;
+  }
+  if (pill === "author") return "About this guide — quick checks";
+  if (primary) return `What readers ask about ${primary}`;
+  return "What readers ask — quick checks";
+}
+
+/** Visible CTA / next-block heading — never bare "Next Steps" / "CTA". */
+export function getCtaHeading(post: BlogPost): string {
+  const custom = (post.ctaHeading || post.nextHeading || "").trim();
+  if (
+    custom &&
+    !/^(next\s*steps?|cta|siguiente\s*paso)$/i.test(custom)
+  ) {
+    return custom;
+  }
+  const isEs = post.lang === "es";
+  const countries = getPostCountries(post);
+  if (isEs) {
+    if (countries.length) return "Sigue con las guías de país";
+    return "Por dónde seguir";
+  }
+  if (countries.length) {
+    const labels = countries
+      .slice(0, 2)
+      .map(titleCaseCountry)
+      .join(" & ");
+    return `Open the ${labels} guide${countries.length > 1 ? "s" : ""}`;
+  }
+  return "Where to go next";
+}
+
+/** Visible related-reading heading — never bare "Related". */
+export function getRelatedHeading(post: BlogPost): string {
+  const custom = (post.relatedHeading || "").trim();
+  if (custom && !/^related$/i.test(custom)) return custom;
+  return post.lang === "es" ? "Sigue leyendo" : "Keep reading";
 }
