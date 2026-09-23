@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, BookOpen, Globe, Trophy, Info, Users, LayoutDashboard, LogIn, LogOut, User, Star, ShoppingBag, Languages, Search } from "lucide-react";
+import { Menu, X, BookOpen, Globe, Trophy, Info, Users, LayoutDashboard, LogIn, LogOut, User, Star, ShoppingBag, Languages, Search, PenLine } from "lucide-react";
 import SearchDialog from "@/components/SearchDialog";
 import { AMAZON_LINK } from "@/lib/data";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -22,6 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navLinks = [
     { href: localePath("/"), label: t("nav.home"), icon: Globe },
+    { href: localePath("/blog"), label: t("nav.blog"), icon: PenLine },
     { href: localePath("/community"), label: t("nav.community"), icon: Users },
     { href: localePath("/rankings"), label: t("nav.rankings"), icon: Trophy },
     { href: localePath("/get-the-book"), label: t("nav.getBook"), icon: ShoppingBag },
@@ -248,6 +249,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </h4>
               <div className="flex flex-col gap-2">
                 <Link href={localePath("/")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.home")}</Link>
+                <Link href={localePath("/blog")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.blog")}</Link>
                 <Link href={localePath("/community")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.community")}</Link>
                 <Link href={localePath("/rankings")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.rankings")}</Link>
                 <Link href={localePath("/get-the-book")} className="text-gray-300 hover:text-[#FFE500] text-sm no-underline transition-colors">{t("nav.getBook")}</Link>

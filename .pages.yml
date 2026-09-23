@@ -1,0 +1,109 @@
+# HECS Blog — Pages CMS pilot (Preview / feature branch only)
+media:
+  input: client/public/blog
+  output: /blog
+
+content:
+  - name: blog
+    label: Blog posts
+    type: collection
+    path: content/blog
+    format: yaml-frontmatter
+    extension: mdx
+    filename: "{primary}.mdx"
+    view:
+      fields: [title, date, pill, draft, lang]
+      primary: title
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: slug
+        label: slug
+        type: string
+        required: true
+      - name: date
+        label: Date
+        type: date
+        required: true
+      - name: description
+        label: Description
+        type: text
+        required: true
+      - name: pill
+        label: Pill
+        type: select
+        required: true
+        options:
+          values: [Scene, Compare, Method, Pronounce, Author, Country]
+      - name: lang
+        label: Lang
+        type: string
+        default: en
+        required: true
+      - name: draft
+        label: Draft
+        type: boolean
+        default: true
+        required: true
+      - name: countries
+        label: Countries
+        type: string
+        list: true
+        description: Optional country ids e.g. spain, mexico (drives tags + /blog?country=)
+      - name: countryLinks
+        label: Country links
+        type: string
+        list: true
+        description: Paths like /country/japan (kept in sync with countries in blog.ts)
+      - name: translations
+        label: Translations
+        type: object
+        list: true
+        description: Optional alternate-language posts (independent paths)
+        fields:
+          - name: lang
+            label: Lang
+            type: string
+          - name: slug
+            label: Slug
+            type: string
+      - name: faqHeading
+        label: FAQ heading
+        type: string
+        description: Visible FAQ section title (never bare "FAQ"); required in writing workflow
+      - name: ctaHeading
+        label: CTA heading
+        type: string
+        description: Visible end-CTA title (never bare "Next Steps" / "CTA")
+      - name: nextHeading
+        label: Next heading
+        type: string
+        description: Alias for ctaHeading if preferred in copy workflow
+      - name: relatedHeading
+        label: Related heading
+        type: string
+        description: Visible related-reading title (default Keep reading / Sigue leyendo)
+      - name: related
+        label: Related slugs
+        type: string
+        list: true
+        description: Optional exact-order related post slugs (clamped 3–5)
+      - name: faq
+        label: FAQ
+        type: object
+        list: true
+        fields:
+          - name: q
+            label: Question
+            type: string
+          - name: a
+            label: Answer
+            type: text
+      - name: body
+        label: Body
+        type: rich-text

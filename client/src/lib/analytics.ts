@@ -2,6 +2,9 @@
  * GA4 Analytics Module
  * Uses gtag() for direct GA4 event sending
  * Measurement ID: G-GVS8FVW8NN
+ *
+ * Dual-fire: existing event names stay; P0 v0 aliases fire alongside
+ * (see docs/analytics-p0-map.md). Call sites should prefer wrappers below.
  */
 
 declare global {
@@ -13,26 +16,98 @@ declare global {
 
 export const PREVIEW_COUNTRIES = ["egypt", "kenya", "mexico", "samoa"];
 
+const LOGIN_SUCCESS_SESSION_KEY = "hecs_login_success_fired";
+/** In-memory guard so parallel useAuth mounts cannot double-fire before sessionStorage writes. */
+let loginSuccessFiredThisLoad = false;
+
 function trackEvent(eventName: string, params?: Record<string, unknown>) {
   if (typeof window !== "undefined" && window.gtag) {
     window.gtag("event", eventName, params);
   }
 }
 
+/** Infer page_type from pathname for v0 alias params. */
+export function getPageTypeFromPath(pathname?: string): string {
+  const p =
+    pathname ??
+    (typeof window !== "undefined" ? window.location.pathname : "");
+  if (/\/blog(\/|$)/.test(p)) return "blog";
+  if (/\/country\//.test(p)) return "country";
+  if (/\/(region|part)\//.test(p)) return "region";
+  if (/\/phrase\//.test(p)) return "phrase";
+  if (/\/(get-the-book|buy)/.test(p)) return "buy";
+  if (/\/about(\/|$)/.test(p)) return "about";
+  if (/\/community(\/|$)/.test(p)) return "community";
+  if (/\/ranking/.test(p)) return "rankings";
+  if (/\/dashboard(\/|$)/.test(p)) return "dashboard";
+  if (p === "/" || /^\/(es|zh-tw)\/?$/.test(p)) return "home";
+  return "other";
+}
+
 // ============================================================
 // KEY EVENTS (Conversions)
 // ============================================================
 
-/** User completes OAuth sign-up */
+/** User completes OAuth sign-up (legacy; prefer trackLoginSuccess for session login) */
 export function trackSignUp(method: string = "oauth") {
   trackEvent("sign_up", { method });
 }
 
-/** User clicks Amazon purchase link */
-export function trackPurchaseClick(context: string, country?: string) {
+/**
+ * Fire login_success once per browser session when auth first resolves with a user.
+ * Does not fire sign_up (first-ever user is unclear from /api/auth/me alone).
+ */
+export function trackLoginSuccess(params?: {
+  method?: string;
+  page_type?: string;
+}) {
+  if (typeof window === "undefined") return;
+  if (loginSuccessFiredThisLoad) return;
+  try {
+    if (sessionStorage.getItem(LOGIN_SUCCESS_SESSION_KEY)) {
+      loginSuccessFiredThisLoad = true;
+      return;
+    }
+    sessionStorage.setItem(LOGIN_SUCCESS_SESSION_KEY, "1");
+  } catch {
+    // sessionStorage unavailable — in-memory guard still limits to once per page load
+  }
+  loginSuccessFiredThisLoad = true;
+  trackEvent("login_success", {
+    method: params?.method ?? "github",
+    page_type: params?.page_type ?? getPageTypeFromPath(),
+  });
+}
+
+export type PurchaseClickOpts = {
+  destination?: string;
+  content_id?: string;
+  page_type?: string;
+};
+
+/** User clicks Amazon / book purchase CTA — dual-fires book_cta_click */
+export function trackPurchaseClick(
+  context: string,
+  country?: string,
+  opts?: PurchaseClickOpts,
+) {
+  const destination = opts?.destination ?? "amazon";
+  const page_type = opts?.page_type ?? getPageTypeFromPath();
+  const extra: Record<string, unknown> = {};
+  if (opts?.content_id) extra.content_id = opts.content_id;
+
   trackEvent("purchase_click", {
-    context, // e.g. "country_page", "paywall", "buy_page", "footer", "hero"
+    context,
     country,
+    ...extra,
+  });
+  trackEvent("book_cta_click", {
+    cta_id: context,
+    context,
+    destination,
+    country,
+    page_type,
+    ...extra,
   });
 }
 
@@ -45,7 +120,7 @@ export function trackBookPageView() {
 // EXPLORATION EVENTS
 // ============================================================
 
-/** User plays a phrase pronunciation */
+/** User plays a phrase pronunciation — dual-fires audio_play */
 export function trackPhrasePlay(params: {
   country: string;
   phrase_index: number;
@@ -53,9 +128,15 @@ export function trackPhrasePlay(params: {
   is_locked: boolean;
 }) {
   trackEvent("phrase_play", params);
+  trackEvent("audio_play", {
+    content_id: String(params.phrase_index),
+    country: params.country,
+    page_type: getPageTypeFromPath(),
+    phrase_index: params.phrase_index,
+  });
 }
 
-/** User views a country page */
+/** User views a country page — dual-fires country_page_view */
 export function trackCountryView(params: {
   country: string;
   part_id: number;
@@ -63,6 +144,14 @@ export function trackCountryView(params: {
   is_locked: boolean;
 }) {
   trackEvent("country_view", params);
+  trackEvent("country_page_view", {
+    country: params.country,
+    page_path:
+      typeof window !== "undefined" ? window.location.pathname : undefined,
+    part_id: params.part_id,
+    is_preview_country: params.is_preview_country,
+    is_locked: params.is_locked,
+  });
 }
 
 /** User views a region page */
@@ -79,6 +168,26 @@ export function trackCountryScrollDepth(country: string, depthPercent: number) {
   trackEvent("country_scroll_depth", {
     country,
     depth_percent: depthPercent,
+  });
+}
+
+/**
+ * Blog post reached read threshold (30s on page OR 50% scroll).
+ * Call once per post view from BlogPostPage.
+ */
+export function trackBlogRead(params: {
+  post_id: string;
+  category?: string;
+  country?: string;
+  read_seconds: number;
+}) {
+  trackEvent("blog_read", {
+    post_id: params.post_id,
+    slug: params.post_id,
+    category: params.category,
+    country: params.country,
+    read_seconds: params.read_seconds,
+    page_type: "blog",
   });
 }
 
@@ -125,12 +234,18 @@ export function trackRecommendationClick(params: {
 // PAYWALL EVENTS
 // ============================================================
 
-/** User sees locked content */
+/** User sees locked content — dual-fires gray_card_view (no IntersectionObserver) */
 export function trackPaywallView(params: {
   country?: string;
   context: "country_page" | "phrase_card" | "region_page";
 }) {
   trackEvent("paywall_view", params);
+  trackEvent("gray_card_view", {
+    country: params.country,
+    page_type: getPageTypeFromPath(),
+    card_type: params.context,
+    context: params.context,
+  });
 }
 
 /** User clicks Sign In on paywall */
@@ -141,13 +256,21 @@ export function trackPaywallLoginClick(params: {
   trackEvent("paywall_login_click", params);
 }
 
-/** User clicks Get the Book on paywall */
+/** User clicks Get the Book on paywall — dual-fires book_cta_click */
 export function trackPaywallBookClick(params: {
   country?: string;
   context: "country_page" | "phrase_card" | "region_page";
   phrases_previewed?: number;
 }) {
   trackEvent("paywall_book_click", params);
+  trackEvent("book_cta_click", {
+    cta_id: params.context,
+    context: params.context,
+    destination: "amazon",
+    country: params.country,
+    page_type: getPageTypeFromPath(),
+    phrases_previewed: params.phrases_previewed,
+  });
 }
 
 /** User enters a preview country from a locked region */

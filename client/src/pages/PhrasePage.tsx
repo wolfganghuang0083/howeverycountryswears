@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import { trackPurchaseClick } from "@/lib/analytics";
 import PhraseCard from "@/components/PhraseCard";
 import { getPhraseById, getAllCountries, AMAZON_LINK, type Card as CardType, type Country } from "@/lib/data";
 import { useParams, Link } from "wouter";
@@ -225,6 +226,7 @@ export default function PhrasePage() {
               href={AMAZON_LINK}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackPurchaseClick("phrase_page_header")}
               className="flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-4 py-2 rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
             >
               <BookOpen size={14} />
@@ -415,6 +417,7 @@ export default function PhrasePage() {
             href={AMAZON_LINK}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackPurchaseClick("phrase_page_footer")}
             className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
           >
             <BookOpen size={18} />
