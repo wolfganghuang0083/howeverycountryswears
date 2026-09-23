@@ -19,6 +19,7 @@ import { ArrowLeft, BookOpen, Compass, List } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useLocale } from "@/contexts/LocaleContext";
 import NotFound from "@/pages/NotFound";
+import BlogPhraseEmbeds from "@/components/BlogPhraseEmbeds";
 import type { Locale } from "@/lib/i18n";
 
 const SITE = "https://howeverycountryswears.com";
@@ -331,6 +332,8 @@ export default function BlogPostPage() {
               [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
             dangerouslySetInnerHTML={{ __html: html }}
           />
+
+          <BlogPhraseEmbeds embeds={post.phraseEmbeds} lang={post.lang} />
 
           {post.faq.length > 0 ? (
             <section className="mt-12 pt-8 border-t-2 border-[#1a1a1a]">

@@ -4,6 +4,16 @@ import { buildLocalePath, type Locale } from "@/lib/i18n";
 export type BlogFaq = { q: string; a: string };
 export type BlogTranslation = { lang: string; slug: string };
 
+/** Flat phrase embed after normalize (one card each). Cap ≤3. */
+export type BlogPhraseEmbed = { country: string; number: number };
+
+/** Raw frontmatter shapes before normalize. */
+export type BlogPhraseEmbedRaw =
+  | { country: string; numbers: number[] }
+  | { country: string; number: number };
+
+export const MAX_BLOG_PHRASE_EMBEDS = 3;
+
 export type BlogPost = {
   slug: string;
   title: string;
@@ -25,6 +35,8 @@ export type BlogPost = {
   relatedHeading?: string;
   /** Optional exact-order related slug override (clamped 3–5). */
   related?: string[];
+  /** Frontmatter-driven PhraseCard embeds (≤3), rendered after body. */
+  phraseEmbeds: BlogPhraseEmbed[];
   html: string;
 };
 
@@ -51,6 +63,35 @@ function deriveCountryLinks(countries: string[], countryLinks?: string[]): strin
 function asStringList(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((x) => String(x).trim()).filter(Boolean);
+}
+
+
+/** Normalize phraseEmbeds: accept [{country, numbers}] or [{country, number}]; cap ≤3. */
+export function normalizePhraseEmbeds(raw: unknown): BlogPhraseEmbed[] {
+  if (!Array.isArray(raw)) return [];
+  const out: BlogPhraseEmbed[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const obj = item as Record<string, unknown>;
+    const country = String(obj.country || "")
+      .replace(/^\/country\//, "")
+      .trim();
+    if (!country) continue;
+    if (Array.isArray(obj.numbers)) {
+      for (const n of obj.numbers) {
+        const num = Number(n);
+        if (!Number.isFinite(num) || num < 1) continue;
+        out.push({ country, number: Math.floor(num) });
+        if (out.length >= MAX_BLOG_PHRASE_EMBEDS) return out;
+      }
+    } else if (obj.number != null && obj.number !== "") {
+      const num = Number(obj.number);
+      if (!Number.isFinite(num) || num < 1) continue;
+      out.push({ country, number: Math.floor(num) });
+      if (out.length >= MAX_BLOG_PHRASE_EMBEDS) return out;
+    }
+  }
+  return out.slice(0, MAX_BLOG_PHRASE_EMBEDS);
 }
 
 function normalizePost(raw: Record<string, unknown>): BlogPost {
@@ -87,6 +128,7 @@ function normalizePost(raw: Record<string, unknown>): BlogPost {
     nextHeading: nextHeading || undefined,
     relatedHeading: relatedHeading || undefined,
     related: asStringList(raw.related),
+    phraseEmbeds: normalizePhraseEmbeds(raw.phraseEmbeds),
     html: String(raw.html || ""),
   };
 }

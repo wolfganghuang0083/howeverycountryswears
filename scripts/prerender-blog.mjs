@@ -126,6 +126,54 @@ function parseFrontmatter(raw) {
       }
       continue;
     }
+    if (line.match(/^phraseEmbeds:\s*$/)) {
+      data.phraseEmbeds = [];
+      i++;
+      while (i < lines.length) {
+        const cm = lines[i].match(/^\s*-\s*country:\s*(.*)$/);
+        if (!cm) break;
+        const country = unquote(cm[1].trim()).replace(/^\/country\//, "");
+        i++;
+        let numbers = [];
+        let number = null;
+        while (i < lines.length) {
+          const numsInline = lines[i].match(/^\s+numbers:\s*\[([^\]]*)\]\s*$/);
+          const numsBlock = lines[i].match(/^\s+numbers:\s*$/);
+          const numOne = lines[i].match(/^\s+number:\s*(.*)$/);
+          if (numsInline) {
+            numbers = numsInline[1]
+              .split(",")
+              .map((s) => parseInt(s.trim(), 10))
+              .filter((n) => Number.isFinite(n));
+            i++;
+            continue;
+          }
+          if (numsBlock) {
+            i++;
+            while (i < lines.length) {
+              const lm = lines[i].match(/^\s+-\s+(\d+)\s*$/);
+              if (!lm) break;
+              numbers.push(parseInt(lm[1], 10));
+              i++;
+            }
+            continue;
+          }
+          if (numOne) {
+            const n = parseInt(unquote(numOne[1].trim()), 10);
+            if (Number.isFinite(n)) number = n;
+            i++;
+            continue;
+          }
+          break;
+        }
+        if (numbers.length) {
+          data.phraseEmbeds.push({ country, numbers });
+        } else if (number != null) {
+          data.phraseEmbeds.push({ country, number });
+        }
+      }
+      continue;
+    }
     if (line.match(/^translations:\s*$/)) {
       data.translations = [];
       i++;
@@ -351,6 +399,7 @@ function loadPosts() {
         nextHeading: data.nextHeading || "",
         relatedHeading: data.relatedHeading || "",
         related: Array.isArray(data.related) ? data.related : [],
+        phraseEmbeds: Array.isArray(data.phraseEmbeds) ? data.phraseEmbeds : [],
         html,
         toc: extractTocFromHtml(html),
       });
@@ -414,6 +463,10 @@ function writeManifest(posts) {
     nextHeading: p.nextHeading || undefined,
     relatedHeading: p.relatedHeading || undefined,
     related: Array.isArray(p.related) && p.related.length ? p.related : undefined,
+    phraseEmbeds:
+      Array.isArray(p.phraseEmbeds) && p.phraseEmbeds.length
+        ? p.phraseEmbeds
+        : undefined,
     html: p.html,
   }));
   fs.writeFileSync(MANIFEST, JSON.stringify(payload, null, 2) + "\n", "utf8");
