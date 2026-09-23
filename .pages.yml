@@ -12,7 +12,7 @@ content:
     extension: mdx
     filename: "{primary}.mdx"
     view:
-      fields: [title, date, pill, draft]
+      fields: [title, date, pill, draft, lang]
       primary: title
       default:
         sort: date
@@ -50,11 +50,49 @@ content:
         type: boolean
         default: true
         required: true
+      - name: countries
+        label: Countries
+        type: string
+        list: true
+        description: Optional country ids e.g. spain, mexico (drives tags + /blog?country=)
       - name: countryLinks
         label: Country links
         type: string
         list: true
-        description: Paths like /country/japan
+        description: Paths like /country/japan (kept in sync with countries in blog.ts)
+      - name: translations
+        label: Translations
+        type: object
+        list: true
+        description: Optional alternate-language posts (independent paths)
+        fields:
+          - name: lang
+            label: Lang
+            type: string
+          - name: slug
+            label: Slug
+            type: string
+      - name: faqHeading
+        label: FAQ heading
+        type: string
+        description: Visible FAQ section title (never bare "FAQ"); required in writing workflow
+      - name: ctaHeading
+        label: CTA heading
+        type: string
+        description: Visible end-CTA title (never bare "Next Steps" / "CTA")
+      - name: nextHeading
+        label: Next heading
+        type: string
+        description: Alias for ctaHeading if preferred in copy workflow
+      - name: relatedHeading
+        label: Related heading
+        type: string
+        description: Visible related-reading title (default Keep reading / Sigue leyendo)
+      - name: related
+        label: Related slugs
+        type: string
+        list: true
+        description: Optional exact-order related post slugs (clamped 3–5)
       - name: faq
         label: FAQ
         type: object

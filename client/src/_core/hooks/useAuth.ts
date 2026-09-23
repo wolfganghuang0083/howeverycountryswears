@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { trackLoginSuccess } from "@/lib/analytics";
 
 export interface AuthUser {
   id: number;
@@ -18,6 +19,12 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+function inferLoginMethod(user: AuthUser | null): string {
+  if (!user?.openId) return "oauth";
+  if (user.openId.startsWith("github_")) return "github";
+  return "oauth";
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -35,12 +42,17 @@ export function useAuth() {
         if (!res.ok) throw new Error("Failed to fetch user");
         const data = await res.json();
         if (!cancelled) {
+          const user = data.user as AuthUser | null;
           setState({
-            user: data.user,
+            user,
             loading: false,
             error: null,
-            isAuthenticated: !!data.user,
+            isAuthenticated: !!user,
           });
+          // Once per browser session when auth first resolves with a user
+          if (user) {
+            trackLoginSuccess({ method: inferLoginMethod(user) });
+          }
         }
       } catch (err: any) {
         if (!cancelled) {

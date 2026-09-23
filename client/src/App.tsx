@@ -64,6 +64,20 @@ function Router() {
         <Route path="/zh-tw/dashboard" component={DashboardPage} />
         <Route path="/zh-tw/get-the-book" component={BuyBookPage} />
 
+        {/* Spanish (es) routes — blog pilot + minimal site chrome */}
+        <Route path="/es" component={Home} />
+        <Route path="/es/country/:slug" component={CountryPage} />
+        <Route path="/es/region/:slug" component={RegionPage} />
+        <Route path="/es/phrase/:id" component={PhrasePage} />
+        <Route path="/es/rankings" component={RankingsPage} />
+        <Route path="/es/rankings/:category" component={RankingsPage} />
+        <Route path="/es/about" component={AboutPage} />
+        <Route path="/es/blog" component={BlogPage} />
+        <Route path="/es/blog/:slug" component={BlogPostPage} />
+        <Route path="/es/community" component={CommunityPage} />
+        <Route path="/es/dashboard" component={DashboardPage} />
+        <Route path="/es/get-the-book" component={BuyBookPage} />
+
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

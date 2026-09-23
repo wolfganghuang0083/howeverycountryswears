@@ -26,6 +26,7 @@ import {
   Flag,
 } from "lucide-react";
 import { AMAZON_LINK } from "@/lib/data";
+import { trackPurchaseClick } from "@/lib/analytics";
 import { Link } from "wouter";
 
 // ========== STAT CARD ==========
@@ -450,6 +451,7 @@ export default function DashboardPage() {
                   href={AMAZON_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackPurchaseClick("dashboard")}
                   className="px-4 py-2 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
                 >
                   Get the Book

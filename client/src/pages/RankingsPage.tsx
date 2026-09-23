@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import { trackPurchaseClick } from "@/lib/analytics";
 import PhraseCard from "@/components/PhraseCard";
 import { getAllCountries, getRiskLevel, AMAZON_LINK, type Country, type Card as CardType } from "@/lib/data";
 import { useParams, Link } from "wouter";
@@ -184,6 +185,7 @@ export default function RankingsPage() {
             href={AMAZON_LINK}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackPurchaseClick("rankings_footer")}
             className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
           >
             <BookOpen size={18} />
