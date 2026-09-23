@@ -3,7 +3,7 @@
  * Handoff: kdp-s1/traffic/blog-drafts/2026-09-24_HECS_Anglo_related_on_hot_country_pages.md
  *
  * IA: max 2 related blog cards + 1 Book CTA. Do NOT link Wave A #25/#27/#29/#30.
- * Only `status: "live"` hubs render; `pending` = queued until country page is sitemap-confirmed.
+ * Only `status: "live"` hubs render; `pending` = queued until sitemap-confirmed.
  */
 
 export type CountryHubRelatedCardId = "08" | "09" | "07";
@@ -79,8 +79,8 @@ export type CountryHubRelatedConfig = {
 };
 
 /**
- * Hang now (sitemap live): fiji, new-zealand.
- * Queue (pending — do not render until sitemap-confirmed): exotic pack #08+#09+Book.
+ * Hang now (live): fiji, new-zealand, uzbekistan, afghanistan.
+ * Queue (pending): tunisia, samoa, algeria — exotic pack when sitemap-confirmed.
  */
 export const COUNTRY_HUB_RELATED: Record<string, CountryHubRelatedConfig> = {
   fiji: {
@@ -95,23 +95,23 @@ export const COUNTRY_HUB_RELATED: Record<string, CountryHubRelatedConfig> = {
       "Related reading — how to use this kiwi map without Friendly Fire",
     relatedCardIds: ["08", "07"],
   },
-  // --- Queue: same exotic pack when these country pages ship (sitemap) ---
+  uzbekistan: {
+    status: "live",
+    relatedHeading: "Related reading for this country map",
+    relatedCardIds: ["08", "09"],
+  },
+  afghanistan: {
+    status: "live",
+    relatedHeading: "Related reading for this country map",
+    relatedCardIds: ["08", "09"],
+  },
+  // --- Queue (pending): tunisia / samoa / algeria — exotic pack when sitemap-confirmed ---
   tunisia: {
     status: "pending",
     relatedHeading: "Related reading for this country map",
     relatedCardIds: ["08", "09"],
   },
-  uzbekistan: {
-    status: "pending",
-    relatedHeading: "Related reading for this country map",
-    relatedCardIds: ["08", "09"],
-  },
   samoa: {
-    status: "pending",
-    relatedHeading: "Related reading for this country map",
-    relatedCardIds: ["08", "09"],
-  },
-  afghanistan: {
     status: "pending",
     relatedHeading: "Related reading for this country map",
     relatedCardIds: ["08", "09"],
