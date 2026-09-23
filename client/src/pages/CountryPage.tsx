@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
+import CountryHubRelated from "@/components/CountryHubRelated";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -536,6 +537,9 @@ export default function CountryPage() {
           </div>
         </div>
       </section>
+
+      {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
+      <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
 
       {/* Navigation */}
       <section className="py-8 border-t border-gray-200">
