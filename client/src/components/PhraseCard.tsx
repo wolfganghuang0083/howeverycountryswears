@@ -1,7 +1,8 @@
 import { Card, getRiskColor, getRiskLevel, type Country, SITE_DOMAIN, AMAZON_LINK, isLockedContent } from "@/lib/data";
 import { playPronunciation, shareToTwitter, shareToFacebook, shareToWhatsApp } from "@/lib/pronunciation";
 import { Volume2, Lock, BookOpen, LogIn, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
@@ -47,6 +48,21 @@ export default function PhraseCard({
   const [showPaywall, setShowPaywall] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(initialUserRating || 0);
   const [hoverRating, setHoverRating] = useState(0);
+
+  useEffect(() => {
+    if (!showPaywall) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowPaywall(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [showPaywall]);
+
   const riskColor = getRiskColor(card.risk);
   const { locale, t, localePath } = useLocale();
   const isZhTw = locale === "zh-tw";
@@ -155,46 +171,99 @@ export default function PhraseCard({
     </button>
   );
 
+  const paywallModal =
+    showPaywall && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`paywall-title-${anchorId}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowPaywall(false);
+            }}
+          >
+            <div
+              className="bg-white rounded-xl border-3 border-[#FFE500] shadow-[4px_4px_0px_#1a1a1a] p-6 max-w-sm w-full text-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#FFF8E1] flex items-center justify-center border-2 border-[#FFE500]">
+                <Lock size={28} className="text-[#FF1493]" />
+              </div>
+              <h4 id={`paywall-title-${anchorId}`} className="font-display text-xl text-[#1a1a1a] mb-2">
+                {paywallContent.title}
+              </h4>
+              <p className="text-sm text-[#666] mb-4">{paywallContent.desc}</p>
+              <div className="space-y-2">
+                {paywallContent.showLogin && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      trackPaywallLoginClick({ country: country.slug, context: "phrase_card" });
+                      window.location.href = getLoginUrl(
+                        window.location.pathname + window.location.search + "#" + anchorId,
+                      );
+                    }}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                  >
+                    <LogIn size={16} /> {isZhTw ? "免費登入" : "Sign In Free"}
+                  </button>
+                )}
+                {paywallContent.showBookCTA && (
+                  <>
+                    {isAuthenticated && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          window.location.href = localePath("/community");
+                        }}
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                      >
+                        <BookOpen size={16} /> {isZhTw ? "輸入書籍代碼" : "Enter Book Code"}
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        trackPaywallBookClick({ country: country.slug, context: "phrase_card" });
+                        window.open(AMAZON_LINK, "_blank");
+                      }}
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
+                    >
+                      <BookOpen size={16} /> {isZhTw ? "在 Amazon 購買書籍" : "Get the Book on Amazon"}
+                    </button>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setShowPaywall(false);
+                }}
+                className="mt-3 text-xs text-[#999] hover:text-[#666] transition-colors"
+              >
+                {isZhTw ? "關閉" : "Close"}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   const cardContent = (
     <div
       id={anchorId}
       className={`bg-white rounded-lg border-2 border-[#1a1a1a] shadow-[4px_4px_0px_#1a1a1a] overflow-hidden transition-all hover:shadow-[2px_2px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] relative ${linkToDetail ? "cursor-pointer" : ""}`}
     >
-      {/* Paywall overlay */}
-      {showPaywall && (
-        <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 rounded-lg" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-          <div className="bg-white rounded-xl border-3 border-[#FFE500] shadow-[4px_4px_0px_#1a1a1a] p-6 max-w-sm w-full text-center">
-            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#FFF8E1] flex items-center justify-center border-2 border-[#FFE500]">
-              <Lock size={28} className="text-[#FF1493]" />
-            </div>
-            <h4 className="font-display text-xl text-[#1a1a1a] mb-2">{paywallContent.title}</h4>
-            <p className="text-sm text-[#666] mb-4">{paywallContent.desc}</p>
-            <div className="space-y-2">
-              {paywallContent.showLogin && (
-                <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); trackPaywallLoginClick({ country: country.slug, context: "phrase_card" }); window.location.href = getLoginUrl(window.location.pathname + window.location.search + '#' + anchorId); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
-                  <LogIn size={16} /> {isZhTw ? "免費登入" : "Sign In Free"}
-                </button>
-              )}
-              {paywallContent.showBookCTA && (
-                <>
-                  {isAuthenticated && (
-                    <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.location.href = localePath('/community'); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
-                      <BookOpen size={16} /> {isZhTw ? "輸入書籍代碼" : "Enter Book Code"}
-                    </button>
-                  )}
-                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); trackPaywallBookClick({ country: country.slug, context: "phrase_card" }); window.open(AMAZON_LINK, '_blank'); }} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline">
-                    <BookOpen size={16} /> {isZhTw ? "在 Amazon 購買書籍" : "Get the Book on Amazon"}
-                  </button>
-                </>
-              )}
-            </div>
-            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowPaywall(false); }} className="mt-3 text-xs text-[#999] hover:text-[#666] transition-colors">
-              {isZhTw ? "關閉" : "Close"}
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="flex">
         <div className="w-2 shrink-0" style={{ backgroundColor: riskColor }} />
         <div className="flex-1 p-4">
@@ -330,14 +399,22 @@ export default function PhraseCard({
     </div>
   );
 
-  // If linkToDetail, wrap in a Link
+  // If linkToDetail, wrap in a Link — portal modal stays outside Link
   if (linkToDetail) {
     return (
-      <Link href={detailPath} className="no-underline block">
-        {cardContent}
-      </Link>
+      <>
+        <Link href={detailPath} className="no-underline block">
+          {cardContent}
+        </Link>
+        {paywallModal}
+      </>
     );
   }
 
-  return cardContent;
+  return (
+    <>
+      {cardContent}
+      {paywallModal}
+    </>
+  );
 }

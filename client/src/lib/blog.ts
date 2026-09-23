@@ -386,6 +386,13 @@ export function getCtaHeading(post: BlogPost): string {
 /** Visible related-reading heading — never bare "Related". */
 export function getRelatedHeading(post: BlogPost): string {
   const custom = (post.relatedHeading || "").trim();
-  if (custom && !/^related$/i.test(custom)) return custom;
-  return post.lang === "es" ? "Sigue leyendo" : "Keep reading";
+  if (
+    custom &&
+    !/^(related|keep reading|sigue leyendo)$/i.test(custom)
+  ) {
+    return custom;
+  }
+  return post.lang === "es"
+    ? "También te pueden interesar estos artículos"
+    : "You may be interested in these articles";
 }
