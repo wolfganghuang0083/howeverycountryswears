@@ -1,4 +1,4 @@
-import { pgTable, serial, text, varchar, integer, boolean, timestamp, pgEnum, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, varchar, integer, boolean, timestamp, pgEnum, uniqueIndex, index } from "drizzle-orm/pg-core";
 
 // ========== ENUMS ==========
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -166,3 +166,19 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
 });
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
+
+// ========== PAGE HITS (HTML request logging, human vs bot; no IP) ==========
+export const pageHits = pgTable(
+  "page_hits",
+  {
+    id: serial("id").primaryKey(),
+    ts: timestamp("ts", { withTimezone: true }).defaultNow().notNull(),
+    path: text("path").notNull(),
+    userAgent: text("user_agent"),
+    isBot: boolean("is_bot").default(false).notNull(),
+    botName: text("bot_name"),
+    country: text("country"),
+    referer: text("referer"),
+  },
+  (t) => [index("page_hits_ts_idx").on(t.ts)],
+);
