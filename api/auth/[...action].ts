@@ -476,3 +476,45 @@ function handleLogout(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Set-Cookie", cookie);
   return res.status(200).json({ success: true });
 }
+
+async function handleNewsletterStatus(req: VercelRequest, res: VercelResponse) {
+  const cookies = parse(req.headers.cookie || "");
+  const token = cookies[COOKIE_NAME];
+  if (!token) return res.status(200).json({ subscribed: false, authenticated: false });
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const email = typeof payload.email === "string" ? payload.email : "";
+    if (!email) return res.status(200).json({ subscribed: false, authenticated: true });
+    const row = await getNewsletterByEmail(email);
+    const subscribed = Boolean(
+      row && row.marketingConsent && row.status !== "unsubscribed",
+    );
+    return res.status(200).json({ subscribed, authenticated: true, status: row?.status ?? null });
+  } catch {
+    return res.status(200).json({ subscribed: false, authenticated: false });
+  }
+}
+
+async function handleNewsletterOptIn(req: VercelRequest, res: VercelResponse) {
+  const cookies = parse(req.headers.cookie || "");
+  const token = cookies[COOKIE_NAME];
+  if (!token) return res.status(401).json({ ok: false, error: "Not signed in" });
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
+    if (!email) return res.status(400).json({ ok: false, error: "No email on account" });
+    await upsertNewsletterSubscriber({
+      email,
+      locale: "en",
+      sourcePath: "/",
+      marketingConsent: true,
+    });
+    const result = await confirmOptInByEmail(email);
+    if (!result.ok) {
+      return res.status(200).json({ ok: false, reason: result.reason });
+    }
+    return res.status(200).json({ ok: true, status: "confirmed" });
+  } catch {
+    return res.status(401).json({ ok: false, error: "Invalid session" });
+  }
+}
