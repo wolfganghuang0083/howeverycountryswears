@@ -1,4 +1,6 @@
 import Layout from "@/components/Layout";
+import NewsletterSubscribe from "@/components/NewsletterSubscribe";
+import { useLocale } from "@/contexts/LocaleContext";
 import { AMAZON_LINK } from "@/lib/data";
 import { trackPurchaseClick } from "@/lib/analytics";
 import { BookOpen, Mail, Globe, Users } from "lucide-react";
@@ -9,6 +11,8 @@ const ABOUT_HERO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663213089248/Dxi
 const BOOK_COVER = "https://d2xsxph8kpxj0f.cloudfront.net/310519663213089248/DxiapP3ZDvXs6SvszhZhBd/Swear-Book-Cover-PopArt-V2-eBook_52a815e1.webp";
 
 export default function AboutPage() {
+  const { locale, localePath } = useLocale();
+  const isZhTw = locale === "zh-tw";
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -178,6 +182,12 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      <NewsletterSubscribe
+        sourcePath={localePath("/about")}
+        locale={locale}
+        enabled={!isZhTw}
+      />
 
       {/* Contact */}
       <section className="py-16 md:py-24 bg-[#1a1a1a]">

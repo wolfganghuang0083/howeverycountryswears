@@ -341,3 +341,35 @@ export function trackFirstShare() {
     trackEvent("first_share");
   }
 }
+
+// ============================================================
+// NEWSLETTER / CRM PREVIEW
+// ============================================================
+
+/**
+ * Fire when user submits the newsletter subscribe form.
+ * Event name locked: newsletter_subscribe_submit.
+ *
+ * RESERVED (do NOT fire yet): newsletter_confirm — confirmation-mail
+ * flow is not live in this Preview wave; lock the name here as a stub.
+ */
+export function trackNewsletterSubscribeSubmit(params: {
+  country?: string;
+  locale?: string;
+  source_path: string;
+}) {
+  trackEvent("newsletter_subscribe_submit", {
+    country: params.country,
+    locale: params.locale,
+    source_path: params.source_path,
+  });
+}
+
+/** @deprecated stub — reserved event name; not fired until confirm mail ships */
+export function trackNewsletterConfirm(_params?: {
+  country?: string;
+  locale?: string;
+  source_path?: string;
+}) {
+  // newsletter_confirm — intentionally not fired in CRM Preview
+}

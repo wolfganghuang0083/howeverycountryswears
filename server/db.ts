@@ -4,6 +4,7 @@ import { eq, and, desc, sql, count, gte } from "drizzle-orm";
 import {
   users, submissions, votes, bookCodes,
   ratings, userBadges, countryAmbassadors, pointsHistory, reviews,
+  newsletterSubscribers,
   type InsertUser, type InsertSubmission, type InsertReview
 } from "../drizzle/schema";
 
@@ -357,4 +358,39 @@ export async function getReviewSummaryForCountry(countrySlug: string) {
     .where(eq(reviews.countrySlug, countrySlug))
     .groupBy(reviews.cardNumber);
   return results;
+}
+
+// ========== NEWSLETTER (CRM Preview — no email send) ==========
+export async function upsertNewsletterSubscriber(input: {
+  email: string;
+  country?: string | null;
+  locale: string;
+  sourcePath: string;
+}): Promise<{ ok: true; status: "pending" | "confirmed" | "unsubscribed" }> {
+  const db = getDb();
+  const email = input.email.trim().toLowerCase();
+  const existing = await db.select().from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, email))
+    .limit(1);
+
+  if (existing.length > 0) {
+    const nextStatus = existing[0].status === "confirmed" ? "confirmed" : "pending";
+    await db.update(newsletterSubscribers).set({
+      country: input.country ?? existing[0].country,
+      locale: input.locale,
+      sourcePath: input.sourcePath,
+      status: nextStatus,
+      updatedAt: new Date(),
+    }).where(eq(newsletterSubscribers.id, existing[0].id));
+    return { ok: true, status: nextStatus };
+  }
+
+  const [row] = await db.insert(newsletterSubscribers).values({
+    email,
+    country: input.country ?? null,
+    locale: input.locale,
+    sourcePath: input.sourcePath,
+    status: "pending",
+  }).returning({ status: newsletterSubscribers.status });
+  return { ok: true, status: row.status };
 }

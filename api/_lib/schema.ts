@@ -148,3 +148,18 @@ export const reviews = pgTable("reviews", {
 });
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = typeof reviews.$inferInsert;
+
+// ========== NEWSLETTER SUBSCRIBERS (CRM Preview) ==========
+export const newsletterStatusEnum = pgEnum("newsletter_status", ["pending", "confirmed", "unsubscribed"]);
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  country: varchar("country", { length: 100 }),
+  locale: varchar("locale", { length: 16 }).default("en").notNull(),
+  sourcePath: varchar("source_path", { length: 512 }).notNull(),
+  status: newsletterStatusEnum("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;

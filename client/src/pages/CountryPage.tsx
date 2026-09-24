@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
+import NewsletterSubscribe from "@/components/NewsletterSubscribe";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -540,6 +541,13 @@ export default function CountryPage() {
 
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
       <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
+
+      <NewsletterSubscribe
+        sourcePath={localePath(`/country/${country.slug}`)}
+        country={country.slug}
+        locale={locale}
+        enabled={!isZhTw}
+      />
 
       {/* Navigation */}
       <section className="py-8 border-t border-gray-200">

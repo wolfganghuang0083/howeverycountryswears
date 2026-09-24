@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import NewsletterSubscribe from "@/components/NewsletterSubscribe";
 import {
   getBlogIndexPath,
   getBlogPost,
@@ -408,6 +409,12 @@ export default function BlogPostPage() {
 
           <BlogCta post={post} localePath={localePath} />
           <BlogRelated post={post} />
+          <NewsletterSubscribe
+            sourcePath={getBlogPostPath(post)}
+            country={post.countries?.[0]}
+            locale={post.lang || locale}
+            enabled={locale !== "zh-tw" && (post.lang || locale) !== "zh-tw"}
+          />
         </div>
       </article>
     </Layout>

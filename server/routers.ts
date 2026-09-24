@@ -12,6 +12,7 @@ import {
   getCountryAmbassadors, getAmbassadorForCountry,
   incrementCountriesVisited, incrementPhrasesListened,
   createReview, getReviewsForCard, getReviewSummaryForCountry,
+  upsertNewsletterSubscriber,
 } from "./db";
 
 export const appRouter = router({
@@ -255,6 +256,25 @@ export const appRouter = router({
       .input(z.object({ countrySlug: z.string() }))
       .query(async ({ input }) => {
         return getReviewSummaryForCountry(input.countrySlug);
+      }),
+  }),
+
+  // ========== NEWSLETTER (CRM Preview — no email send) ==========
+  newsletter: router({
+    subscribe: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        country: z.string().max(100).optional(),
+        locale: z.string().max(16).default("en"),
+        sourcePath: z.string().min(1).max(512),
+      }))
+      .mutation(async ({ input }) => {
+        return upsertNewsletterSubscriber({
+          email: input.email,
+          country: input.country,
+          locale: input.locale || "en",
+          sourcePath: input.sourcePath,
+        });
       }),
   }),
 });
