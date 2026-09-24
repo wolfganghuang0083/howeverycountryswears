@@ -30,7 +30,7 @@ function wrapHtml(title: string, body: string): string {
   <p style="font-size:1.4rem;font-weight:800;color:#FF1493;margin:0 0 1rem">@#$%!</p>
   ${body}
   <hr style="border:none;border-top:1px solid #ddd;margin:1.5rem 0"/>
-  <p style="font-size:0.85rem;color:#555;margin:0">HECS<br/>
+  <p style="font-size:0.85rem;color:#555;margin:0">How Every Country Swears<br/>
   <a href="https://howeverycountryswears.com" style="color:#FF1493;text-decoration:none">howeverycountryswears.com</a></p>
 </body></html>`;
 }
@@ -53,7 +53,7 @@ export function renderMagicLinkWelcomeEmail(opts: {
     <p>After that, try a country page:</p>
     ${countryListHtml(opts.origin)}
     <p style="font-size:0.85rem;color:#666">If you didn’t ask for this, ignore this email. The link expires in about 30 minutes.</p>
-    <p style="margin-top:1.25rem">— HECS<br/>
+    <p style="margin-top:1.25rem">— How Every Country Swears<br/>
     <a href="https://howeverycountryswears.com" style="color:#FF1493;text-decoration:none">howeverycountryswears.com</a></p>
   `,
   );
@@ -71,7 +71,7 @@ export function renderMagicLinkWelcomeEmail(opts: {
     "",
     "If you didn’t ask for this, ignore this email. The link expires in about 30 minutes.",
     "",
-    "— HECS",
+    "— How Every Country Swears",
     "howeverycountryswears.com",
   ].join("\n");
   return { subject, html, text };
@@ -92,7 +92,7 @@ export function renderGoogleWelcomeEmail(opts: {
     <p>Your Google sign-in worked. Pronunciations are unlocked on How Every Country Swears.</p>
     <p>Start with a country page:</p>
     ${countryListHtml(opts.origin)}
-    <p style="margin-top:1.25rem">See you on the map,<br/>HECS<br/>
+    <p style="margin-top:1.25rem">See you on the map,<br/>How Every Country Swears<br/>
     <a href="https://howeverycountryswears.com" style="color:#FF1493;text-decoration:none">howeverycountryswears.com</a></p>
   `,
   );
@@ -105,7 +105,7 @@ export function renderGoogleWelcomeEmail(opts: {
     countryListText(opts.origin),
     "",
     "See you on the map,",
-    "HECS",
+    "How Every Country Swears",
     "howeverycountryswears.com",
   ].join("\n");
   return { subject, html, text };
