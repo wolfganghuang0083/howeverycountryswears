@@ -147,7 +147,7 @@ export default function PhraseCard({
       surface="graycard"
       ctaId="graycard_join"
       country={country.slug}
-      headline="Unlock more phrases — join free"
+      headline="Get one swear word a week — free"
       microcopy="Free email membership. No payment. Unsubscribe anytime."
       enabled={!isZhTw}
       locale={locale}
