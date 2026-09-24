@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "./trpc";
 import {
@@ -13,6 +14,7 @@ import {
   incrementCountriesVisited, incrementPhrasesListened,
   createReview, getReviewsForCard, getReviewSummaryForCountry,
   upsertNewsletterSubscriber,
+  listNewsletterSubscribers, countNewsletterSubscribers, setNewsletterUnsubscribed,
 } from "./db";
 
 export const appRouter = router({
@@ -275,6 +277,67 @@ export const appRouter = router({
           locale: input.locale || "en",
           sourcePath: input.sourcePath,
         });
+      }),
+
+    list: adminProcedure
+      .input(z.object({
+        status: z.enum(["pending", "confirmed", "unsubscribed"]).optional(),
+        limit: z.number().int().min(1).max(200).default(50),
+        offset: z.number().int().min(0).default(0),
+      }))
+      .query(async ({ input }) => {
+        const [items, total] = await Promise.all([
+          listNewsletterSubscribers({
+            status: input.status,
+            limit: input.limit,
+            offset: input.offset,
+          }),
+          countNewsletterSubscribers({ status: input.status }),
+        ]);
+        return { items, total };
+      }),
+
+    exportCsv: adminProcedure
+      .input(z.object({
+        status: z.enum(["pending", "confirmed", "unsubscribed"]).optional(),
+      }).default({}))
+      .query(async ({ input }) => {
+        const status = input.status;
+        const total = await countNewsletterSubscribers({ status });
+        const items = await listNewsletterSubscribers({
+          status,
+          limit: Math.min(total || 200, 200),
+          offset: 0,
+        });
+        const escape = (v: string | null | undefined) => {
+          const s = v ?? "";
+          if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+          return s;
+        };
+        const header = "id,email,country,locale,source_path,status,created_at";
+        const rows = items.map((r) => [
+          String(r.id),
+          escape(r.email),
+          escape(r.country),
+          escape(r.locale),
+          escape(r.sourcePath),
+          escape(r.status),
+          escape(r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt ?? "")),
+        ].join(","));
+        return { csv: [header, ...rows].join("\n") };
+      }),
+
+    unsubscribe: adminProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        const ok = await setNewsletterUnsubscribed(input.id);
+        if (!ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Subscriber not found or not pending",
+          });
+        }
+        return { success: true };
       }),
   }),
 });

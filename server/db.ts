@@ -394,3 +394,65 @@ export async function upsertNewsletterSubscriber(input: {
   }).returning({ status: newsletterSubscribers.status });
   return { ok: true, status: row.status };
 }
+
+export type NewsletterStatus = "pending" | "confirmed" | "unsubscribed";
+
+export async function listNewsletterSubscribers(opts: {
+  status?: NewsletterStatus;
+  limit: number;
+  offset: number;
+}) {
+  const db = getDb();
+  const conditions = [];
+  if (opts.status) conditions.push(eq(newsletterSubscribers.status, opts.status));
+
+  let query = db
+    .select({
+      id: newsletterSubscribers.id,
+      email: newsletterSubscribers.email,
+      country: newsletterSubscribers.country,
+      locale: newsletterSubscribers.locale,
+      sourcePath: newsletterSubscribers.sourcePath,
+      status: newsletterSubscribers.status,
+      createdAt: newsletterSubscribers.createdAt,
+    })
+    .from(newsletterSubscribers)
+    .orderBy(desc(newsletterSubscribers.createdAt))
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as typeof query;
+  }
+
+  return query;
+}
+
+export async function countNewsletterSubscribers(opts: { status?: NewsletterStatus } = {}) {
+  const db = getDb();
+  const conditions = [];
+  if (opts.status) conditions.push(eq(newsletterSubscribers.status, opts.status));
+
+  let query = db.select({ total: sql<number>`COUNT(*)::int` }).from(newsletterSubscribers);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as typeof query;
+  }
+  const [{ total }] = await query;
+  return total;
+}
+
+/** Only pending → unsubscribed. Returns false if missing or not pending. */
+export async function setNewsletterUnsubscribed(id: number): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ id: newsletterSubscribers.id, status: newsletterSubscribers.status })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.id, id))
+    .limit(1);
+  if (!row || row.status !== "pending") return false;
+  await db
+    .update(newsletterSubscribers)
+    .set({ status: "unsubscribed", updatedAt: new Date() })
+    .where(eq(newsletterSubscribers.id, id));
+  return true;
+}

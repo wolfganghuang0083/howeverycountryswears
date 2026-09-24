@@ -19,6 +19,7 @@ const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const BuyBookPage = lazy(() => import("./pages/BuyBookPage"));
 const HiddenRegisterPage = lazy(() => import("./pages/HiddenRegisterPage"));
+const AdminNewsletterPage = lazy(() => import("./pages/AdminNewsletterPage"));
 
 function LoadingFallback() {
   return (
@@ -49,6 +50,7 @@ function Router() {
         <Route path="/dashboard" component={DashboardPage} />
         <Route path="/get-the-book" component={BuyBookPage} />
         <Route path="/book-activate" component={HiddenRegisterPage} />
+        <Route path="/admin/newsletter" component={AdminNewsletterPage} />
 
         {/* Chinese (zh-tw) routes */}
         <Route path="/zh-tw" component={Home} />

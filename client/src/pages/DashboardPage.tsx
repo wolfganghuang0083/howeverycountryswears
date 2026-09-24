@@ -247,9 +247,13 @@ function ProfileSection({ user, points }: { user: any; points: number }) {
               {levelLabel}
             </span>
             {user?.role === "admin" && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#FF1493] text-white border border-[#1a1a1a]">
+              <Link
+                href="/admin/newsletter"
+                className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#FF1493] text-white border border-[#1a1a1a] hover:opacity-90"
+                title="Newsletter CRM"
+              >
                 Admin
-              </span>
+              </Link>
             )}
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-[#F0F8FF] text-[#00BFFF] border border-[#00BFFF]">
               <Star size={10} /> {points} pts
