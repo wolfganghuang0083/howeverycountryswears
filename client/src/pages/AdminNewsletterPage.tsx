@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Download, Loader2, LogIn, ShieldAlert, UserX } from "lucide-react";
 
-type StatusFilter = "all" | "pending" | "confirmed" | "unsubscribed";
+type StatusFilter = "all" | "pending" | "confirmed" | "unsubscribed" | "sendable";
 
 const PAGE_SIZE = 50;
 
@@ -43,7 +43,11 @@ export default function AdminNewsletterPage() {
 
   const listInput = useMemo(
     () => ({
-      status: statusFilter === "all" ? undefined : statusFilter,
+      status:
+        statusFilter === "all" || statusFilter === "sendable"
+          ? undefined
+          : (statusFilter as "pending" | "confirmed" | "unsubscribed"),
+      sendable: statusFilter === "sendable" ? true : undefined,
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     }),
@@ -76,7 +80,11 @@ export default function AdminNewsletterPage() {
     setActionMsg(null);
     try {
       const result = await utils.newsletter.exportCsv.fetch({
-        status: statusFilter === "all" ? undefined : statusFilter,
+        status:
+          statusFilter === "all" || statusFilter === "sendable"
+            ? undefined
+            : (statusFilter as "pending" | "confirmed" | "unsubscribed"),
+        sendable: statusFilter === "sendable" ? true : undefined,
       });
       const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
@@ -185,6 +193,7 @@ export default function AdminNewsletterPage() {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="unsubscribed">Unsubscribed</SelectItem>
+                  <SelectItem value="sendable">Sendable</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -227,6 +236,7 @@ export default function AdminNewsletterPage() {
                     <TableHead className="font-bold">Locale</TableHead>
                     <TableHead className="font-bold">Source path</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold">Consent</TableHead>
                     <TableHead className="font-bold">Created at</TableHead>
                     <TableHead className="font-bold text-right">Actions</TableHead>
                   </TableRow>
@@ -234,13 +244,13 @@ export default function AdminNewsletterPage() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-10 text-[#666]">
+                      <TableCell colSpan={9} className="text-center py-10 text-[#666]">
                         Loading subscribers…
                       </TableCell>
                     </TableRow>
                   ) : items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-10 text-[#666]">
+                      <TableCell colSpan={9} className="text-center py-10 text-[#666]">
                         No subscribers for this filter.
                       </TableCell>
                     </TableRow>
@@ -266,6 +276,9 @@ export default function AdminNewsletterPage() {
                           >
                             {row.status}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {row.marketingConsent ? "yes" : "no"}
                         </TableCell>
                         <TableCell className="text-xs whitespace-nowrap">
                           {formatDate(row.createdAt)}

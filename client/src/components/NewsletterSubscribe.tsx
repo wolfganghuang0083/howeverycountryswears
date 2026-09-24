@@ -12,8 +12,7 @@ type Props = {
 };
 
 /**
- * Back-compat wrapper: blog/about still import NewsletterSubscribe.
- * Renders Join free with EN-only gate (enabled=false on zh-tw callers).
+ * Blog/About newsletter signup — always marketing_consent=true.
  */
 export default function NewsletterSubscribe({
   sourcePath,
@@ -29,6 +28,7 @@ export default function NewsletterSubscribe({
     <section className="py-10 border-t border-gray-200" aria-label="Join free">
       <div className="container max-w-xl mx-auto">
         <JoinFree
+          mode="newsletter"
           surface={surface}
           ctaId={ctaId}
           country={country}

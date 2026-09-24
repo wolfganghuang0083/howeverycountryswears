@@ -402,6 +402,21 @@ export function trackNewsletterSignup(params: {
   });
 }
 
+/** Audio unlocked via email gate (every successful unlock submit). No PII. */
+export function trackAudioUnlock(params: {
+  opt_in: boolean;
+  surface: string;
+  cta_id: string;
+  country?: string;
+}) {
+  trackEvent("audio_unlock", {
+    opt_in: params.opt_in,
+    surface: params.surface,
+    cta_id: params.cta_id,
+    country: params.country,
+  });
+}
+
 /** Fired on /subscribe/confirmed after successful confirm. No PII. */
 export function trackNewsletterConfirm(params?: { method?: string }) {
   trackEvent("newsletter_confirm", {

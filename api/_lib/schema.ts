@@ -158,6 +158,7 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   locale: varchar("locale", { length: 16 }).default("en").notNull(),
   sourcePath: varchar("source_path", { length: 512 }).notNull(),
   status: newsletterStatusEnum("status").default("pending").notNull(),
+  marketingConsent: boolean("marketing_consent").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

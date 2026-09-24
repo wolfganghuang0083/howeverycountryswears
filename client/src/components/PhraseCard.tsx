@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocale } from "@/contexts/LocaleContext";
 import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView } from "@/lib/analytics";
 import JoinFree from "@/components/JoinFree";
+import { isAudioUnlocked, subscribeAudioUnlock } from "@/lib/audioUnlock";
 
 interface PhraseCardProps {
   card: Card;
@@ -45,22 +46,14 @@ export default function PhraseCard({
   const [isPlaying, setIsPlaying] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showJoinFree, setShowJoinFree] = useState(false);
+  const [audioUnlocked, setAudioUnlockedState] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(initialUserRating || 0);
   const [hoverRating, setHoverRating] = useState(0);
 
   useEffect(() => {
-    if (!showJoinFree) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowJoinFree(false);
-    };
-    document.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [showJoinFree]);
+    setAudioUnlockedState(isAudioUnlocked());
+    return subscribeAudioUnlock(() => setAudioUnlockedState(isAudioUnlocked()));
+  }, []);
 
   const riskColor = getRiskColor(card.risk);
   const { locale, t, localePath } = useLocale();
@@ -70,7 +63,12 @@ export default function PhraseCard({
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(country.part_id, country.slug);
 
-  const canPlay = freePreview || (isAuthenticated && (isBookBuyer || !isLocked));
+  // Audio: free preview OR local email-unlock OR (auth + free-part / bookBuyer)
+  // Part 8–11 page content (cards 4–10) still gated at CountryPage; audio on visible cards unlocks.
+  const canPlay =
+    freePreview ||
+    audioUnlocked ||
+    (isAuthenticated && (isBookBuyer || !isLocked));
   const canRate = isAuthenticated;
 
   const rateMutation = trpc.rating.rate.useMutation();
@@ -79,8 +77,11 @@ export default function PhraseCard({
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!freePreview && !isAuthenticated) { setShowJoinFree(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
-    if (!freePreview && isLocked && !isBookBuyer) { setShowJoinFree(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
+    if (!canPlay) {
+      setShowJoinFree(true);
+      trackPaywallView({ country: country.slug, context: "phrase_card" });
+      return;
+    }
     setIsPlaying(true);
     playPronunciation(card.phrase, country.lang_code);
     trackPhrasePlay({ country: country.slug, phrase_index: card.number, is_free_preview: freePreview, is_locked: isLocked });
@@ -89,10 +90,10 @@ export default function PhraseCard({
       listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
     }
     setTimeout(() => setIsPlaying(false), 2000);
-  }, [card.phrase, country.lang_code, country.slug, card.number, isAuthenticated, isLocked, isBookBuyer, freePreview, listenMutation]);
+  }, [card.phrase, country.lang_code, country.slug, card.number, canPlay, isAuthenticated, isLocked, freePreview, listenMutation]);
 
   const handleRate = useCallback((value: number) => {
-    if (!isAuthenticated) { setShowJoinFree(true); return; }
+    if (!isAuthenticated) { return; }
     setCurrentUserRating(value);
     rateMutation.mutate({ countrySlug: country.slug, cardNumber: card.number, value });
     trackPhraseRate({ country: country.slug, phrase_index: card.number, rating_value: value });
@@ -142,13 +143,14 @@ export default function PhraseCard({
   const joinFreeModal = (
     <JoinFree
       variant="modal"
+      mode="audio_unlock"
       open={showJoinFree}
       onOpenChange={setShowJoinFree}
+      onUnlocked={() => setAudioUnlockedState(true)}
       surface="graycard"
-      ctaId="graycard_join"
+      ctaId="graycard_play"
       country={country.slug}
-      headline="Get one swear word a week — free"
-      microcopy="Free email membership. No payment. Unsubscribe anytime."
+      headline="Unlock all pronunciations — free"
       enabled={!isZhTw}
       locale={locale}
       sourcePath={localePath(`/country/${country.slug}`)}

@@ -380,24 +380,72 @@ export async function upsertNewsletterSubscriber(input: {
   country?: string | null;
   locale: string;
   sourcePath: string;
-}): Promise<{ ok: true; status: "pending" | "confirmed" | "unsubscribed" }> {
+  marketingConsent?: boolean;
+}): Promise<{
+  ok: true;
+  status: "pending" | "confirmed" | "unsubscribed";
+  marketingConsent: boolean;
+  issueConfirm: boolean;
+}> {
   const db = getDb();
   const email = input.email.trim().toLowerCase();
+  const wantConsent = Boolean(input.marketingConsent);
   const existing = await db.select().from(newsletterSubscribers)
     .where(eq(newsletterSubscribers.email, email))
     .limit(1);
 
   if (existing.length > 0) {
-    // Keep confirmed; otherwise reset to pending (resubscribe / preview)
-    const nextStatus = existing[0].status === "confirmed" ? "confirmed" : "pending";
+    const row = existing[0];
+
+    // Unsubscribed: only re-engage if checkbox checked; otherwise leave untouched
+    if (row.status === "unsubscribed") {
+      if (!wantConsent) {
+        return {
+          ok: true,
+          status: "unsubscribed",
+          marketingConsent: row.marketingConsent,
+          issueConfirm: false,
+        };
+      }
+      await db.update(newsletterSubscribers).set({
+        country: input.country ?? row.country,
+        locale: input.locale,
+        sourcePath: input.sourcePath,
+        status: "pending",
+        marketingConsent: true,
+        updatedAt: new Date(),
+      }).where(eq(newsletterSubscribers.id, row.id));
+      return { ok: true, status: "pending", marketingConsent: true, issueConfirm: true };
+    }
+
+    // Never flip true → false via this form
+    const nextConsent = row.marketingConsent || wantConsent;
+    const flippedToConsent = !row.marketingConsent && wantConsent;
+    // Keep confirmed; otherwise stay/reset pending
+    const nextStatus = row.status === "confirmed" ? "confirmed" : "pending";
+
     await db.update(newsletterSubscribers).set({
-      country: input.country ?? existing[0].country,
+      country: input.country ?? row.country,
       locale: input.locale,
       sourcePath: input.sourcePath,
       status: nextStatus,
+      marketingConsent: nextConsent,
       updatedAt: new Date(),
-    }).where(eq(newsletterSubscribers.id, existing[0].id));
-    return { ok: true, status: nextStatus };
+    }).where(eq(newsletterSubscribers.id, row.id));
+
+    const issueConfirm =
+      wantConsent &&
+      nextStatus !== "confirmed" &&
+      (flippedToConsent || nextConsent);
+    // Issue confirm when opting in and not already confirmed
+    const shouldConfirm = wantConsent && nextStatus !== "confirmed";
+
+    return {
+      ok: true,
+      status: nextStatus,
+      marketingConsent: nextConsent,
+      issueConfirm: shouldConfirm,
+    };
   }
 
   const [row] = await db.insert(newsletterSubscribers).values({
@@ -406,20 +454,35 @@ export async function upsertNewsletterSubscriber(input: {
     locale: input.locale,
     sourcePath: input.sourcePath,
     status: "pending",
-  }).returning({ status: newsletterSubscribers.status });
-  return { ok: true, status: row.status };
+    marketingConsent: wantConsent,
+  }).returning({
+    status: newsletterSubscribers.status,
+    marketingConsent: newsletterSubscribers.marketingConsent,
+  });
+  return {
+    ok: true,
+    status: row.status,
+    marketingConsent: row.marketingConsent,
+    issueConfirm: wantConsent,
+  };
 }
 
 export type NewsletterStatus = "pending" | "confirmed" | "unsubscribed";
 
 export async function listNewsletterSubscribers(opts: {
   status?: NewsletterStatus;
+  /** Sendable = marketing_consent=true AND status=confirmed */
+  sendable?: boolean;
   limit: number;
   offset: number;
 }) {
   const db = getDb();
   const conditions = [];
   if (opts.status) conditions.push(eq(newsletterSubscribers.status, opts.status));
+  if (opts.sendable) {
+    conditions.push(eq(newsletterSubscribers.marketingConsent, true));
+    conditions.push(eq(newsletterSubscribers.status, "confirmed"));
+  }
 
   let query = db
     .select({
@@ -429,6 +492,7 @@ export async function listNewsletterSubscribers(opts: {
       locale: newsletterSubscribers.locale,
       sourcePath: newsletterSubscribers.sourcePath,
       status: newsletterSubscribers.status,
+      marketingConsent: newsletterSubscribers.marketingConsent,
       createdAt: newsletterSubscribers.createdAt,
     })
     .from(newsletterSubscribers)
@@ -443,10 +507,17 @@ export async function listNewsletterSubscribers(opts: {
   return query;
 }
 
-export async function countNewsletterSubscribers(opts: { status?: NewsletterStatus } = {}) {
+export async function countNewsletterSubscribers(opts: {
+  status?: NewsletterStatus;
+  sendable?: boolean;
+} = {}) {
   const db = getDb();
   const conditions = [];
   if (opts.status) conditions.push(eq(newsletterSubscribers.status, opts.status));
+  if (opts.sendable) {
+    conditions.push(eq(newsletterSubscribers.marketingConsent, true));
+    conditions.push(eq(newsletterSubscribers.status, "confirmed"));
+  }
 
   let query = db.select({ total: sql<number>`COUNT(*)::int` }).from(newsletterSubscribers);
   if (conditions.length > 0) {

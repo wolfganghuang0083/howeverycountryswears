@@ -304,6 +304,7 @@ export const appRouter = router({
         country: z.string().max(100).optional(),
         locale: z.string().max(16).default("en"),
         sourcePath: z.string().min(1).max(512),
+        marketingConsent: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
         const result = await upsertNewsletterSubscriber({
@@ -311,19 +312,26 @@ export const appRouter = router({
           country: input.country,
           locale: input.locale || "en",
           sourcePath: input.sourcePath,
+          marketingConsent: input.marketingConsent,
         });
-        const token = await signNewsletterConfirmToken(input.email);
-        const confirmUrl = buildConfirmUrl(token);
-        // Relative path keeps Preview SSO cookie (VERCEL_URL host differs from branch alias)
-        const relativeConfirm = `/subscribe/confirmed?token=${encodeURIComponent(token)}`;
-        console.log("[newsletter] confirm URL (no email sent):", confirmUrl);
         const out: {
           ok: true;
           status: "pending" | "confirmed" | "unsubscribed";
+          marketingConsent: boolean;
           previewConfirmUrl?: string;
-        } = { ok: true, status: result.status };
-        if (isPreviewEnv()) {
-          out.previewConfirmUrl = relativeConfirm;
+        } = {
+          ok: true,
+          status: result.status,
+          marketingConsent: result.marketingConsent,
+        };
+        if (result.issueConfirm) {
+          const token = await signNewsletterConfirmToken(input.email);
+          const confirmUrl = buildConfirmUrl(token);
+          const relativeConfirm = `/subscribe/confirmed?token=${encodeURIComponent(token)}`;
+          console.log("[newsletter] confirm URL (no email sent):", confirmUrl);
+          if (isPreviewEnv()) {
+            out.previewConfirmUrl = relativeConfirm;
+          }
         }
         return out;
       }),
@@ -359,17 +367,22 @@ export const appRouter = router({
     list: adminProcedure
       .input(z.object({
         status: z.enum(["pending", "confirmed", "unsubscribed"]).optional(),
+        sendable: z.boolean().optional(),
         limit: z.number().int().min(1).max(200).default(50),
         offset: z.number().int().min(0).default(0),
       }))
       .query(async ({ input }) => {
         const [items, total] = await Promise.all([
           listNewsletterSubscribers({
-            status: input.status,
+            status: input.sendable ? undefined : input.status,
+            sendable: input.sendable,
             limit: input.limit,
             offset: input.offset,
           }),
-          countNewsletterSubscribers({ status: input.status }),
+          countNewsletterSubscribers({
+            status: input.sendable ? undefined : input.status,
+            sendable: input.sendable,
+          }),
         ]);
         return { items, total };
       }),
@@ -377,12 +390,15 @@ export const appRouter = router({
     exportCsv: adminProcedure
       .input(z.object({
         status: z.enum(["pending", "confirmed", "unsubscribed"]).optional(),
+        sendable: z.boolean().optional(),
       }).default({}))
       .query(async ({ input }) => {
-        const status = input.status;
-        const total = await countNewsletterSubscribers({ status });
+        const status = input.sendable ? undefined : input.status;
+        const sendable = input.sendable;
+        const total = await countNewsletterSubscribers({ status, sendable });
         const items = await listNewsletterSubscribers({
           status,
+          sendable,
           limit: Math.min(total || 200, 200),
           offset: 0,
         });
@@ -391,7 +407,7 @@ export const appRouter = router({
           if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
           return s;
         };
-        const header = "id,email,country,locale,source_path,status,created_at";
+        const header = "id,email,country,locale,source_path,status,marketing_consent,created_at";
         const rows = items.map((r) => [
           String(r.id),
           escape(r.email),
@@ -399,6 +415,7 @@ export const appRouter = router({
           escape(r.locale),
           escape(r.sourcePath),
           escape(r.status),
+          r.marketingConsent ? "true" : "false",
           escape(r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt ?? "")),
         ].join(","));
         return { csv: [header, ...rows].join("\n") };

@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
 import JoinFree from "@/components/JoinFree";
+import { isAudioUnlocked, subscribeAudioUnlock } from "@/lib/audioUnlock";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -42,21 +43,29 @@ export default function CountryPage() {
   const [recommendations] = useState(() => country ? getRecommendations(country, allCountries) : {});
   const firstCardRef = useRef<HTMLDivElement | null>(null);
   const [showStickyJoin, setShowStickyJoin] = useState(false);
+  const [audioUnlocked, setAudioUnlockedState] = useState(false);
 
   useEffect(() => {
-    if (isZhTw) return;
+    setAudioUnlockedState(isAudioUnlocked());
+    return subscribeAudioUnlock(() => setAudioUnlockedState(isAudioUnlocked()));
+  }, []);
+
+  useEffect(() => {
+    if (isZhTw || audioUnlocked) {
+      setShowStickyJoin(false);
+      return;
+    }
     const el = firstCardRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        // Show sticky after first card has scrolled out of view (past first open big card)
         setShowStickyJoin(!entry.isIntersecting && entry.boundingClientRect.top < 0);
       },
       { threshold: 0 },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [isZhTw, country?.slug]);
+  }, [isZhTw, country?.slug, audioUnlocked]);
 
   // Fetch ratings for this country's cards
   const cardNumbers = useMemo(() => country?.cards.map(c => c.number) || [], [country]);
@@ -406,21 +415,6 @@ export default function CountryPage() {
                     />
                   </motion.div>
                   </div>
-                  {i === 0 && !isZhTw ? (
-                    <div className="lg:col-span-2">
-                      <JoinFree
-                        surface="country"
-                        ctaId="country_inline"
-                        country={country.slug}
-                        headline="One swear word a week — free"
-                        microcopy="A new country each week, with a short cultural note. Free. Unsubscribe anytime. We never sell your email."
-                        locale={locale}
-                        sourcePath={localePath(`/country/${country.slug}`)}
-                        showBookLink
-                        bookLinkLabel="Prefer the full guide? Get the book on Kindle →"
-                      />
-                    </div>
-                  ) : null}
                   {/* Contextual CTA after the 5th card */}
                   {i === 4 && (
                     <motion.div
@@ -508,25 +502,6 @@ export default function CountryPage() {
           </div>
         </section>
       )}
-
-      {/* Join free — country_footer (above Keep Exploring) */}
-      {!isZhTw ? (
-        <section className="py-8 border-t border-gray-200">
-          <div className="container max-w-xl mx-auto">
-            <JoinFree
-              surface="country"
-              ctaId="country_footer"
-              country={country.slug}
-              headline="One swear word a week — free"
-              microcopy="A new country each week, with a short cultural note. Free. Unsubscribe anytime. We never sell your email."
-              locale={locale}
-              sourcePath={localePath(`/country/${country.slug}`)}
-              showBookLink
-              bookLinkLabel="Prefer the full guide? Get the book on Kindle →"
-            />
-          </div>
-        </section>
-      ) : null}
 
       {/* Recommendations — You Might Also Like */}
       <section className="py-10 bg-[#FAFAFA] border-t border-gray-200">
@@ -692,16 +667,16 @@ export default function CountryPage() {
           )}
         </div>
       </section>
-      {!isZhTw && showStickyJoin ? (
+      {!isZhTw && showStickyJoin && !audioUnlocked ? (
         <JoinFree
           variant="sticky"
+          mode="audio_unlock"
           surface="country"
           ctaId="country_sticky"
           country={country.slug}
-          headline="One swear word a week — free"
-          microcopy="Free. Unsubscribe anytime. We never sell your email."
           locale={locale}
           sourcePath={localePath(`/country/${country.slug}`)}
+          onUnlocked={() => setAudioUnlockedState(true)}
         />
       ) : null}
     </Layout>
