@@ -1,6 +1,6 @@
 /**
  * PLACEHOLDER email templates — Wolfgang copy TBD.
- * Swap copy here only; keep {{links}} construction in callers.
+ * Swap copy here only.
  */
 
 export const POPULAR_COUNTRIES = [
@@ -36,67 +36,78 @@ function wrapHtml(title: string, body: string): string {
 </body></html>`;
 }
 
-/** Unchecked opt-in: service “You’re unlocked” + weekly subscribe footer (no book/ads). */
-export function renderUnlockedEmail(opts: {
+/** Magic-link signup: verification + welcome combined. */
+export function renderMagicLinkWelcomeEmail(opts: {
   origin: string;
-  optInUrl: string;
+  magicUrl: string;
 }): { subject: string; html: string; text: string } {
-  const subject = "[PLACEHOLDER] You're unlocked — hear every phrase";
+  const subject = "[PLACEHOLDER] Verify your email — unlock pronunciations";
   const html = wrapHtml(
     subject,
     `
-    <h1 style="font-size:1.35rem;margin:0 0 0.75rem">You're unlocked</h1>
-    <p><!-- PLACEHOLDER_GREETING -->Hi — welcome to HECS. Your email unlocked pronunciations on the site. No account needed.</p>
-    <p><!-- PLACEHOLDER_EXPLORE -->Explore a few popular country pages:</p>
-    ${countryListHtml(opts.origin)}
-    <p style="margin-top:1.5rem;font-size:0.9rem;color:#555">
-      Want the weekly cultural swear note?
-      <a href="${opts.optInUrl}" style="color:#FF1493;font-weight:700">Subscribe to the weekly</a>
-    </p>
-  `,
-  );
-  const text = [
-    "PLACEHOLDER TEMPLATE — You're unlocked",
-    "",
-    "Hi — welcome to HECS. Your email unlocked pronunciations on the site.",
-    "",
-    "Explore popular country pages:",
-    countryListText(opts.origin),
-    "",
-    `Subscribe to the weekly: ${opts.optInUrl}`,
-  ].join("\n");
-  return { subject, html, text };
-}
-
-/** Checked opt-in: welcome + DOI confirm link embedded (one combined email). */
-export function renderOptInWelcomeEmail(opts: {
-  origin: string;
-  confirmUrl: string;
-}): { subject: string; html: string; text: string } {
-  const subject = "[PLACEHOLDER] Confirm your HECS weekly + you're unlocked";
-  const html = wrapHtml(
-    subject,
-    `
-    <h1 style="font-size:1.35rem;margin:0 0 0.75rem">You're in — confirm the weekly</h1>
-    <p><!-- PLACEHOLDER_GREETING -->Hi — pronunciations are unlocked on the site right now.</p>
-    <p><!-- PLACEHOLDER_CONFIRM -->Please confirm you want <strong>Swear Word of the Week</strong> by email (one country, one phrase, a short cultural note):</p>
+    <h1 style="font-size:1.35rem;margin:0 0 0.75rem">Verify &amp; unlock audio</h1>
+    <p><!-- PLACEHOLDER -->Hi — click below to verify your email and unlock pronunciations on HECS. No password.</p>
     <p style="margin:1.25rem 0">
-      <a href="${opts.confirmUrl}" style="display:inline-block;background:#FF1493;color:#fff;font-weight:700;padding:0.65rem 1.1rem;border-radius:8px;text-decoration:none;border:2px solid #1a1a1a">Confirm my email</a>
+      <a href="${opts.magicUrl}" style="display:inline-block;background:#FF1493;color:#fff;font-weight:700;padding:0.65rem 1.1rem;border-radius:8px;text-decoration:none;border:2px solid #1a1a1a">Verify my email</a>
     </p>
-    <p><!-- PLACEHOLDER_EXPLORE -->While you're here, try a country page:</p>
+    <p><!-- PLACEHOLDER -->After verifying, try a country page:</p>
     ${countryListHtml(opts.origin)}
-    <p style="font-size:0.8rem;color:#888">If you didn't ask for this, you can ignore this message.</p>
+    <p style="font-size:0.8rem;color:#888">Link expires in 30 minutes. If you didn't ask for this, ignore this message.</p>
   `,
   );
   const text = [
-    "PLACEHOLDER TEMPLATE — Confirm weekly + unlocked",
+    "PLACEHOLDER — Verify & unlock audio",
     "",
-    "Pronunciations are unlocked on the site.",
-    "",
-    `Confirm weekly email: ${opts.confirmUrl}`,
+    `Verify: ${opts.magicUrl}`,
     "",
     "Explore:",
     countryListText(opts.origin),
   ].join("\n");
   return { subject, html, text };
+}
+
+/** Post–Google signup welcome (email already verified). */
+export function renderGoogleWelcomeEmail(opts: {
+  origin: string;
+  name?: string | null;
+}): { subject: string; html: string; text: string } {
+  const subject = "[PLACEHOLDER] Welcome — pronunciations unlocked";
+  const greet = opts.name ? `Hi ${opts.name}` : "Hi";
+  const html = wrapHtml(
+    subject,
+    `
+    <h1 style="font-size:1.35rem;margin:0 0 0.75rem">You're in</h1>
+    <p><!-- PLACEHOLDER -->${greet} — your Google account is verified. Pronunciations are unlocked on HECS.</p>
+    <p><!-- PLACEHOLDER -->Explore a few popular country pages:</p>
+    ${countryListHtml(opts.origin)}
+  `,
+  );
+  const text = [
+    "PLACEHOLDER — Welcome (Google)",
+    "",
+    `${greet} — pronunciations unlocked.`,
+    "",
+    countryListText(opts.origin),
+  ].join("\n");
+  return { subject, html, text };
+}
+
+/** @deprecated audio-unlock era — kept for reference until templates fully swapped */
+export function renderUnlockedEmail(opts: {
+  origin: string;
+  optInUrl: string;
+}): { subject: string; html: string; text: string } {
+  const subject = "[PLACEHOLDER][deprecated] You're unlocked";
+  const html = wrapHtml(subject, `<p>Deprecated unlocked template. Opt-in: <a href="${opts.optInUrl}">subscribe</a></p>${countryListHtml(opts.origin)}`);
+  return { subject, html, text: `Deprecated. ${opts.optInUrl}` };
+}
+
+/** @deprecated combined DOI — magic-link welcome replaces for email signup */
+export function renderOptInWelcomeEmail(opts: {
+  origin: string;
+  confirmUrl: string;
+}): { subject: string; html: string; text: string } {
+  const subject = "[PLACEHOLDER][deprecated] Confirm weekly";
+  const html = wrapHtml(subject, `<p><a href="${opts.confirmUrl}">Confirm</a></p>${countryListHtml(opts.origin)}`);
+  return { subject, html, text: opts.confirmUrl };
 }

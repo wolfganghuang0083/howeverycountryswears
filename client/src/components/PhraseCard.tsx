@@ -6,8 +6,7 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useLocale } from "@/contexts/LocaleContext";
 import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView } from "@/lib/analytics";
-import JoinFree from "@/components/JoinFree";
-import { isAudioUnlocked, subscribeAudioUnlock } from "@/lib/audioUnlock";
+import SignupModal from "@/components/SignupModal";
 
 interface PhraseCardProps {
   card: Card;
@@ -45,15 +44,9 @@ export default function PhraseCard({
 }: PhraseCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showJoinFree, setShowJoinFree] = useState(false);
-  const [audioUnlocked, setAudioUnlockedState] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(initialUserRating || 0);
   const [hoverRating, setHoverRating] = useState(0);
-
-  useEffect(() => {
-    setAudioUnlockedState(isAudioUnlocked());
-    return subscribeAudioUnlock(() => setAudioUnlockedState(isAudioUnlocked()));
-  }, []);
 
   const riskColor = getRiskColor(card.risk);
   const { locale, t, localePath } = useLocale();
@@ -63,11 +56,10 @@ export default function PhraseCard({
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(country.part_id, country.slug);
 
-  // Audio: free preview OR local email-unlock OR (auth + free-part / bookBuyer)
-  // Part 8–11 page content (cards 4–10) still gated at CountryPage; audio on visible cards unlocks.
+  // Audio: free preview OR verified session (+ bookBuyer for Part 8–11).
+  // Unverified localStorage unlock removed — registration required.
   const canPlay =
     freePreview ||
-    audioUnlocked ||
     (isAuthenticated && (isBookBuyer || !isLocked));
   const canRate = isAuthenticated;
 
@@ -78,7 +70,10 @@ export default function PhraseCard({
     e.stopPropagation();
     e.preventDefault();
     if (!canPlay) {
-      setShowJoinFree(true);
+      // Verified account unlocks free-part audio; Part 8–11 still needs bookBuyer.
+      if (!(isAuthenticated && isLocked && !isBookBuyer)) {
+        setShowSignup(true);
+      }
       trackPaywallView({ country: country.slug, context: "phrase_card" });
       return;
     }
@@ -140,17 +135,13 @@ export default function PhraseCard({
     </button>
   );
 
-  const joinFreeModal = (
-    <JoinFree
-      variant="modal"
-      mode="audio_unlock"
-      open={showJoinFree}
-      onOpenChange={setShowJoinFree}
-      onUnlocked={() => setAudioUnlockedState(true)}
+  const signupModal = (
+    <SignupModal
+      open={showSignup}
+      onOpenChange={setShowSignup}
       surface="graycard"
       ctaId="graycard_play"
       country={country.slug}
-      headline="Unlock all pronunciations — free"
       enabled={!isZhTw}
       locale={locale}
       sourcePath={localePath(`/country/${country.slug}`)}
@@ -268,7 +259,7 @@ export default function PhraseCard({
                 ))}
               </div>
               {!isAuthenticated && (
-                <button onClick={(e) => { e.stopPropagation(); setShowPaywall(true); }} className="text-xs text-[#FF1493] font-semibold hover:underline">
+                <button onClick={(e) => { e.stopPropagation(); setShowSignup(true); }} className="text-xs text-[#FF1493] font-semibold hover:underline">
                   {isZhTw ? "登入即可評分" : "Sign in to rate"}
                 </button>
               )}
@@ -304,7 +295,7 @@ export default function PhraseCard({
         <Link href={detailPath} className="no-underline block">
           {cardContent}
         </Link>
-        {joinFreeModal}
+        {signupModal}
       </>
     );
   }
@@ -312,7 +303,7 @@ export default function PhraseCard({
   return (
     <>
       {cardContent}
-      {joinFreeModal}
+      {signupModal}
     </>
   );
 }

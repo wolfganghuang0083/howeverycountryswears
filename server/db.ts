@@ -16,15 +16,33 @@ export function getDb() {
 }
 
 // ========== USER HELPERS ==========
-export async function upsertUser(user: { openId: string; name?: string | null; email?: string | null; avatarUrl?: string | null; loginMethod?: string; }): Promise<typeof users.$inferSelect> {
+export async function upsertUser(user: {
+  openId: string;
+  name?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
+  loginMethod?: string;
+  emailVerifiedAt?: Date | null;
+}): Promise<typeof users.$inferSelect> {
   const db = getDb();
   const existing = await db.select().from(users).where(eq(users.openId, user.openId)).limit(1);
-  
+
   if (existing.length > 0) {
+    const nextVerified =
+      user.emailVerifiedAt !== undefined
+        ? (user.emailVerifiedAt ?? existing[0].emailVerifiedAt)
+        : existing[0].emailVerifiedAt;
+    // Never clear a prior verification
+    const emailVerifiedAt =
+      existing[0].emailVerifiedAt && nextVerified
+        ? (existing[0].emailVerifiedAt <= nextVerified ? existing[0].emailVerifiedAt : nextVerified)
+        : (existing[0].emailVerifiedAt ?? nextVerified ?? null);
     await db.update(users).set({
       name: user.name ?? existing[0].name,
       email: user.email ?? existing[0].email,
       avatarUrl: user.avatarUrl ?? existing[0].avatarUrl,
+      loginMethod: user.loginMethod ?? existing[0].loginMethod,
+      emailVerifiedAt,
       lastSignedIn: new Date(),
       updatedAt: new Date(),
     }).where(eq(users.id, existing[0].id));
@@ -36,11 +54,19 @@ export async function upsertUser(user: { openId: string; name?: string | null; e
       name: user.name ?? null,
       email: user.email ?? null,
       avatarUrl: user.avatarUrl ?? null,
-      loginMethod: user.loginMethod ?? "github",
+      loginMethod: user.loginMethod ?? "email",
+      emailVerifiedAt: user.emailVerifiedAt ?? null,
       lastSignedIn: new Date(),
     }).returning();
     return newUser;
   }
+}
+
+export async function getUserByEmail(email: string) {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getUserByOpenId(openId: string) {

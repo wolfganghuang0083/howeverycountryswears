@@ -27,6 +27,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 320 }),
   avatarUrl: text("avatar_url"),
   loginMethod: varchar("login_method", { length: 64 }),
+  /** Set when email is verified (Google email_verified, or magic-link click). Null = unverified. */
+  emailVerifiedAt: timestamp("email_verified_at"),
   role: roleEnum("role").default("user").notNull(),
   memberTier: memberTierEnum("member_tier").default("regular").notNull(),
   displayName: varchar("display_name", { length: 100 }),

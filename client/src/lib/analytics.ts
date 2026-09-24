@@ -53,6 +53,19 @@ export function trackSignUp(method: string = "oauth") {
   trackEvent("sign_up", { method });
 }
 
+/** Signup modal / method chosen — no PII. */
+export function trackSignupStart(params: {
+  method: string;
+  surface?: string;
+  cta_id?: string;
+}) {
+  trackEvent("signup_start", {
+    method: params.method,
+    surface: params.surface,
+    cta_id: params.cta_id,
+  });
+}
+
 /**
  * Fire login_success once per browser session when auth first resolves with a user.
  * Does not fire sign_up (first-ever user is unclear from /api/auth/me alone).
@@ -426,7 +439,7 @@ export function trackNewsletterConfirm(params?: { method?: string }) {
 
 /** Welcome/service email queued or dry-run previewed. No PII. */
 export function trackWelcomeEmailQueued(params: {
-  variant: "unlocked" | "optin_welcome";
+  variant: "unlocked" | "optin_welcome" | "magic" | "google";
   surface?: string;
   cta_id?: string;
 }) {

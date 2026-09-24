@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { getAdminLoginUrl } from "@/const";
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -122,7 +122,7 @@ export default function AdminNewsletterPage() {
           <h1 className="font-display text-3xl mb-2">Admin only</h1>
           <p className="text-[#666] mb-6">Sign in with an admin account to view newsletter subscribers.</p>
           <Button asChild className="bg-[#FF1493] hover:bg-[#FF1493]/90">
-            <a href={getLoginUrl("/admin/newsletter")}>
+            <a href={getAdminLoginUrl("/admin/newsletter")}>
               <LogIn size={16} className="mr-2" /> Sign in
             </a>
           </Button>

@@ -1,8 +1,7 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
-import JoinFree from "@/components/JoinFree";
-import { isAudioUnlocked, subscribeAudioUnlock } from "@/lib/audioUnlock";
+import SignupModal from "@/components/SignupModal";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -32,6 +31,7 @@ export default function CountryPage() {
   const country = getCountryBySlug(slug || "", locale);
   const { prev, next } = getAdjacentCountries(slug || "", locale);
   const { user, isAuthenticated } = useAuth();
+  const audioReady = isAuthenticated; // verified session only (cookie after Google/magic)
 
   const isAdmin = user?.role === "admin";
   const isBookBuyer = user?.memberTier === "bookBuyer" || isAdmin;
@@ -43,15 +43,10 @@ export default function CountryPage() {
   const [recommendations] = useState(() => country ? getRecommendations(country, allCountries) : {});
   const firstCardRef = useRef<HTMLDivElement | null>(null);
   const [showStickyJoin, setShowStickyJoin] = useState(false);
-  const [audioUnlocked, setAudioUnlockedState] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
-    setAudioUnlockedState(isAudioUnlocked());
-    return subscribeAudioUnlock(() => setAudioUnlockedState(isAudioUnlocked()));
-  }, []);
-
-  useEffect(() => {
-    if (isZhTw || audioUnlocked) {
+    if (isZhTw || audioReady) {
       setShowStickyJoin(false);
       return;
     }
@@ -65,7 +60,7 @@ export default function CountryPage() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [isZhTw, country?.slug, audioUnlocked]);
+  }, [isZhTw, country?.slug, audioReady]);
 
   // Fetch ratings for this country's cards
   const cardNumbers = useMemo(() => country?.cards.map(c => c.number) || [], [country]);
@@ -667,18 +662,32 @@ export default function CountryPage() {
           )}
         </div>
       </section>
-      {!isZhTw && showStickyJoin && !audioUnlocked ? (
-        <JoinFree
-          variant="sticky"
-          mode="audio_unlock"
-          surface="country"
-          ctaId="country_sticky"
-          country={country.slug}
-          locale={locale}
-          sourcePath={localePath(`/country/${country.slug}`)}
-          onUnlocked={() => setAudioUnlockedState(true)}
-        />
+      {!isZhTw && showStickyJoin && !audioReady ? (
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t-2 border-[#1a1a1a] bg-[#FFE500] shadow-[0_-4px_0_#1a1a1a]">
+          <div className="container py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-sm font-bold text-[#1a1a1a] m-0 text-center sm:text-left">
+              Unlock all pronunciations — free account
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowSignup(true)}
+              className="inline-flex items-center gap-2 bg-[#1a1a1a] text-white px-5 py-2.5 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0_white] hover:shadow-[1px_1px_0_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+            >
+              Sign up free
+            </button>
+          </div>
+        </div>
       ) : null}
+      <SignupModal
+        open={showSignup}
+        onOpenChange={setShowSignup}
+        surface="country"
+        ctaId="country_sticky"
+        country={country.slug}
+        enabled={!isZhTw}
+        locale={locale}
+        sourcePath={localePath(`/country/${country.slug}`)}
+      />
     </Layout>
   );
 }

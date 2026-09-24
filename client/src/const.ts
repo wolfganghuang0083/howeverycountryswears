@@ -1,10 +1,17 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
 /**
- * Returns the login URL that redirects to GitHub OAuth via our API.
- * Encodes the current page path as returnTo so user returns after login.
+ * Public pages: open signup modal instead of GitHub.
+ * Admin GitHub OAuth only via getAdminLoginUrl.
  */
 export const getLoginUrl = (returnTo?: string) => {
-  const path = returnTo || window.location.pathname + window.location.search;
-  return `/api/auth/login?returnTo=${encodeURIComponent(path)}`;
+  const path = returnTo || (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
+  // Soft redirect: homepage with signin flag; country pages use SignupModal directly.
+  return `/?signin=1&returnTo=${encodeURIComponent(path)}`;
+};
+
+/** Admin-only GitHub OAuth (newsletter CRM, etc.). */
+export const getAdminLoginUrl = (returnTo?: string) => {
+  const path = returnTo || "/admin/newsletter";
+  return `/api/auth/github?returnTo=${encodeURIComponent(path)}`;
 };

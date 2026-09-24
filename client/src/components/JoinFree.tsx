@@ -7,11 +7,9 @@ import {
   trackNewsletterModalOpen,
   trackNewsletterSignup,
   trackNewsletterSubscribeSubmit,
-  trackAudioUnlock,
   trackWelcomeEmailQueued,
   getPageTypeFromPath,
 } from "@/lib/analytics";
-import { setAudioUnlocked } from "@/lib/audioUnlock";
 
 export type JoinFreeSurface = "country" | "blog" | "home" | "graycard" | "about" | "footer";
 
@@ -67,7 +65,9 @@ export default function JoinFree({
   bookLinkLabel = "Prefer the full guide? Get the book on Kindle →",
   className = "",
 }: Props) {
-  const isAudio = mode === "audio_unlock";
+  const isAudio = false; // audio_unlock removed; SignupModal owns pronunciation unlock
+  void mode;
+  void onUnlocked;
   const resolvedHeadline =
     headline ?? (isAudio ? AUDIO_HEADLINE : DEFAULT_NEWSLETTER_HEADLINE);
   const resolvedMicro =
@@ -117,16 +117,7 @@ export default function JoinFree({
         locale,
         source_path: sourcePath || (typeof window !== "undefined" ? window.location.pathname : "/"),
       });
-      if (isAudio) {
-        setAudioUnlocked();
-        trackAudioUnlock({
-          opt_in: consented,
-          surface,
-          cta_id: ctaId,
-          country,
-        });
-        onUnlocked?.();
-      }
+      // audio_unlock mode deprecated — use SignupModal (verified account).
       if (consented) {
         trackNewsletterSignup({
           surface,
