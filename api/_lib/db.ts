@@ -594,6 +594,27 @@ export async function confirmNewsletterByEmail(email: string): Promise<{
   return { ok: true, status: "confirmed", alreadyConfirmed: false };
 }
 
+
+/** Lookup newsletter row by email (no PII returned to callers beyond status flags). */
+export async function getNewsletterByEmail(email: string): Promise<{
+  id: number;
+  status: "pending" | "confirmed" | "unsubscribed";
+  marketingConsent: boolean;
+} | null> {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const [row] = await db
+    .select({
+      id: newsletterSubscribers.id,
+      status: newsletterSubscribers.status,
+      marketingConsent: newsletterSubscribers.marketingConsent,
+    })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, normalized))
+    .limit(1);
+  return row ?? null;
+}
+
 /** Opt-in JWT from unlocked email footer: marketing_consent=true + status=confirmed.
  *  Never leaves unsubscribed stuck — re-engages to confirmed+consent.
  */

@@ -10,6 +10,16 @@ import {
   getPageTypeFromPath,
 } from "@/lib/analytics";
 
+/** Short-lived preference cookie (also set httpOnly by /api/auth/google). */
+export const NEWSLETTER_OPTIN_COOKIE = "hecs_newsletter_optin";
+export const NEWSLETTER_ASK_DISMISSED_KEY = "hecs_newsletter_ask_dismissed";
+
+export function setNewsletterOptInCookie(optIn: boolean) {
+  if (typeof document === "undefined") return;
+  const v = optIn ? "1" : "0";
+  document.cookie = `${NEWSLETTER_OPTIN_COOKIE}=${v}; Path=/; Max-Age=3600; SameSite=Lax`;
+}
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,6 +30,29 @@ type Props = {
   locale?: string;
   enabled?: boolean;
 };
+
+function OptInCheckbox({
+  optIn,
+  setOptIn,
+  id,
+}: {
+  optIn: boolean;
+  setOptIn: (v: boolean) => void;
+  id: string;
+}) {
+  return (
+    <label htmlFor={id} className="flex items-start gap-2 text-xs text-[#555] cursor-pointer select-none mb-3">
+      <input
+        id={id}
+        type="checkbox"
+        checked={optIn}
+        onChange={(e) => setOptIn(e.target.checked)}
+        className="mt-0.5 accent-[#FF1493]"
+      />
+      <span>Also send me one swear word a week (newsletter). Unsubscribe anytime.</span>
+    </label>
+  );
+}
 
 export default function SignupModal({
   open,
@@ -32,7 +65,7 @@ export default function SignupModal({
   enabled = true,
 }: Props) {
   const [email, setEmail] = useState("");
-  const [optIn, setOptIn] = useState(false);
+  const [optIn, setOptIn] = useState(false); // GDPR: default unchecked
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -79,6 +112,7 @@ export default function SignupModal({
       page_type: getPageTypeFromPath(),
       country,
     });
+    setNewsletterOptInCookie(optIn);
     const q = new URLSearchParams({
       returnTo,
       marketingConsent: optIn ? "1" : "0",
@@ -97,6 +131,7 @@ export default function SignupModal({
       page_type: getPageTypeFromPath(),
       country,
     });
+    setNewsletterOptInCookie(optIn);
     try {
       const res = await fetch("/api/auth/magic", {
         method: "POST",
@@ -210,6 +245,9 @@ export default function SignupModal({
               </div>
             </div>
 
+            {/* P0: checkbox directly above Google; still covers email path */}
+            <OptInCheckbox optIn={optIn} setOptIn={setOptIn} id="signup-newsletter-optin" />
+
             <button
               type="button"
               onClick={onGoogle}
@@ -246,15 +284,6 @@ export default function SignupModal({
                   "Email me a magic link"
                 )}
               </button>
-              <label className="flex items-start gap-2 text-xs text-[#555] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={optIn}
-                  onChange={(e) => setOptIn(e.target.checked)}
-                  className="mt-0.5 accent-[#FF1493]"
-                />
-                <span>Also send me one swear word a week (newsletter). Unsubscribe anytime.</span>
-              </label>
             </form>
             {error ? (
               <p className="mt-3 text-sm text-red-600 font-medium" role="alert">
