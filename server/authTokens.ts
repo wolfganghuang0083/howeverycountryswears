@@ -17,6 +17,11 @@ export function googleOpenId(sub: string): string {
   return `google_${sub}`.slice(0, 64);
 }
 
+/**
+ * Magic login: stateless signed JWT, reusable within ~30m (no token table).
+ * TODO(P1, pre-launch): evaluate single-use (jti denylist or consumed_tokens)
+ * to prevent replay within the expiry window.
+ */
 export async function signMagicLoginToken(input: {
   email: string;
   marketingConsent: boolean;
