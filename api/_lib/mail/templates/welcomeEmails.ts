@@ -23,6 +23,14 @@ function countryListText(origin: string): string {
   return POPULAR_COUNTRIES.map((c) => `• ${c.name}: ${origin}/country/${c.slug}`).join("\n");
 }
 
+function weeklyOptInHtml(optInUrl: string): string {
+  return `<p style="margin:1rem 0 0;font-size:0.9rem;color:#444">Want one swear word a week? <a href="${optInUrl}" style="color:#FF1493;font-weight:700;text-decoration:underline">Confirm weekly email</a> — unsubscribe anytime.</p>`;
+}
+
+function weeklyOptInText(optInUrl: string): string {
+  return `Want one swear word a week? Confirm weekly email: ${optInUrl} — unsubscribe anytime.`;
+}
+
 function wrapHtml(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"/><title>${title}</title></head>
@@ -39,8 +47,12 @@ function wrapHtml(title: string, body: string): string {
 export function renderMagicLinkWelcomeEmail(opts: {
   origin: string;
   magicUrl: string;
+  /** One-click DOI weekly subscribe (optional; does not replace magic CTA). */
+  optInUrl?: string;
 }): { subject: string; html: string; text: string } {
   const subject = "Unlock your pronunciations — one tap";
+  const weeklyHtml = opts.optInUrl ? weeklyOptInHtml(opts.optInUrl) : "";
+  const weeklyText = opts.optInUrl ? ["", weeklyOptInText(opts.optInUrl)] : [];
   const html = wrapHtml(
     subject,
     `
@@ -52,6 +64,7 @@ export function renderMagicLinkWelcomeEmail(opts: {
     </p>
     <p>After that, try a country page:</p>
     ${countryListHtml(opts.origin)}
+    ${weeklyHtml}
     <p style="font-size:0.85rem;color:#666">If you didn’t ask for this, ignore this email. The link expires in about 30 minutes.</p>
     <p style="margin-top:1.25rem">— How Every Country Swears<br/>
     <a href="https://howeverycountryswears.com" style="color:#FF1493;text-decoration:none">howeverycountryswears.com</a></p>
@@ -68,6 +81,7 @@ export function renderMagicLinkWelcomeEmail(opts: {
     "",
     "After that, try a country page:",
     countryListText(opts.origin),
+    ...weeklyText,
     "",
     "If you didn’t ask for this, ignore this email. The link expires in about 30 minutes.",
     "",
@@ -81,10 +95,13 @@ export function renderMagicLinkWelcomeEmail(opts: {
 export function renderGoogleWelcomeEmail(opts: {
   origin: string;
   name?: string | null;
+  optInUrl?: string;
 }): { subject: string; html: string; text: string } {
   const subject = "You’re in — pronunciations unlocked";
   const name = (opts.name || "").trim();
   const greet = name ? `Hi ${name} —` : "Hi —";
+  const weeklyHtml = opts.optInUrl ? weeklyOptInHtml(opts.optInUrl) : "";
+  const weeklyText = opts.optInUrl ? ["", weeklyOptInText(opts.optInUrl)] : [];
   const html = wrapHtml(
     subject,
     `
@@ -92,6 +109,7 @@ export function renderGoogleWelcomeEmail(opts: {
     <p>Your Google sign-in worked. Pronunciations are unlocked on How Every Country Swears.</p>
     <p>Start with a country page:</p>
     ${countryListHtml(opts.origin)}
+    ${weeklyHtml}
     <p style="margin-top:1.25rem">See you on the map,<br/>How Every Country Swears<br/>
     <a href="https://howeverycountryswears.com" style="color:#FF1493;text-decoration:none">howeverycountryswears.com</a></p>
   `,
@@ -103,6 +121,7 @@ export function renderGoogleWelcomeEmail(opts: {
     "",
     "Start with a country page:",
     countryListText(opts.origin),
+    ...weeklyText,
     "",
     "See you on the map,",
     "How Every Country Swears",
@@ -119,12 +138,18 @@ export function renderUnlockedEmail(opts: {
   const subject = "You’re unlocked";
   const html = wrapHtml(
     subject,
-    `<p>You’re unlocked on How Every Country Swears.</p>${countryListHtml(opts.origin)}`,
+    `<p>You’re unlocked on How Every Country Swears.</p>${countryListHtml(opts.origin)}${weeklyOptInHtml(opts.optInUrl)}`,
   );
   return {
     subject,
     html,
-    text: ["You’re unlocked on How Every Country Swears.", "", countryListText(opts.origin)].join("\n"),
+    text: [
+      "You’re unlocked on How Every Country Swears.",
+      "",
+      countryListText(opts.origin),
+      "",
+      weeklyOptInText(opts.optInUrl),
+    ].join("\n"),
   };
 }
 

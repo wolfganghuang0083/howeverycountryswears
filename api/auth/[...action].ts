@@ -1,7 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { SignJWT, jwtVerify, createRemoteJWKSet } from "jose";
 import { serialize, parse } from "cookie";
-import { upsertUser, upsertNewsletterSubscriber } from "../_lib/db.js";
+import {
+  upsertUser,
+  upsertNewsletterSubscriber,
+  getNewsletterByEmail,
+  confirmOptInByEmail,
+} from "../_lib/db.js";
 import {
   emailOpenId,
   googleOpenId,
@@ -13,9 +18,16 @@ import {
   renderMagicLinkWelcomeEmail,
   renderGoogleWelcomeEmail,
 } from "../_lib/mail/templates/welcomeEmails.js";
-import { siteOrigin, isPreviewEnv } from "../_lib/newsletterConfirm.js";
+import {
+  siteOrigin,
+  isPreviewEnv,
+  signNewsletterOptInToken,
+  buildOptInUrl,
+} from "../_lib/newsletterConfirm.js";
 
 const COOKIE_NAME = "hecs_session";
+/** Short-lived OAuth pass-through for newsletter checkbox (0|1). */
+const NEWSLETTER_OPTIN_COOKIE = "hecs_newsletter_optin";
 const JWT_SECRET = new TextEncoder().encode(process.env.AUTH_SECRET || "fallback-secret-change-me");
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || "";
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || "";
@@ -27,6 +39,42 @@ function getBaseUrl(req: VercelRequest): string {
   const host = req.headers["x-forwarded-host"] || req.headers.host || "howeverycountryswears.com";
   return `${proto}://${host}`;
 }
+
+function readNewsletterOptInCookie(req: VercelRequest): boolean | null {
+  const cookies = parse(req.headers.cookie || "");
+  const v = cookies[NEWSLETTER_OPTIN_COOKIE];
+  if (v === "1") return true;
+  if (v === "0") return false;
+  return null;
+}
+
+function newsletterOptInCookie(value: "0" | "1" | "", maxAge = 3600): string {
+  return serialize(NEWSLETTER_OPTIN_COOKIE, value, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: value === "" ? 0 : maxAge,
+  });
+}
+
+function appendSetCookie(res: VercelResponse, cookie: string) {
+  const prev = res.getHeader("Set-Cookie");
+  if (!prev) {
+    res.setHeader("Set-Cookie", cookie);
+  } else if (Array.isArray(prev)) {
+    res.setHeader("Set-Cookie", [...prev, cookie]);
+  } else {
+    res.setHeader("Set-Cookie", [String(prev), cookie]);
+  }
+}
+
+function signupRedirect(returnTo: string, method: "google" | "email", newsletterOptedIn: boolean): string {
+  const sep = returnTo.includes("?") ? "&" : "?";
+  const nl = newsletterOptedIn ? "&newsletter=1" : "";
+  return `${returnTo}${sep}signup=${method}${nl}`;
+}
+
 
 async function setSessionCookie(
   res: VercelResponse,
@@ -56,8 +104,8 @@ async function setSessionCookie(
     .setExpirationTime("30d")
     .sign(JWT_SECRET);
 
-  res.setHeader(
-    "Set-Cookie",
+  appendSetCookie(
+    res,
     serialize(COOKIE_NAME, token, {
       httpOnly: true,
       secure: true,
@@ -100,6 +148,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           google: Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
           githubAdmin: Boolean(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET),
         });
+      case "newsletter-status":
+        return handleNewsletterStatus(req, res);
+      case "newsletter-optin":
+        if (req.method === "POST") return handleNewsletterOptIn(req, res);
+        return res.status(405).json({ error: "POST required" });
       default:
         return res.status(404).json({ error: "Not found" });
     }
@@ -194,6 +247,8 @@ function handleGoogleLogin(req: VercelRequest, res: VercelResponse) {
   authUrl.searchParams.set("scope", "openid email profile");
   authUrl.searchParams.set("state", state);
   authUrl.searchParams.set("prompt", "select_account");
+  // Persist opt-in for callback even if state is lost
+  appendSetCookie(res, newsletterOptInCookie(marketingConsent ? "1" : "0"));
   return res.redirect(302, authUrl.toString());
 }
 
@@ -209,12 +264,20 @@ async function handleGoogleCallback(req: VercelRequest, res: VercelResponse) {
 
   let returnTo = "/";
   let marketingConsent = false;
+  let stateHadConsent = false;
   if (stateParam) {
     try {
       const stateData = JSON.parse(Buffer.from(stateParam, "base64url").toString());
       returnTo = stateData.returnTo || "/";
       marketingConsent = Boolean(stateData.marketingConsent);
+      stateHadConsent = true;
     } catch { /* ignore */ }
+  }
+  // Cookie fallback if OAuth state omitted consent
+  if (!stateHadConsent || !marketingConsent) {
+    const fromCookie = readNewsletterOptInCookie(req);
+    if (fromCookie === true) marketingConsent = true;
+    if (!stateHadConsent && fromCookie === false) marketingConsent = false;
   }
 
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
@@ -285,12 +348,13 @@ async function handleGoogleCallback(req: VercelRequest, res: VercelResponse) {
   });
   // Google + opt-in → confirmed (email already verified)
   if (marketingConsent) {
-    const { confirmOptInByEmail } = await import("../_lib/db.js");
     await confirmOptInByEmail(email);
   }
 
   const origin = siteOrigin(baseUrl);
-  const rendered = renderGoogleWelcomeEmail({ origin, name });
+  const optToken = await signNewsletterOptInToken(email);
+  const optInUrl = buildOptInUrl(optToken, origin);
+  const rendered = renderGoogleWelcomeEmail({ origin, name, optInUrl });
   await sendMail({
     to: email,
     subject: rendered.subject,
@@ -300,8 +364,8 @@ async function handleGoogleCallback(req: VercelRequest, res: VercelResponse) {
   });
 
   await setSessionCookie(res, dbUser);
-  const sep = returnTo.includes("?") ? "&" : "?";
-  return res.redirect(302, `${returnTo}${sep}signup=google`);
+  appendSetCookie(res, newsletterOptInCookie("", 0)); // clear pass-through
+  return res.redirect(302, signupRedirect(returnTo, "google", marketingConsent));
 }
 
 async function handleMagicStart(req: VercelRequest, res: VercelResponse) {
@@ -330,7 +394,9 @@ async function handleMagicStart(req: VercelRequest, res: VercelResponse) {
   const baseUrl = getBaseUrl(req);
   const magicUrl = `${baseUrl}/api/auth/magic/verify?token=${encodeURIComponent(token)}`;
   const origin = siteOrigin(baseUrl);
-  const rendered = renderMagicLinkWelcomeEmail({ origin, magicUrl });
+  const optToken = await signNewsletterOptInToken(email);
+  const optInUrl = buildOptInUrl(optToken, origin);
+  const rendered = renderMagicLinkWelcomeEmail({ origin, magicUrl, optInUrl });
   const mailResult = await sendMail({
     to: email,
     subject: rendered.subject,
@@ -366,14 +432,13 @@ async function handleMagicVerify(req: VercelRequest, res: VercelResponse) {
   });
 
   if (verified.marketingConsent) {
-    const { confirmOptInByEmail } = await import("../_lib/db.js");
     await confirmOptInByEmail(verified.email);
   }
 
   await setSessionCookie(res, dbUser);
+  appendSetCookie(res, newsletterOptInCookie("", 0));
   const returnTo = verified.returnTo || "/";
-  const sep = returnTo.includes("?") ? "&" : "?";
-  return res.redirect(302, `${returnTo}${sep}signup=email`);
+  return res.redirect(302, signupRedirect(returnTo, "email", Boolean(verified.marketingConsent)));
 }
 
 async function handleMe(req: VercelRequest, res: VercelResponse) {
