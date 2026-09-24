@@ -252,7 +252,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link href={localePath("/blog")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.blog")}</Link>
                 <Link href={localePath("/community")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.community")}</Link>
                 <Link href={localePath("/rankings")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.rankings")}</Link>
-                <Link href={localePath("/get-the-book")} className="text-gray-300 hover:text-[#FFE500] text-sm no-underline transition-colors">{t("nav.getBook")}</Link>
+                {locale !== "zh-tw" ? (
+                  <Link href={localePath("/country/afghanistan")} className="text-[#FFE500] hover:text-[#FF1493] text-sm font-bold no-underline transition-colors">Join free</Link>
+                ) : null}
+                <Link href={localePath("/get-the-book")} className="text-gray-400 hover:text-gray-300 text-sm no-underline transition-colors">{t("nav.getBook")}</Link>
                 <Link href={localePath("/about")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.about")}</Link>
               </div>
             </div>

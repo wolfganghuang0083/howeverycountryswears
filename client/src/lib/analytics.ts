@@ -343,15 +343,11 @@ export function trackFirstShare() {
 }
 
 // ============================================================
-// NEWSLETTER / CRM PREVIEW
+// NEWSLETTER / JOIN FREE FUNNEL
 // ============================================================
 
 /**
- * Fire when user submits the newsletter subscribe form.
- * Event name locked: newsletter_subscribe_submit.
- *
- * RESERVED (do NOT fire yet): newsletter_confirm — confirmation-mail
- * flow is not live in this Preview wave; lock the name here as a stub.
+ * Legacy CRM Preview submit event — kept harmless alongside newsletter_signup.
  */
 export function trackNewsletterSubscribeSubmit(params: {
   country?: string;
@@ -365,11 +361,50 @@ export function trackNewsletterSubscribeSubmit(params: {
   });
 }
 
-/** @deprecated stub — reserved event name; not fired until confirm mail ships */
-export function trackNewsletterConfirm(_params?: {
+/** User clicks Join free CTA (inline / sticky / modal submit button). No PII. */
+export function trackNewsletterCtaClick(params: {
+  surface: string;
+  cta_id: string;
+  page_type?: string;
   country?: string;
-  locale?: string;
-  source_path?: string;
 }) {
-  // newsletter_confirm — intentionally not fired in CRM Preview
+  trackEvent("newsletter_cta_click", {
+    surface: params.surface,
+    cta_id: params.cta_id,
+    page_type: params.page_type ?? getPageTypeFromPath(),
+    country: params.country,
+  });
+}
+
+/** Modal opened (graycard / etc). Inline forms do not fire this. */
+export function trackNewsletterModalOpen(params: {
+  surface: string;
+  cta_id: string;
+}) {
+  trackEvent("newsletter_modal_open", {
+    surface: params.surface,
+    cta_id: params.cta_id,
+  });
+}
+
+/** Fired after subscribe API success. No email / PII. */
+export function trackNewsletterSignup(params: {
+  surface: string;
+  cta_id: string;
+  method?: string;
+  country?: string;
+}) {
+  trackEvent("newsletter_signup", {
+    surface: params.surface,
+    cta_id: params.cta_id,
+    method: params.method ?? "email",
+    country: params.country,
+  });
+}
+
+/** Fired on /subscribe/confirmed after successful confirm. No PII. */
+export function trackNewsletterConfirm(params?: { method?: string }) {
+  trackEvent("newsletter_confirm", {
+    method: params?.method ?? "email",
+  });
 }

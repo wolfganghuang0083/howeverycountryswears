@@ -456,3 +456,27 @@ export async function setNewsletterUnsubscribed(id: number): Promise<boolean> {
     .where(eq(newsletterSubscribers.id, id));
   return true;
 }
+/** pending → confirmed only. Never touches unsubscribed. Returns status or null if not found. */
+export async function confirmNewsletterByEmail(email: string): Promise<{
+  ok: true;
+  status: "pending" | "confirmed" | "unsubscribed";
+  alreadyConfirmed: boolean;
+} | { ok: false; reason: "not_found" | "unsubscribed" }> {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const [row] = await db
+    .select({ id: newsletterSubscribers.id, status: newsletterSubscribers.status })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, normalized))
+    .limit(1);
+  if (!row) return { ok: false, reason: "not_found" };
+  if (row.status === "unsubscribed") return { ok: false, reason: "unsubscribed" };
+  if (row.status === "confirmed") {
+    return { ok: true, status: "confirmed", alreadyConfirmed: true };
+  }
+  await db
+    .update(newsletterSubscribers)
+    .set({ status: "confirmed", updatedAt: new Date() })
+    .where(eq(newsletterSubscribers.id, row.id));
+  return { ok: true, status: "confirmed", alreadyConfirmed: false };
+}

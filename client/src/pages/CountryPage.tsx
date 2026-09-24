@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
-import NewsletterSubscribe from "@/components/NewsletterSubscribe";
+import JoinFree from "@/components/JoinFree";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -16,7 +16,7 @@ import { getRecommendations } from "@/lib/recommendations";
 import { useParams, Link } from "wouter";
 import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, MapPin, Lock, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -40,6 +40,23 @@ export default function CountryPage() {
   // Get recommendations for this country
   const allCountries = getAllCountries(locale);
   const [recommendations] = useState(() => country ? getRecommendations(country, allCountries) : {});
+  const firstCardRef = useRef<HTMLDivElement | null>(null);
+  const [showStickyJoin, setShowStickyJoin] = useState(false);
+
+  useEffect(() => {
+    if (isZhTw) return;
+    const el = firstCardRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        // Show sticky after first card has scrolled out of view (past first open big card)
+        setShowStickyJoin(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isZhTw, country?.slug]);
 
   // Fetch ratings for this country's cards
   const cardNumbers = useMemo(() => country?.cards.map(c => c.number) || [], [country]);
@@ -370,6 +387,7 @@ export default function CountryPage() {
               const userRating = userRatingsData?.[card.number];
               return (
                 <React.Fragment key={card.number}>
+                  <div ref={i === 0 ? firstCardRef : undefined}>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -387,6 +405,22 @@ export default function CountryPage() {
                       userRating={userRating}
                     />
                   </motion.div>
+                  </div>
+                  {i === 0 && !isZhTw ? (
+                    <div className="lg:col-span-2">
+                      <JoinFree
+                        surface="country"
+                        ctaId="country_inline"
+                        country={country.slug}
+                        headline="One swear word a week — free"
+                        microcopy="A new country each week, with a short cultural note. Free. Unsubscribe anytime. We never sell your email."
+                        locale={locale}
+                        sourcePath={localePath(`/country/${country.slug}`)}
+                        showBookLink
+                        bookLinkLabel="Prefer the full guide? Get the book on Kindle →"
+                      />
+                    </div>
+                  ) : null}
                   {/* Contextual CTA after the 5th card */}
                   {i === 4 && (
                     <motion.div
@@ -475,6 +509,25 @@ export default function CountryPage() {
         </section>
       )}
 
+      {/* Join free — country_footer (above Keep Exploring) */}
+      {!isZhTw ? (
+        <section className="py-8 border-t border-gray-200">
+          <div className="container max-w-xl mx-auto">
+            <JoinFree
+              surface="country"
+              ctaId="country_footer"
+              country={country.slug}
+              headline="One swear word a week — free"
+              microcopy="A new country each week, with a short cultural note. Free. Unsubscribe anytime. We never sell your email."
+              locale={locale}
+              sourcePath={localePath(`/country/${country.slug}`)}
+              showBookLink
+              bookLinkLabel="Prefer the full guide? Get the book on Kindle →"
+            />
+          </div>
+        </section>
+      ) : null}
+
       {/* Recommendations — You Might Also Like */}
       <section className="py-10 bg-[#FAFAFA] border-t border-gray-200">
         <div className="container">
@@ -542,12 +595,6 @@ export default function CountryPage() {
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
       <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
 
-      <NewsletterSubscribe
-        sourcePath={localePath(`/country/${country.slug}`)}
-        country={country.slug}
-        locale={locale}
-        enabled={!isZhTw}
-      />
 
       {/* Navigation */}
       <section className="py-8 border-t border-gray-200">
@@ -619,34 +666,45 @@ export default function CountryPage() {
           ) : (
             <>
               <p className="text-gray-400 text-sm mb-2">
-                {isZhTw ? "網站是遊樂場。書是完整收藏。" : "The website is the playground. The book is the full collection."}
+                {isZhTw ? "網站是遊樂場。書是完整收藏。" : "Prefer the full guide?"}
               </p>
               <p className="text-white font-display text-2xl md:text-3xl mb-2">
                 {isZhTw ? (
                   <>擁有全部 <span className="text-[#FFE500]">100 個國家</span>的完整指南</>
                 ) : (
-                  <>Own the complete guide to all <span className="text-[#FFE500]">100 countries</span></>
+                  <>Get the book on <span className="text-[#FFE500]">Kindle</span></>
                 )}
               </p>
               <p className="text-gray-400 text-sm mb-6">
                 {isZhTw
                   ? "1,000+ 個片語 · 每個詞條附發音連結 · 深度文化背景"
-                  : "1,000+ phrases · pronunciation for every entry · deep cultural context"}
+                  : "1,000+ phrases · secondary to Join free membership"}
               </p>
               <a
-                href={AMAZON_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={`/go/book?surface=country&cta_id=country_page_footer&country=${country.slug}`}
                 onClick={() => trackPurchaseClick("country_page_footer", country.slug)}
                 className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
               >
                 <BookOpen size={18} />
-                {isZhTw ? "在 Amazon 購買完整版" : "Buy the Complete Edition on Amazon"}
+                {isZhTw ? "在 Amazon 購買完整版" : "Get the book on Kindle"}
               </a>
             </>
           )}
         </div>
       </section>
+      {!isZhTw && showStickyJoin ? (
+        <JoinFree
+          variant="sticky"
+          surface="country"
+          ctaId="country_sticky"
+          country={country.slug}
+          headline="One swear word a week — free"
+          microcopy="Free. Unsubscribe anytime. We never sell your email."
+          locale={locale}
+          sourcePath={localePath(`/country/${country.slug}`)}
+        />
+      ) : null}
     </Layout>
   );
 }
+

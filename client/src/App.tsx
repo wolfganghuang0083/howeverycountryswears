@@ -20,6 +20,8 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const BuyBookPage = lazy(() => import("./pages/BuyBookPage"));
 const HiddenRegisterPage = lazy(() => import("./pages/HiddenRegisterPage"));
 const AdminNewsletterPage = lazy(() => import("./pages/AdminNewsletterPage"));
+const SubscribeConfirmedPage = lazy(() => import("./pages/SubscribeConfirmedPage"));
+const GoBookPage = lazy(() => import("./pages/GoBookPage"));
 
 function LoadingFallback() {
   return (
@@ -51,6 +53,8 @@ function Router() {
         <Route path="/get-the-book" component={BuyBookPage} />
         <Route path="/book-activate" component={HiddenRegisterPage} />
         <Route path="/admin/newsletter" component={AdminNewsletterPage} />
+        <Route path="/subscribe/confirmed" component={SubscribeConfirmedPage} />
+        <Route path="/go/book" component={GoBookPage} />
 
         {/* Chinese (zh-tw) routes */}
         <Route path="/zh-tw" component={Home} />
@@ -65,6 +69,8 @@ function Router() {
         <Route path="/zh-tw/community" component={CommunityPage} />
         <Route path="/zh-tw/dashboard" component={DashboardPage} />
         <Route path="/zh-tw/get-the-book" component={BuyBookPage} />
+        <Route path="/zh-tw/subscribe/confirmed" component={SubscribeConfirmedPage} />
+        <Route path="/zh-tw/go/book" component={GoBookPage} />
 
         {/* Spanish (es) routes — blog pilot + minimal site chrome */}
         <Route path="/es" component={Home} />
@@ -79,6 +85,8 @@ function Router() {
         <Route path="/es/community" component={CommunityPage} />
         <Route path="/es/dashboard" component={DashboardPage} />
         <Route path="/es/get-the-book" component={BuyBookPage} />
+        <Route path="/es/subscribe/confirmed" component={SubscribeConfirmedPage} />
+        <Route path="/es/go/book" component={GoBookPage} />
 
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />

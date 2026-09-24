@@ -187,6 +187,10 @@ export default function AboutPage() {
         sourcePath={localePath("/about")}
         locale={locale}
         enabled={!isZhTw}
+        surface="about"
+        ctaId="about_mid"
+        headline="Follow the project by email"
+        microcopy="Free. Unsubscribe anytime. We never sell your email."
       />
 
       {/* Contact */}

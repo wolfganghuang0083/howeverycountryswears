@@ -15,7 +15,14 @@ import {
   createReview, getReviewsForCard, getReviewSummaryForCountry,
   upsertNewsletterSubscriber,
   listNewsletterSubscribers, countNewsletterSubscribers, setNewsletterUnsubscribed,
+  confirmNewsletterByEmail,
 } from "./db.js";
+import {
+  signNewsletterConfirmToken,
+  verifyNewsletterConfirmToken,
+  buildConfirmUrl,
+  isPreviewEnv,
+} from "./newsletterConfirm.js";
 
 export const appRouter = router({
   // ========== AUTH ==========
@@ -299,12 +306,53 @@ export const appRouter = router({
         sourcePath: z.string().min(1).max(512),
       }))
       .mutation(async ({ input }) => {
-        return upsertNewsletterSubscriber({
+        const result = await upsertNewsletterSubscriber({
           email: input.email,
           country: input.country,
           locale: input.locale || "en",
           sourcePath: input.sourcePath,
         });
+        const token = await signNewsletterConfirmToken(input.email);
+        const confirmUrl = buildConfirmUrl(token);
+        // No real email send — log confirm URL for Preview / ops
+        console.log("[newsletter] confirm URL (no email sent):", confirmUrl);
+        const out: {
+          ok: true;
+          status: "pending" | "confirmed" | "unsubscribed";
+          previewConfirmUrl?: string;
+        } = { ok: true, status: result.status };
+        if (isPreviewEnv()) {
+          out.previewConfirmUrl = confirmUrl;
+        }
+        return out;
+      }),
+
+    confirm: publicProcedure
+      .input(z.object({
+        token: z.string().min(10).max(2048),
+      }))
+      .mutation(async ({ input }) => {
+        const verified = await verifyNewsletterConfirmToken(input.token);
+        if (!verified) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid or expired confirmation link",
+          });
+        }
+        const result = await confirmNewsletterByEmail(verified.email);
+        if (!result.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.reason === "unsubscribed"
+              ? "This address is unsubscribed"
+              : "Subscription not found",
+          });
+        }
+        return {
+          ok: true as const,
+          status: result.status,
+          alreadyConfirmed: result.alreadyConfirmed,
+        };
       }),
 
     list: adminProcedure
