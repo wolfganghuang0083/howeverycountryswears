@@ -314,7 +314,8 @@ export const appRouter = router({
         });
         const token = await signNewsletterConfirmToken(input.email);
         const confirmUrl = buildConfirmUrl(token);
-        // No real email send — log confirm URL for Preview / ops
+        // Relative path keeps Preview SSO cookie (VERCEL_URL host differs from branch alias)
+        const relativeConfirm = `/subscribe/confirmed?token=${encodeURIComponent(token)}`;
         console.log("[newsletter] confirm URL (no email sent):", confirmUrl);
         const out: {
           ok: true;
@@ -322,7 +323,7 @@ export const appRouter = router({
           previewConfirmUrl?: string;
         } = { ok: true, status: result.status };
         if (isPreviewEnv()) {
-          out.previewConfirmUrl = confirmUrl;
+          out.previewConfirmUrl = relativeConfirm;
         }
         return out;
       }),
