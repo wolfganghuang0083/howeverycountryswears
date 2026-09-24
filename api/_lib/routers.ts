@@ -16,13 +16,23 @@ import {
   upsertNewsletterSubscriber,
   listNewsletterSubscribers, countNewsletterSubscribers, setNewsletterUnsubscribed,
   confirmNewsletterByEmail,
+  confirmOptInByEmail,
 } from "./db.js";
 import {
   signNewsletterConfirmToken,
   verifyNewsletterConfirmToken,
+  verifyNewsletterOptInToken,
+  signNewsletterOptInToken,
   buildConfirmUrl,
+  buildOptInUrl,
+  siteOrigin,
   isPreviewEnv,
 } from "./newsletterConfirm.js";
+import { sendMail } from "./mail/sendMail.js";
+import {
+  renderUnlockedEmail,
+  renderOptInWelcomeEmail,
+} from "./mail/templates/welcomeEmails.js";
 
 export const appRouter = router({
   // ========== AUTH ==========
@@ -319,19 +329,58 @@ export const appRouter = router({
           status: "pending" | "confirmed" | "unsubscribed";
           marketingConsent: boolean;
           previewConfirmUrl?: string;
+          previewEmailHtml?: string;
+          previewEmailSubject?: string;
+          emailVariant?: "unlocked" | "optin_welcome";
         } = {
           ok: true,
           status: result.status,
           marketingConsent: result.marketingConsent,
         };
-        if (result.issueConfirm) {
+
+        const origin = siteOrigin();
+        const optedIn = Boolean(input.marketingConsent && result.issueConfirm);
+
+        if (optedIn) {
+          // Combined welcome + DOI confirm (one email, no separate confirm send)
           const token = await signNewsletterConfirmToken(input.email);
-          const confirmUrl = buildConfirmUrl(token);
+          const confirmUrlAbs = buildConfirmUrl(token);
           const relativeConfirm = `/subscribe/confirmed?token=${encodeURIComponent(token)}`;
-          console.log("[newsletter] confirm URL (no email sent):", confirmUrl);
+          const rendered = renderOptInWelcomeEmail({ origin, confirmUrl: confirmUrlAbs });
+          const mailResult = await sendMail({
+            to: input.email,
+            subject: rendered.subject,
+            html: rendered.html,
+            text: rendered.text,
+            tag: "welcome_optin",
+          });
+          out.emailVariant = "optin_welcome";
           if (isPreviewEnv()) {
             out.previewConfirmUrl = relativeConfirm;
+            out.previewEmailHtml = mailResult.previewHtml || rendered.html;
+            out.previewEmailSubject = rendered.subject;
           }
+          console.log("[newsletter] welcome_optin queued/sent");
+        } else {
+          // Service “You're unlocked” + weekly subscribe footer (JWT purpose=optin)
+          const optToken = await signNewsletterOptInToken(input.email);
+          const optInUrlAbs = buildOptInUrl(optToken);
+          const rendered = renderUnlockedEmail({ origin, optInUrl: optInUrlAbs });
+          const mailResult = await sendMail({
+            to: input.email,
+            subject: rendered.subject,
+            html: rendered.html,
+            text: rendered.text,
+            tag: "welcome_unlocked",
+          });
+          out.emailVariant = "unlocked";
+          if (isPreviewEnv()) {
+            out.previewEmailHtml = mailResult.previewHtml || rendered.html;
+            out.previewEmailSubject = rendered.subject;
+            // Also expose relative opt-in link for Preview testing
+            out.previewConfirmUrl = `/subscribe/confirmed?token=${encodeURIComponent(optToken)}&variant=optin`;
+          }
+          console.log("[newsletter] welcome_unlocked queued/sent");
         }
         return out;
       }),
@@ -339,8 +388,34 @@ export const appRouter = router({
     confirm: publicProcedure
       .input(z.object({
         token: z.string().min(10).max(2048),
+        /** optin = footer Subscribe to the weekly (consent+confirmed) */
+        variant: z.enum(["confirm", "optin"]).optional(),
       }))
       .mutation(async ({ input }) => {
+        const asOptIn = input.variant === "optin";
+        if (asOptIn) {
+          const verified = await verifyNewsletterOptInToken(input.token);
+          if (!verified) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Invalid or expired opt-in link",
+            });
+          }
+          const result = await confirmOptInByEmail(verified.email);
+          if (!result.ok) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Subscription not found",
+            });
+          }
+          return {
+            ok: true as const,
+            status: result.status,
+            alreadyConfirmed: result.alreadyConfirmed,
+            variant: "optin" as const,
+          };
+        }
+
         const verified = await verifyNewsletterConfirmToken(input.token);
         if (!verified) {
           throw new TRPCError({
@@ -361,6 +436,7 @@ export const appRouter = router({
           ok: true as const,
           status: result.status,
           alreadyConfirmed: result.alreadyConfirmed,
+          variant: "confirm" as const,
         };
       }),
 

@@ -423,3 +423,16 @@ export function trackNewsletterConfirm(params?: { method?: string }) {
     method: params?.method ?? "email",
   });
 }
+
+/** Welcome/service email queued or dry-run previewed. No PII. */
+export function trackWelcomeEmailQueued(params: {
+  variant: "unlocked" | "optin_welcome";
+  surface?: string;
+  cta_id?: string;
+}) {
+  trackEvent("welcome_email_queued", {
+    variant: params.variant,
+    surface: params.surface,
+    cta_id: params.cta_id,
+  });
+}

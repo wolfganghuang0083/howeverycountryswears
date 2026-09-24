@@ -11,8 +11,15 @@ function getTokenFromSearch(): string | null {
   return q.get("token");
 }
 
+function getVariantFromSearch(): "confirm" | "optin" {
+  if (typeof window === "undefined") return "confirm";
+  const q = new URLSearchParams(window.location.search);
+  return q.get("variant") === "optin" ? "optin" : "confirm";
+}
+
 export default function SubscribeConfirmedPage() {
   const [token] = useState(() => getTokenFromSearch());
+  const [variant] = useState(() => getVariantFromSearch());
   const fired = useRef(false);
   const [phase, setPhase] = useState<"loading" | "ok" | "invalid">("loading");
 
@@ -32,9 +39,9 @@ export default function SubscribeConfirmedPage() {
       setPhase("invalid");
       return;
     }
-    confirm.mutate({ token });
+    confirm.mutate({ token, variant });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, variant]);
 
   return (
     <Layout>
@@ -50,9 +57,13 @@ export default function SubscribeConfirmedPage() {
           {phase === "ok" && (
             <>
               <CheckCircle2 className="mx-auto mb-4 text-[#32CD32]" size={48} />
-              <h1 className="font-display text-3xl text-[#1a1a1a] mb-2">You&apos;re confirmed</h1>
+              <h1 className="font-display text-3xl text-[#1a1a1a] mb-2">
+                {variant === "optin" ? "You're subscribed to the weekly" : "You're confirmed"}
+              </h1>
               <p className="text-sm text-[#555] mb-6 leading-relaxed">
-                Thanks — you&apos;re on the list. When sending is enabled, you&apos;ll get Swear Word of the Week by email.
+                {variant === "optin"
+                  ? "Thanks — marketing consent is on and you're confirmed for Swear Word of the Week."
+                  : "Thanks — you're on the list. When sending is enabled, you'll get Swear Word of the Week by email."}
               </p>
               <Link
                 href="/"

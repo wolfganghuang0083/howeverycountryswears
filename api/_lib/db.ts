@@ -567,3 +567,36 @@ export async function confirmNewsletterByEmail(email: string): Promise<{
     .where(eq(newsletterSubscribers.id, row.id));
   return { ok: true, status: "confirmed", alreadyConfirmed: false };
 }
+
+/** Opt-in JWT from unlocked email footer: marketing_consent=true + status=confirmed.
+ *  Never leaves unsubscribed stuck — re-engages to confirmed+consent.
+ */
+export async function confirmOptInByEmail(email: string): Promise<{
+  ok: true;
+  status: "confirmed";
+  alreadyConfirmed: boolean;
+} | { ok: false; reason: "not_found" }> {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const [row] = await db
+    .select({
+      id: newsletterSubscribers.id,
+      status: newsletterSubscribers.status,
+      marketingConsent: newsletterSubscribers.marketingConsent,
+    })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, normalized))
+    .limit(1);
+  if (!row) return { ok: false, reason: "not_found" };
+  const already =
+    row.status === "confirmed" && row.marketingConsent === true;
+  await db
+    .update(newsletterSubscribers)
+    .set({
+      status: "confirmed",
+      marketingConsent: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(newsletterSubscribers.id, row.id));
+  return { ok: true, status: "confirmed", alreadyConfirmed: already };
+}

@@ -8,6 +8,7 @@ import {
   trackNewsletterSignup,
   trackNewsletterSubscribeSubmit,
   trackAudioUnlock,
+  trackWelcomeEmailQueued,
   getPageTypeFromPath,
 } from "@/lib/analytics";
 import { setAudioUnlocked } from "@/lib/audioUnlock";
@@ -77,6 +78,9 @@ export default function JoinFree({
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewConfirmUrl, setPreviewConfirmUrl] = useState<string | null>(null);
+  const [previewEmailHtml, setPreviewEmailHtml] = useState<string | null>(null);
+  const [previewEmailSubject, setPreviewEmailSubject] = useState<string | null>(null);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [internalOpen, setInternalOpen] = useState(false);
 
   const isModal = variant === "modal";
@@ -136,6 +140,24 @@ export default function JoinFree({
       } else {
         setPreviewConfirmUrl(null);
       }
+      if (data && "previewEmailHtml" in data && data.previewEmailHtml) {
+        setPreviewEmailHtml(data.previewEmailHtml as string);
+        setPreviewEmailSubject(
+          data && "previewEmailSubject" in data && data.previewEmailSubject
+            ? (data.previewEmailSubject as string)
+            : null,
+        );
+      } else {
+        setPreviewEmailHtml(null);
+        setPreviewEmailSubject(null);
+      }
+      if (data && "emailVariant" in data && data.emailVariant) {
+        trackWelcomeEmailQueued({
+          variant: data.emailVariant as "unlocked" | "optin_welcome",
+          surface,
+          cta_id: ctaId,
+        });
+      }
       setDone(true);
       setError(null);
     },
@@ -189,12 +211,32 @@ export default function JoinFree({
           </p>
           {previewConfirmUrl ? (
             <p className="mt-3 text-xs text-[#666] break-all">
-              <span className="font-bold text-[#FF1493]">Preview only: confirm link</span>
+              <span className="font-bold text-[#FF1493]">Preview only: link</span>
               <br />
               <a href={previewConfirmUrl} className="text-[#FF1493] underline break-all">
                 {previewConfirmUrl}
               </a>
             </p>
+          ) : null}
+          {previewEmailHtml ? (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setShowEmailPreview((v) => !v)}
+                className="text-xs font-bold text-[#FF1493] underline"
+              >
+                {showEmailPreview ? "Hide email preview" : "Preview email"}
+                {previewEmailSubject ? ` — ${previewEmailSubject}` : ""}
+              </button>
+              {showEmailPreview ? (
+                <iframe
+                  title="Email preview"
+                  srcDoc={previewEmailHtml}
+                  className="mt-2 w-full h-64 border-2 border-[#1a1a1a] rounded-lg bg-white"
+                  sandbox=""
+                />
+              ) : null}
+            </div>
           ) : null}
           {isAudio ? (
             <button
