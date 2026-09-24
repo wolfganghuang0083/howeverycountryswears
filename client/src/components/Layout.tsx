@@ -4,7 +4,7 @@ import { Menu, X, BookOpen, Globe, Trophy, Info, Users, LayoutDashboard, LogIn, 
 import SearchDialog from "@/components/SearchDialog";
 import { AMAZON_LINK } from "@/lib/data";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import SignupModal from "@/components/SignupModal";
 import { useLocale } from "@/contexts/LocaleContext";
 import { getEnabledLocales, type Locale, DEFAULT_LOCALE } from "@/lib/i18n";
 
@@ -12,6 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const { locale, t, localePath, switchLocalePath } = useLocale();
@@ -209,12 +210,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           </button>
                         </>
                       ) : (
-                        <a
-                          href={getLoginUrl()}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1a1a1a] hover:bg-[#FFF0F5] hover:text-[#FF1493] no-underline transition-colors"
+                        <button
+                          type="button"
+                          onClick={() => { setSignupOpen(true); setMenuOpen(false); }}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1a1a1a] hover:bg-[#FFF0F5] hover:text-[#FF1493] w-full text-left transition-colors"
                         >
                           <LogIn size={18} /> {t("nav.signIn")}
-                        </a>
+                        </button>
                       )
                     )}
                   </div>
@@ -227,6 +229,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Search Dialog */}
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <SignupModal open={signupOpen} onOpenChange={setSignupOpen} surface="home" ctaId="nav_signin" enabled={locale !== "zh-tw"} locale={locale} sourcePath={location} />
 
       {/* Main Content */}
       <main className="flex-1">{children}</main>
@@ -252,7 +255,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link href={localePath("/blog")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.blog")}</Link>
                 <Link href={localePath("/community")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.community")}</Link>
                 <Link href={localePath("/rankings")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.rankings")}</Link>
-                <Link href={localePath("/get-the-book")} className="text-gray-300 hover:text-[#FFE500] text-sm no-underline transition-colors">{t("nav.getBook")}</Link>
+                {locale !== "zh-tw" ? (
+                  <Link href={localePath("/country/afghanistan")} className="text-[#FFE500] hover:text-[#FF1493] text-sm font-bold no-underline transition-colors">Join free</Link>
+                ) : null}
+                <Link href={localePath("/get-the-book")} className="text-gray-400 hover:text-gray-300 text-sm no-underline transition-colors">{t("nav.getBook")}</Link>
                 <Link href={localePath("/about")} className="text-gray-300 hover:text-[#FF1493] text-sm no-underline transition-colors">{t("nav.about")}</Link>
               </div>
             </div>

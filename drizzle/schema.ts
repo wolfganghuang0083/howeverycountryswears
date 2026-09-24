@@ -27,6 +27,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 320 }),
   avatarUrl: text("avatar_url"),
   loginMethod: varchar("login_method", { length: 64 }),
+  /** Set when email is verified (Google email_verified, or magic-link click). Null = unverified. */
+  emailVerifiedAt: timestamp("email_verified_at"),
   role: roleEnum("role").default("user").notNull(),
   memberTier: memberTierEnum("member_tier").default("regular").notNull(),
   displayName: varchar("display_name", { length: 100 }),
@@ -148,3 +150,19 @@ export const reviews = pgTable("reviews", {
 });
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = typeof reviews.$inferInsert;
+
+// ========== NEWSLETTER SUBSCRIBERS (CRM Preview) ==========
+export const newsletterStatusEnum = pgEnum("newsletter_status", ["pending", "confirmed", "unsubscribed"]);
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  country: varchar("country", { length: 100 }),
+  locale: varchar("locale", { length: 16 }).default("en").notNull(),
+  sourcePath: varchar("source_path", { length: 512 }).notNull(),
+  status: newsletterStatusEnum("status").default("pending").notNull(),
+  marketingConsent: boolean("marketing_consent").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;

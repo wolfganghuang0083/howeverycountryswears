@@ -53,6 +53,19 @@ export function trackSignUp(method: string = "oauth") {
   trackEvent("sign_up", { method });
 }
 
+/** Signup modal / method chosen — no PII. */
+export function trackSignupStart(params: {
+  method: string;
+  surface?: string;
+  cta_id?: string;
+}) {
+  trackEvent("signup_start", {
+    method: params.method,
+    surface: params.surface,
+    cta_id: params.cta_id,
+  });
+}
+
 /**
  * Fire login_success once per browser session when auth first resolves with a user.
  * Does not fire sign_up (first-ever user is unclear from /api/auth/me alone).
@@ -340,4 +353,99 @@ export function trackFirstShare() {
     saveMilestone("first_share");
     trackEvent("first_share");
   }
+}
+
+// ============================================================
+// NEWSLETTER / JOIN FREE FUNNEL
+// ============================================================
+
+/**
+ * Legacy CRM Preview submit event — kept harmless alongside newsletter_signup.
+ */
+export function trackNewsletterSubscribeSubmit(params: {
+  country?: string;
+  locale?: string;
+  source_path: string;
+}) {
+  trackEvent("newsletter_subscribe_submit", {
+    country: params.country,
+    locale: params.locale,
+    source_path: params.source_path,
+  });
+}
+
+/** User clicks Join free CTA (inline / sticky / modal submit button). No PII. */
+export function trackNewsletterCtaClick(params: {
+  surface: string;
+  cta_id: string;
+  page_type?: string;
+  country?: string;
+}) {
+  trackEvent("newsletter_cta_click", {
+    surface: params.surface,
+    cta_id: params.cta_id,
+    page_type: params.page_type ?? getPageTypeFromPath(),
+    country: params.country,
+  });
+}
+
+/** Modal opened (graycard / etc). Inline forms do not fire this. */
+export function trackNewsletterModalOpen(params: {
+  surface: string;
+  cta_id: string;
+}) {
+  trackEvent("newsletter_modal_open", {
+    surface: params.surface,
+    cta_id: params.cta_id,
+  });
+}
+
+/** Fired after subscribe API success. No email / PII. */
+export function trackNewsletterSignup(params: {
+  surface: string;
+  cta_id: string;
+  method?: string;
+  country?: string;
+}) {
+  trackEvent("newsletter_signup", {
+    surface: params.surface,
+    cta_id: params.cta_id,
+    method: params.method ?? "email",
+    country: params.country,
+  });
+}
+
+/** Audio unlocked via email gate (every successful unlock submit). No PII. */
+export function trackAudioUnlock(params: {
+  opt_in: boolean;
+  surface: string;
+  cta_id: string;
+  country?: string;
+}) {
+  trackEvent("audio_unlock", {
+    opt_in: params.opt_in,
+    surface: params.surface,
+    cta_id: params.cta_id,
+    country: params.country,
+  });
+}
+
+/** Fired on /subscribe/confirmed after successful confirm. No PII. */
+export function trackNewsletterConfirm(params?: { method?: string }) {
+  trackEvent("newsletter_confirm", {
+    method: params?.method ?? "email",
+  });
+}
+
+/** Welcome/service email queued or dry-run previewed. No PII. */
+export function trackWelcomeEmailQueued(params: {
+  variant: "unlocked" | "optin_welcome" | "magic" | "google";
+  surface?: string;
+  cta_id?: string;
+}) {
+  trackEvent("welcome_email_queued", {
+    variant: params.variant,
+    surface: params.surface,
+    cta_id: params.cta_id,
+  });
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { trackLoginSuccess } from "@/lib/analytics";
+import { trackLoginSuccess, trackSignUp, trackAudioUnlock } from "@/lib/analytics";
 
 export interface AuthUser {
   id: number;
@@ -10,6 +10,7 @@ export interface AuthUser {
   avatarUrl: string | null;
   role: "user" | "admin";
   memberTier: "regular" | "bookBuyer";
+  emailVerified?: boolean;
 }
 
 interface AuthState {
@@ -22,6 +23,8 @@ interface AuthState {
 function inferLoginMethod(user: AuthUser | null): string {
   if (!user?.openId) return "oauth";
   if (user.openId.startsWith("github_")) return "github";
+  if (user.openId.startsWith("google_")) return "google";
+  if (user.openId.startsWith("email_")) return "email";
   return "oauth";
 }
 
@@ -51,7 +54,24 @@ export function useAuth() {
           });
           // Once per browser session when auth first resolves with a user
           if (user) {
-            trackLoginSuccess({ method: inferLoginMethod(user) });
+            const method = inferLoginMethod(user);
+            trackLoginSuccess({ method });
+            // sign_up: fire when returning from signup=* query (first verify)
+            try {
+              const q = new URLSearchParams(window.location.search);
+              const s = q.get("signup");
+              if (s === "google" || s === "email") {
+                trackSignUp(s);
+                trackAudioUnlock({
+                  opt_in: false,
+                  surface: "auth_callback",
+                  cta_id: `signup_${s}`,
+                });
+                q.delete("signup");
+                const clean = `${window.location.pathname}${q.toString() ? `?${q}` : ""}${window.location.hash}`;
+                window.history.replaceState({}, "", clean);
+              }
+            } catch { /* ignore */ }
           }
         }
       } catch (err: any) {

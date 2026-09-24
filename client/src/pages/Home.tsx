@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocale } from "@/contexts/LocaleContext";
 import { trackPurchaseClick } from "@/lib/analytics";
+import SignupModal from "@/components/SignupModal";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -83,6 +84,18 @@ function AnimatedCounter({ end, label, suffix }: { end: number; label: string; s
 
 function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticated: boolean; memberTier?: string; userRole?: string }) {
   const { locale, t, localePath } = useLocale();
+  const [signupOpen, setSignupOpen] = useState(false);
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("signin") === "1" && !isAuthenticated) {
+        setSignupOpen(true);
+        q.delete("signin");
+        const clean = `${window.location.pathname}${q.toString() ? `?${q}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", clean);
+      }
+    } catch { /* ignore */ }
+  }, [isAuthenticated]);
   const countries = getAllCountries(locale);
   const parts = getAllParts(locale);
 
@@ -135,6 +148,7 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
 
   return (
     <Layout>
+      <SignupModal open={signupOpen} onOpenChange={setSignupOpen} surface="home" ctaId="home_signin" enabled={!isZhTw} locale={locale} sourcePath={localePath("/")} />
       {/* ===== HERO SECTION — Conversion-focused ===== */}
       <section className="relative overflow-hidden">
         <div

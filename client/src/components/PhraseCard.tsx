@@ -1,13 +1,12 @@
-import { Card, getRiskColor, getRiskLevel, type Country, SITE_DOMAIN, AMAZON_LINK, isLockedContent } from "@/lib/data";
+import { Card, getRiskColor, type Country, SITE_DOMAIN, isLockedContent } from "@/lib/data";
 import { playPronunciation, shareToTwitter, shareToFacebook, shareToWhatsApp } from "@/lib/pronunciation";
-import { Volume2, Lock, BookOpen, LogIn, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
+import { Volume2, Lock, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "wouter";
-import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useLocale } from "@/contexts/LocaleContext";
-import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView, trackPaywallLoginClick, trackPaywallBookClick } from "@/lib/analytics";
+import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView } from "@/lib/analytics";
+import SignupModal from "@/components/SignupModal";
 
 interface PhraseCardProps {
   card: Card;
@@ -45,23 +44,9 @@ export default function PhraseCard({
 }: PhraseCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(initialUserRating || 0);
   const [hoverRating, setHoverRating] = useState(0);
-
-  useEffect(() => {
-    if (!showPaywall) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowPaywall(false);
-    };
-    document.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [showPaywall]);
 
   const riskColor = getRiskColor(card.risk);
   const { locale, t, localePath } = useLocale();
@@ -71,7 +56,11 @@ export default function PhraseCard({
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(country.part_id, country.slug);
 
-  const canPlay = freePreview || (isAuthenticated && (isBookBuyer || !isLocked));
+  // Audio: free preview OR verified session (+ bookBuyer for Part 8–11).
+  // Unverified localStorage unlock removed — registration required.
+  const canPlay =
+    freePreview ||
+    (isAuthenticated && (isBookBuyer || !isLocked));
   const canRate = isAuthenticated;
 
   const rateMutation = trpc.rating.rate.useMutation();
@@ -80,8 +69,14 @@ export default function PhraseCard({
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!freePreview && !isAuthenticated) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
-    if (!freePreview && isLocked && !isBookBuyer) { setShowPaywall(true); trackPaywallView({ country: country.slug, context: "phrase_card" }); return; }
+    if (!canPlay) {
+      // Verified account unlocks free-part audio; Part 8–11 still needs bookBuyer.
+      if (!(isAuthenticated && isLocked && !isBookBuyer)) {
+        setShowSignup(true);
+      }
+      trackPaywallView({ country: country.slug, context: "phrase_card" });
+      return;
+    }
     setIsPlaying(true);
     playPronunciation(card.phrase, country.lang_code);
     trackPhrasePlay({ country: country.slug, phrase_index: card.number, is_free_preview: freePreview, is_locked: isLocked });
@@ -90,10 +85,10 @@ export default function PhraseCard({
       listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
     }
     setTimeout(() => setIsPlaying(false), 2000);
-  }, [card.phrase, country.lang_code, country.slug, card.number, isAuthenticated, isLocked, isBookBuyer, freePreview, listenMutation]);
+  }, [card.phrase, country.lang_code, country.slug, card.number, canPlay, isAuthenticated, isLocked, freePreview, listenMutation]);
 
   const handleRate = useCallback((value: number) => {
-    if (!isAuthenticated) { setShowPaywall(true); return; }
+    if (!isAuthenticated) { return; }
     setCurrentUserRating(value);
     rateMutation.mutate({ countrySlug: country.slug, cardNumber: card.number, value });
     trackPhraseRate({ country: country.slug, phrase_index: card.number, rating_value: value });
@@ -127,37 +122,6 @@ export default function PhraseCard({
     setTimeout(() => setCopied(false), 2000);
   }, [phraseAnchorUrl]);
 
-  const getPaywallContent = () => {
-    if (!isAuthenticated) {
-      return {
-        title: isZhTw ? "登入即可收聽" : "Sign In to Listen",
-        desc: isZhTw
-          ? "建立免費帳號即可收聽 66 個國家的發音，評分片語，看看其他人怎麼評！"
-          : "Create a free account to hear pronunciations for 66 countries, rate phrases, and see how others rated them!",
-        showLogin: true,
-        showBookCTA: false,
-      };
-    }
-    if (isLocked && !isBookBuyer) {
-      return {
-        title: isZhTw ? "僅限書籍持有者" : "Book Owners Only",
-        desc: isZhTw
-          ? `此國家位於 Part ${country.part_id} — 書籍持有者專屬內容。購買書籍即可解鎖全部 100 個國家！`
-          : `This country is in Part ${country.part_id} — exclusive content for book owners. Get the book to unlock all 100 countries!`,
-        showLogin: false,
-        showBookCTA: true,
-      };
-    }
-    return {
-      title: isZhTw ? "需要升級" : "Upgrade Required",
-      desc: isZhTw ? "購買書籍以解鎖所有功能。" : "Get the book to unlock all features.",
-      showLogin: false,
-      showBookCTA: true,
-    };
-  };
-
-  const paywallContent = getPaywallContent();
-
   // Round icon button component
   const IconBtn = ({ onClick, title, children, highlight }: { onClick: (e: React.MouseEvent) => void; title: string; children: React.ReactNode; highlight?: boolean }) => (
     <button
@@ -171,93 +135,18 @@ export default function PhraseCard({
     </button>
   );
 
-  const paywallModal =
-    showPaywall && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`paywall-title-${anchorId}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setShowPaywall(false);
-            }}
-          >
-            <div
-              className="bg-white rounded-xl border-3 border-[#FFE500] shadow-[4px_4px_0px_#1a1a1a] p-6 max-w-sm w-full text-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-            >
-              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#FFF8E1] flex items-center justify-center border-2 border-[#FFE500]">
-                <Lock size={28} className="text-[#FF1493]" />
-              </div>
-              <h4 id={`paywall-title-${anchorId}`} className="font-display text-xl text-[#1a1a1a] mb-2">
-                {paywallContent.title}
-              </h4>
-              <p className="text-sm text-[#666] mb-4">{paywallContent.desc}</p>
-              <div className="space-y-2">
-                {paywallContent.showLogin && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      trackPaywallLoginClick({ country: country.slug, context: "phrase_card" });
-                      window.location.href = getLoginUrl(
-                        window.location.pathname + window.location.search + "#" + anchorId,
-                      );
-                    }}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-                  >
-                    <LogIn size={16} /> {isZhTw ? "免費登入" : "Sign In Free"}
-                  </button>
-                )}
-                {paywallContent.showBookCTA && (
-                  <>
-                    {isAuthenticated && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          window.location.href = localePath("/community");
-                        }}
-                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FF1493] text-white rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-                      >
-                        <BookOpen size={16} /> {isZhTw ? "輸入書籍代碼" : "Enter Book Code"}
-                      </button>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        trackPaywallBookClick({ country: country.slug, context: "phrase_card" });
-                        window.open(AMAZON_LINK, "_blank");
-                      }}
-                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FFE500] text-[#1a1a1a] rounded-lg font-bold text-sm border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
-                    >
-                      <BookOpen size={16} /> {isZhTw ? "在 Amazon 購買書籍" : "Get the Book on Amazon"}
-                    </button>
-                  </>
-                )}
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setShowPaywall(false);
-                }}
-                className="mt-3 text-xs text-[#999] hover:text-[#666] transition-colors"
-              >
-                {isZhTw ? "關閉" : "Close"}
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+  const signupModal = (
+    <SignupModal
+      open={showSignup}
+      onOpenChange={setShowSignup}
+      surface="graycard"
+      ctaId="graycard_play"
+      country={country.slug}
+      enabled={!isZhTw}
+      locale={locale}
+      sourcePath={localePath(`/country/${country.slug}`)}
+    />
+  );
 
   const cardContent = (
     <div
@@ -370,7 +259,7 @@ export default function PhraseCard({
                 ))}
               </div>
               {!isAuthenticated && (
-                <button onClick={(e) => { e.stopPropagation(); setShowPaywall(true); }} className="text-xs text-[#FF1493] font-semibold hover:underline">
+                <button onClick={(e) => { e.stopPropagation(); setShowSignup(true); }} className="text-xs text-[#FF1493] font-semibold hover:underline">
                   {isZhTw ? "登入即可評分" : "Sign in to rate"}
                 </button>
               )}
@@ -406,7 +295,7 @@ export default function PhraseCard({
         <Link href={detailPath} className="no-underline block">
           {cardContent}
         </Link>
-        {paywallModal}
+        {signupModal}
       </>
     );
   }
@@ -414,7 +303,7 @@ export default function PhraseCard({
   return (
     <>
       {cardContent}
-      {paywallModal}
+      {signupModal}
     </>
   );
 }

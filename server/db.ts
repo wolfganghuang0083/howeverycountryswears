@@ -4,6 +4,7 @@ import { eq, and, desc, sql, count, gte } from "drizzle-orm";
 import {
   users, submissions, votes, bookCodes,
   ratings, userBadges, countryAmbassadors, pointsHistory, reviews,
+  newsletterSubscribers,
   type InsertUser, type InsertSubmission, type InsertReview
 } from "../drizzle/schema";
 
@@ -15,15 +16,33 @@ export function getDb() {
 }
 
 // ========== USER HELPERS ==========
-export async function upsertUser(user: { openId: string; name?: string | null; email?: string | null; avatarUrl?: string | null; loginMethod?: string; }): Promise<typeof users.$inferSelect> {
+export async function upsertUser(user: {
+  openId: string;
+  name?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
+  loginMethod?: string;
+  emailVerifiedAt?: Date | null;
+}): Promise<typeof users.$inferSelect> {
   const db = getDb();
   const existing = await db.select().from(users).where(eq(users.openId, user.openId)).limit(1);
-  
+
   if (existing.length > 0) {
+    const nextVerified =
+      user.emailVerifiedAt !== undefined
+        ? (user.emailVerifiedAt ?? existing[0].emailVerifiedAt)
+        : existing[0].emailVerifiedAt;
+    // Never clear a prior verification
+    const emailVerifiedAt =
+      existing[0].emailVerifiedAt && nextVerified
+        ? (existing[0].emailVerifiedAt <= nextVerified ? existing[0].emailVerifiedAt : nextVerified)
+        : (existing[0].emailVerifiedAt ?? nextVerified ?? null);
     await db.update(users).set({
       name: user.name ?? existing[0].name,
       email: user.email ?? existing[0].email,
       avatarUrl: user.avatarUrl ?? existing[0].avatarUrl,
+      loginMethod: user.loginMethod ?? existing[0].loginMethod,
+      emailVerifiedAt,
       lastSignedIn: new Date(),
       updatedAt: new Date(),
     }).where(eq(users.id, existing[0].id));
@@ -35,11 +54,19 @@ export async function upsertUser(user: { openId: string; name?: string | null; e
       name: user.name ?? null,
       email: user.email ?? null,
       avatarUrl: user.avatarUrl ?? null,
-      loginMethod: user.loginMethod ?? "github",
+      loginMethod: user.loginMethod ?? "email",
+      emailVerifiedAt: user.emailVerifiedAt ?? null,
       lastSignedIn: new Date(),
     }).returning();
     return newUser;
   }
+}
+
+export async function getUserByEmail(email: string) {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -357,4 +384,230 @@ export async function getReviewSummaryForCountry(countrySlug: string) {
     .where(eq(reviews.countrySlug, countrySlug))
     .groupBy(reviews.cardNumber);
   return results;
+}
+
+// ========== NEWSLETTER (CRM Preview — no email send) ==========
+export async function upsertNewsletterSubscriber(input: {
+  email: string;
+  country?: string | null;
+  locale: string;
+  sourcePath: string;
+  marketingConsent?: boolean;
+}): Promise<{
+  ok: true;
+  status: "pending" | "confirmed" | "unsubscribed";
+  marketingConsent: boolean;
+  issueConfirm: boolean;
+}> {
+  const db = getDb();
+  const email = input.email.trim().toLowerCase();
+  const wantConsent = Boolean(input.marketingConsent);
+  const existing = await db.select().from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, email))
+    .limit(1);
+
+  if (existing.length > 0) {
+    const row = existing[0];
+
+    // Unsubscribed: only re-engage if checkbox checked; otherwise leave untouched
+    if (row.status === "unsubscribed") {
+      if (!wantConsent) {
+        return {
+          ok: true,
+          status: "unsubscribed",
+          marketingConsent: row.marketingConsent,
+          issueConfirm: false,
+        };
+      }
+      await db.update(newsletterSubscribers).set({
+        country: input.country ?? row.country,
+        locale: input.locale,
+        sourcePath: input.sourcePath,
+        status: "pending",
+        marketingConsent: true,
+        updatedAt: new Date(),
+      }).where(eq(newsletterSubscribers.id, row.id));
+      return { ok: true, status: "pending", marketingConsent: true, issueConfirm: true };
+    }
+
+    // Never flip true → false via this form
+    const nextConsent = row.marketingConsent || wantConsent;
+    const flippedToConsent = !row.marketingConsent && wantConsent;
+    // Keep confirmed; otherwise stay/reset pending
+    const nextStatus = row.status === "confirmed" ? "confirmed" : "pending";
+
+    await db.update(newsletterSubscribers).set({
+      country: input.country ?? row.country,
+      locale: input.locale,
+      sourcePath: input.sourcePath,
+      status: nextStatus,
+      marketingConsent: nextConsent,
+      updatedAt: new Date(),
+    }).where(eq(newsletterSubscribers.id, row.id));
+
+    const issueConfirm =
+      wantConsent &&
+      nextStatus !== "confirmed" &&
+      (flippedToConsent || nextConsent);
+    // Issue confirm when opting in and not already confirmed
+    const shouldConfirm = wantConsent && nextStatus !== "confirmed";
+
+    return {
+      ok: true,
+      status: nextStatus,
+      marketingConsent: nextConsent,
+      issueConfirm: shouldConfirm,
+    };
+  }
+
+  const [row] = await db.insert(newsletterSubscribers).values({
+    email,
+    country: input.country ?? null,
+    locale: input.locale,
+    sourcePath: input.sourcePath,
+    status: "pending",
+    marketingConsent: wantConsent,
+  }).returning({
+    status: newsletterSubscribers.status,
+    marketingConsent: newsletterSubscribers.marketingConsent,
+  });
+  return {
+    ok: true,
+    status: row.status,
+    marketingConsent: row.marketingConsent,
+    issueConfirm: wantConsent,
+  };
+}
+
+export type NewsletterStatus = "pending" | "confirmed" | "unsubscribed";
+
+export async function listNewsletterSubscribers(opts: {
+  status?: NewsletterStatus;
+  /** Sendable = marketing_consent=true AND status=confirmed */
+  sendable?: boolean;
+  limit: number;
+  offset: number;
+}) {
+  const db = getDb();
+  const conditions = [];
+  if (opts.status) conditions.push(eq(newsletterSubscribers.status, opts.status));
+  if (opts.sendable) {
+    conditions.push(eq(newsletterSubscribers.marketingConsent, true));
+    conditions.push(eq(newsletterSubscribers.status, "confirmed"));
+  }
+
+  let query = db
+    .select({
+      id: newsletterSubscribers.id,
+      email: newsletterSubscribers.email,
+      country: newsletterSubscribers.country,
+      locale: newsletterSubscribers.locale,
+      sourcePath: newsletterSubscribers.sourcePath,
+      status: newsletterSubscribers.status,
+      marketingConsent: newsletterSubscribers.marketingConsent,
+      createdAt: newsletterSubscribers.createdAt,
+    })
+    .from(newsletterSubscribers)
+    .orderBy(desc(newsletterSubscribers.createdAt))
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as typeof query;
+  }
+
+  return query;
+}
+
+export async function countNewsletterSubscribers(opts: {
+  status?: NewsletterStatus;
+  sendable?: boolean;
+} = {}) {
+  const db = getDb();
+  const conditions = [];
+  if (opts.status) conditions.push(eq(newsletterSubscribers.status, opts.status));
+  if (opts.sendable) {
+    conditions.push(eq(newsletterSubscribers.marketingConsent, true));
+    conditions.push(eq(newsletterSubscribers.status, "confirmed"));
+  }
+
+  let query = db.select({ total: sql<number>`COUNT(*)::int` }).from(newsletterSubscribers);
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as typeof query;
+  }
+  const [{ total }] = await query;
+  return total;
+}
+
+/** Only pending → unsubscribed. Returns false if missing or not pending. */
+export async function setNewsletterUnsubscribed(id: number): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ id: newsletterSubscribers.id, status: newsletterSubscribers.status })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.id, id))
+    .limit(1);
+  if (!row || row.status !== "pending") return false;
+  await db
+    .update(newsletterSubscribers)
+    .set({ status: "unsubscribed", updatedAt: new Date() })
+    .where(eq(newsletterSubscribers.id, id));
+  return true;
+}
+/** pending → confirmed only. Never touches unsubscribed. Returns status or null if not found. */
+export async function confirmNewsletterByEmail(email: string): Promise<{
+  ok: true;
+  status: "pending" | "confirmed" | "unsubscribed";
+  alreadyConfirmed: boolean;
+} | { ok: false; reason: "not_found" | "unsubscribed" }> {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const [row] = await db
+    .select({ id: newsletterSubscribers.id, status: newsletterSubscribers.status })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, normalized))
+    .limit(1);
+  if (!row) return { ok: false, reason: "not_found" };
+  if (row.status === "unsubscribed") return { ok: false, reason: "unsubscribed" };
+  if (row.status === "confirmed") {
+    return { ok: true, status: "confirmed", alreadyConfirmed: true };
+  }
+  await db
+    .update(newsletterSubscribers)
+    .set({ status: "confirmed", updatedAt: new Date() })
+    .where(eq(newsletterSubscribers.id, row.id));
+  return { ok: true, status: "confirmed", alreadyConfirmed: false };
+}
+
+/** Opt-in JWT from unlocked email footer: marketing_consent=true + status=confirmed.
+ *  Never leaves unsubscribed stuck — re-engages to confirmed+consent.
+ */
+export async function confirmOptInByEmail(email: string): Promise<{
+  ok: true;
+  status: "confirmed";
+  alreadyConfirmed: boolean;
+} | { ok: false; reason: "not_found" }> {
+  const db = getDb();
+  const normalized = email.trim().toLowerCase();
+  const [row] = await db
+    .select({
+      id: newsletterSubscribers.id,
+      status: newsletterSubscribers.status,
+      marketingConsent: newsletterSubscribers.marketingConsent,
+    })
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, normalized))
+    .limit(1);
+  if (!row) return { ok: false, reason: "not_found" };
+  const already =
+    row.status === "confirmed" && row.marketingConsent === true;
+  await db
+    .update(newsletterSubscribers)
+    .set({
+      status: "confirmed",
+      marketingConsent: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(newsletterSubscribers.id, row.id));
+  return { ok: true, status: "confirmed", alreadyConfirmed: already };
 }

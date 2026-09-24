@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
+import SignupModal from "@/components/SignupModal";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -15,7 +16,7 @@ import { getRecommendations } from "@/lib/recommendations";
 import { useParams, Link } from "wouter";
 import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, MapPin, Lock, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -30,6 +31,7 @@ export default function CountryPage() {
   const country = getCountryBySlug(slug || "", locale);
   const { prev, next } = getAdjacentCountries(slug || "", locale);
   const { user, isAuthenticated } = useAuth();
+  const audioReady = isAuthenticated; // verified session only (cookie after Google/magic)
 
   const isAdmin = user?.role === "admin";
   const isBookBuyer = user?.memberTier === "bookBuyer" || isAdmin;
@@ -39,6 +41,26 @@ export default function CountryPage() {
   // Get recommendations for this country
   const allCountries = getAllCountries(locale);
   const [recommendations] = useState(() => country ? getRecommendations(country, allCountries) : {});
+  const firstCardRef = useRef<HTMLDivElement | null>(null);
+  const [showStickyJoin, setShowStickyJoin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+
+  useEffect(() => {
+    if (isZhTw || audioReady) {
+      setShowStickyJoin(false);
+      return;
+    }
+    const el = firstCardRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setShowStickyJoin(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isZhTw, country?.slug, audioReady]);
 
   // Fetch ratings for this country's cards
   const cardNumbers = useMemo(() => country?.cards.map(c => c.number) || [], [country]);
@@ -369,6 +391,7 @@ export default function CountryPage() {
               const userRating = userRatingsData?.[card.number];
               return (
                 <React.Fragment key={card.number}>
+                  <div ref={i === 0 ? firstCardRef : undefined}>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -386,6 +409,7 @@ export default function CountryPage() {
                       userRating={userRating}
                     />
                   </motion.div>
+                  </div>
                   {/* Contextual CTA after the 5th card */}
                   {i === 4 && (
                     <motion.div
@@ -541,6 +565,7 @@ export default function CountryPage() {
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
       <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
 
+
       {/* Navigation */}
       <section className="py-8 border-t border-gray-200">
         <div className="container">
@@ -611,34 +636,59 @@ export default function CountryPage() {
           ) : (
             <>
               <p className="text-gray-400 text-sm mb-2">
-                {isZhTw ? "網站是遊樂場。書是完整收藏。" : "The website is the playground. The book is the full collection."}
+                {isZhTw ? "網站是遊樂場。書是完整收藏。" : "Prefer the full guide?"}
               </p>
               <p className="text-white font-display text-2xl md:text-3xl mb-2">
                 {isZhTw ? (
                   <>擁有全部 <span className="text-[#FFE500]">100 個國家</span>的完整指南</>
                 ) : (
-                  <>Own the complete guide to all <span className="text-[#FFE500]">100 countries</span></>
+                  <>Get the book on <span className="text-[#FFE500]">Kindle</span></>
                 )}
               </p>
               <p className="text-gray-400 text-sm mb-6">
                 {isZhTw
                   ? "1,000+ 個片語 · 每個詞條附發音連結 · 深度文化背景"
-                  : "1,000+ phrases · pronunciation for every entry · deep cultural context"}
+                  : "1,000+ phrases · secondary to Join free membership"}
               </p>
               <a
-                href={AMAZON_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={`/go/book?surface=country&cta_id=country_page_footer&country=${country.slug}`}
                 onClick={() => trackPurchaseClick("country_page_footer", country.slug)}
                 className="inline-flex items-center gap-2 bg-[#FFE500] text-[#1a1a1a] px-6 py-3 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0px_white] hover:shadow-[1px_1px_0px_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all no-underline"
               >
                 <BookOpen size={18} />
-                {isZhTw ? "在 Amazon 購買完整版" : "Buy the Complete Edition on Amazon"}
+                {isZhTw ? "在 Amazon 購買完整版" : "Get the book on Kindle"}
               </a>
             </>
           )}
         </div>
       </section>
+      {!isZhTw && showStickyJoin && !audioReady ? (
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t-2 border-[#1a1a1a] bg-[#FFE500] shadow-[0_-4px_0_#1a1a1a]">
+          <div className="container py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-sm font-bold text-[#1a1a1a] m-0 text-center sm:text-left">
+              Unlock all pronunciations — free account
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowSignup(true)}
+              className="inline-flex items-center gap-2 bg-[#1a1a1a] text-white px-5 py-2.5 rounded-lg font-bold border-2 border-white shadow-[3px_3px_0_white] hover:shadow-[1px_1px_0_white] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+            >
+              Sign up free
+            </button>
+          </div>
+        </div>
+      ) : null}
+      <SignupModal
+        open={showSignup}
+        onOpenChange={setShowSignup}
+        surface="country"
+        ctaId="country_sticky"
+        country={country.slug}
+        enabled={!isZhTw}
+        locale={locale}
+        sourcePath={localePath(`/country/${country.slug}`)}
+      />
     </Layout>
   );
 }
+

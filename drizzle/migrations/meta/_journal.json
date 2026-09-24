@@ -8,6 +8,27 @@
       "when": 1777684149648,
       "tag": "0000_late_the_hood",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779800000000,
+      "tag": "0001_newsletter_subscribers",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779900000000,
+      "tag": "0002_newsletter_marketing_consent",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780000000000,
+      "tag": "0003_users_email_verified",
+      "breakpoints": true
     }
   ]
 }
