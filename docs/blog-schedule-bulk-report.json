@@ -1,0 +1,553 @@
+{
+  "start": "2026-09-26",
+  "end": "2026-11-28",
+  "count": 64,
+  "missingNumbers": [
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41
+  ],
+  "skippedLive": [
+    {
+      "num": 1,
+      "slug": "spanish-insults-tourists-recognition",
+      "file": "spanish-insults-tourists-recognition.mdx"
+    },
+    {
+      "num": 2,
+      "slug": "white-elephant-language-nerd-gifts",
+      "file": "white-elephant-language-nerd-gifts.mdx"
+    },
+    {
+      "num": 3,
+      "slug": "halloween-gag-gifts-friendly-fire-safe",
+      "file": "halloween-gag-gifts-friendly-fire-safe.mdx"
+    },
+    {
+      "num": 4,
+      "slug": "dutch-curses-disease-taboo-medical-chart",
+      "file": "dutch-curses-disease-taboo-medical-chart.mdx"
+    },
+    {
+      "num": 5,
+      "slug": "anime-swears-vs-street-japanese-learners",
+      "file": "anime-swears-vs-street-japanese-learners.mdx"
+    },
+    {
+      "num": 6,
+      "slug": "surreal-insults-around-the-world-spain-fish",
+      "file": "surreal-insults-around-the-world-spain-fish.mdx"
+    },
+    {
+      "num": 7,
+      "slug": "recognition-not-permission-study-profanity",
+      "file": "recognition-not-permission-study-profanity.mdx"
+    },
+    {
+      "num": 8,
+      "slug": "how-to-read-hecs-country-page",
+      "file": "how-to-read-hecs-country-page.mdx"
+    },
+    {
+      "num": 9,
+      "slug": "hear-swear-phrase-tap-to-listen-ipa",
+      "file": "hear-swear-phrase-tap-to-listen-ipa.mdx"
+    },
+    {
+      "num": 10,
+      "slug": "tap-to-listen-interactive-pronunciation",
+      "file": "tap-to-listen-interactive-pronunciation.mdx"
+    },
+    {
+      "num": 11,
+      "slug": "why-building-cultural-guide-global-profanity",
+      "file": "why-building-cultural-guide-global-profanity.mdx"
+    },
+    {
+      "num": 12,
+      "slug": "instructors-hecs-recognition-corpus-not-script",
+      "file": "instructors-hecs-recognition-corpus-not-script.mdx"
+    },
+    {
+      "num": 13,
+      "slug": "spain-swears-recognition-guide-1",
+      "file": "spain-swears-recognition-guide-1.mdx"
+    },
+    {
+      "num": 14,
+      "slug": "mexico-swears-recognition-guide-2",
+      "file": "mexico-swears-recognition-guide-2.mdx"
+    }
+  ],
+  "priorityFirst": [],
+  "errors": [],
+  "posts": [
+    {
+      "num": 15,
+      "slug": "argentina-swears-recognition-guide-3",
+      "date": "2026-09-26",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 16,
+      "slug": "colombia-swears-recognition-guide-4",
+      "date": "2026-09-27",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 17,
+      "slug": "chile-swears-recognition-guide-5",
+      "date": "2026-09-28",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 18,
+      "slug": "peru-swears-recognition-guide-1",
+      "date": "2026-09-29",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 19,
+      "slug": "cuba-swears-recognition-guide-2",
+      "date": "2026-09-30",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 42,
+      "slug": "romania-swears-recognition-guide-5",
+      "date": "2026-10-01",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 43,
+      "slug": "ukraine-swears-recognition-guide-1",
+      "date": "2026-10-02",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 44,
+      "slug": "greece-swears-recognition-guide-2",
+      "date": "2026-10-03",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 45,
+      "slug": "turkey-swears-recognition-guide-3",
+      "date": "2026-10-04",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 46,
+      "slug": "russia-swears-recognition-guide-4",
+      "date": "2026-10-05",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 47,
+      "slug": "japan-swears-recognition-guide-5",
+      "date": "2026-10-06",
+      "pill": "Country",
+      "priority": 1
+    },
+    {
+      "num": 48,
+      "slug": "airport-gate-cringe-swear-recognition",
+      "date": "2026-10-07",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 49,
+      "slug": "hotel-bar-banter-insult-registers",
+      "date": "2026-10-08",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 50,
+      "slug": "study-abroad-hear-insults-dont-collect",
+      "date": "2026-10-09",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 51,
+      "slug": "wedding-toast-insult-near-misses",
+      "date": "2026-10-10",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 52,
+      "slug": "office-slack-screenshots-global-swears",
+      "date": "2026-10-11",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 53,
+      "slug": "backpacking-hostels-banter-register",
+      "date": "2026-10-12",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 54,
+      "slug": "food-tour-culinary-insult-metaphors",
+      "date": "2026-10-13",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 55,
+      "slug": "sports-rivalry-chants-translate-first",
+      "date": "2026-10-14",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 56,
+      "slug": "dating-apps-abroad-flirty-vs-insult",
+      "date": "2026-10-15",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 57,
+      "slug": "family-dinner-abroad-kinship-insults",
+      "date": "2026-10-16",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 58,
+      "slug": "museum-vs-street-profanity-culture",
+      "date": "2026-10-17",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 59,
+      "slug": "cruise-excursion-scripted-joke-misfires",
+      "date": "2026-10-18",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 60,
+      "slug": "language-exchange-recognition-not-roasts",
+      "date": "2026-10-19",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 61,
+      "slug": "gift-hecs-without-edgelord-vibes",
+      "date": "2026-10-20",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 62,
+      "slug": "new-year-hear-swears-better",
+      "date": "2026-10-21",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 63,
+      "slug": "conference-networking-global-taboos",
+      "date": "2026-10-22",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 64,
+      "slug": "moving-abroad-month-one-insults-hear",
+      "date": "2026-10-23",
+      "pill": "Scene",
+      "priority": 1
+    },
+    {
+      "num": 65,
+      "slug": "sex-taboo-vs-illness-taboo-insult-engines",
+      "date": "2026-10-24",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 66,
+      "slug": "blasphemy-load-europe-insult-rooms",
+      "date": "2026-10-25",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 67,
+      "slug": "diminutives-soften-or-sharpen-insults",
+      "date": "2026-10-26",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 68,
+      "slug": "gesture-plus-word-insult-hands",
+      "date": "2026-10-27",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 69,
+      "slug": "loanword-f-bombs-land-wrong-abroad",
+      "date": "2026-10-28",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 70,
+      "slug": "mother-insults-across-cultures-kinship",
+      "date": "2026-10-29",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 71,
+      "slug": "animal-metaphors-insults-cute-heavy",
+      "date": "2026-10-30",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 72,
+      "slug": "colonial-contact-mixed-insult-systems",
+      "date": "2026-10-31",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 73,
+      "slug": "internet-vs-elder-insult-register",
+      "date": "2026-11-01",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 74,
+      "slug": "soccer-derbies-vs-family-insults",
+      "date": "2026-11-02",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 75,
+      "slug": "compound-insults-vs-single-punch",
+      "date": "2026-11-03",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 76,
+      "slug": "honorifics-and-insults-politeness-stress",
+      "date": "2026-11-04",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 77,
+      "slug": "censorship-workarounds-asterisks-bleeps",
+      "date": "2026-11-05",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 78,
+      "slug": "translation-traps-literal-gloss-soft",
+      "date": "2026-11-06",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 79,
+      "slug": "nordic-soft-stereotype-vs-taboo-maps",
+      "date": "2026-11-07",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 80,
+      "slug": "arabic-script-regions-recognition-care",
+      "date": "2026-11-08",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 81,
+      "slug": "east-asian-media-vs-local-mouth",
+      "date": "2026-11-09",
+      "pill": "Compare",
+      "priority": 1
+    },
+    {
+      "num": 82,
+      "slug": "risk-lamps-explained-no-green-light",
+      "date": "2026-11-10",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 83,
+      "slug": "outsider-status-accent-changes-insult",
+      "date": "2026-11-11",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 84,
+      "slug": "how-hecs-writes-country-page-method",
+      "date": "2026-11-12",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 85,
+      "slug": "phrase-card-literal-feels-risk-explained",
+      "date": "2026-11-13",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 86,
+      "slug": "personal-recognition-log-not-roast-list",
+      "date": "2026-11-14",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 87,
+      "slug": "quoting-ok-citation-vs-performance",
+      "date": "2026-11-15",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 88,
+      "slug": "ta-guide-recognition-seminar",
+      "date": "2026-11-16",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 89,
+      "slug": "refuse-strength-rankings-swear-words",
+      "date": "2026-11-17",
+      "pill": "Method",
+      "priority": 1
+    },
+    {
+      "num": 90,
+      "slug": "ipa-without-cringe-read-skip-performance",
+      "date": "2026-11-18",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 91,
+      "slug": "google-translate-audio-swear-links",
+      "date": "2026-11-19",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 92,
+      "slug": "mouth-shapes-taboo-pronunciation-anxiety",
+      "date": "2026-11-20",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 93,
+      "slug": "minimal-pairs-insults-one-sound-heat",
+      "date": "2026-11-21",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 94,
+      "slug": "listening-drills-travelers-ear-training",
+      "date": "2026-11-22",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 95,
+      "slug": "kids-overhearing-swears-abroad-parents",
+      "date": "2026-11-23",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 96,
+      "slug": "voice-notes-virality-clip-is-performance",
+      "date": "2026-11-24",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 97,
+      "slug": "kindle-tap-to-hear-hecs-workflow",
+      "date": "2026-11-25",
+      "pill": "Pronounce",
+      "priority": 1
+    },
+    {
+      "num": 98,
+      "slug": "hecs-harm-without-roast-brand",
+      "date": "2026-11-26",
+      "pill": "Author",
+      "priority": 1
+    },
+    {
+      "num": 99,
+      "slug": "field-notes-100-country-recognition-atlas",
+      "date": "2026-11-27",
+      "pill": "Author",
+      "priority": 1
+    },
+    {
+      "num": 100,
+      "slug": "readers-gifted-book-recognition-stories",
+      "date": "2026-11-28",
+      "pill": "Author",
+      "priority": 1
+    }
+  ]
+}

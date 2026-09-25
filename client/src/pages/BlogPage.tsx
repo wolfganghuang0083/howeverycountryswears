@@ -5,6 +5,7 @@ import {
   getBlogPostsForLocale,
   getPostCountries,
 } from "@/lib/blog";
+// date gate via getBlogPostsForLocale → getAllBlogPosts
 import { Link, useSearch } from "wouter";
 import { PenLine, X } from "lucide-react";
 import { useEffect, useMemo } from "react";
@@ -18,10 +19,7 @@ export default function BlogPage() {
     return (params.get("country") || "").trim().toLowerCase() || null;
   }, [searchString]);
 
-  const posts = getBlogPostsForLocale(locale, {
-    includeDrafts: import.meta.env.PROD ? false : true,
-    country: countryFilter,
-  });
+  const posts = getBlogPostsForLocale(locale, { country: countryFilter });
 
   useEffect(() => {
     window.scrollTo(0, 0);

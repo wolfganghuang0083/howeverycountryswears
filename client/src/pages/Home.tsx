@@ -7,6 +7,7 @@ import {
   getBlogPostsForLocale,
   getPostCountries,
 } from "@/lib/blog";
+// date gate via getBlogPostsForLocale → getAllBlogPosts
 import { Link } from "wouter";
 import { ArrowRight, BookOpen, Volume2, Globe, MapPin, Gift, Sparkles, Users, Star, PenLine } from "lucide-react";
 import React, { useState, useMemo, useEffect, useRef } from "react";
@@ -119,9 +120,7 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
   }, [countries]);
 
   const latestBlogPosts = useMemo(() => {
-    return getBlogPostsForLocale(locale, {
-      includeDrafts: import.meta.env.PROD ? false : true,
-    }).slice(0, 6);
+    return getBlogPostsForLocale(locale).slice(0, 6);
   }, [locale]);
 
   const blogCountryChips = useMemo(() => {

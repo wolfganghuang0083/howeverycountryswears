@@ -14,6 +14,24 @@ const ROOT = path.resolve(__dirname, "..");
 const CONTENT = path.join(ROOT, "content", "blog");
 const MANIFEST = path.join(ROOT, "client", "src", "data", "blog-posts.json");
 const DIST = path.join(ROOT, "dist");
+
+function todayTokyo(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+/** Production deploy: only draft=false AND date≤today Tokyo. Preview/dev: all. */
+function isPublicPost(post, { asOf = todayTokyo(), preview = process.env.VERCEL_ENV !== "production" } = {}) {
+  if (preview) return true;
+  if (post.draft) return false;
+  const d = String(post.date || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= asOf;
+}
+
 const SITE = "https://howeverycountryswears.com";
 const METHOD_SLUG = "recognition-not-permission-study-profanity";
 
@@ -833,6 +851,7 @@ function writeHtml(posts) {
   fs.mkdirSync(path.join(DIST, "es", "blog"), { recursive: true });
 
   for (const post of posts) {
+    if (!isPublicPost(post)) continue; // Production: no HTML for drafts / future dates
     const rel = postPath(post).replace(/^\//, "");
     const dir = path.join(DIST, ...rel.split("/"));
     fs.mkdirSync(dir, { recursive: true });
@@ -850,7 +869,7 @@ function writeHtml(posts) {
   }
 
   // EN / ES indexes — published posts only in static shell (no draft badges / Preview copy)
-  const published = posts.filter((p) => !p.draft);
+  const published = posts.filter((p) => isPublicPost(p));
   writeIndexHtml(shell, published.filter((p) => (p.lang || "en") === "en"), {
     dir: path.join(DIST, "blog"),
     pathPrefix: "/blog",
