@@ -15,6 +15,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocale } from "@/contexts/LocaleContext";
 import { trackPurchaseClick } from "@/lib/analytics";
 import SignupModal from "@/components/SignupModal";
+import NewsletterSubscribe from "@/components/NewsletterSubscribe";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -620,6 +621,18 @@ function HomeContent({ isAuthenticated, memberTier, userRole }: { isAuthenticate
           </motion.div>
         </div>
       </section>
+
+      {!isZhTw ? (
+        <NewsletterSubscribe
+          sourcePath={localePath("/")}
+          locale={locale}
+          enabled={!isZhTw}
+          surface="home"
+          ctaId="home_join_free"
+          headline="Get the weekly cultural swear note"
+          microcopy="Free. Unsubscribe anytime. We never sell your email."
+        />
+      ) : null}
 
       {/* ===== BOOK CTA — Conversion-focused ===== */}
       <section className="py-16 md:py-24 bg-[#1a1a1a] relative overflow-hidden">
