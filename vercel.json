@@ -7,20 +7,58 @@
   "functions": {
     "api/**/*.ts": {
       "includeFiles": "api/_lib/**"
+    },
+    "api/bot-page.js": {
+      "includeFiles": "dist/**/*.html"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/auth/:path*",
-      "destination": "/api/auth/[...action]"
+      "src": "^/(?!api(?:/|$)|_vercel(?:/|$)|assets/|__manus__/)(?!(?:.*/)?[^/]*\\.[^/]*$)(.*)$",
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "^(?!.*(?:[Gg]oogle|[Bb]ing[Bb]ot|[Bb]ing[Pp]review|msnbot|adidxbot|[Dd]uck[Dd]uck|[Dd]uck[Aa]ssist|[Yy]andex|[Bb]aidu|[Aa]pplebot|[Mm]ediapartners)).*(?:[Bb][Oo][Tt]|[Ss]pider|[Cc]rawl|[Cc]url|[Pp]ython|[Ww]get|[Gg]o-http-client|[Hh]eadless|[Aa]nthropic|[Cc]laude-[Ww]eb|ChatGPT-User|meta-externalagent|facebookexternalhit|[Ss]crapy|axios|node-fetch|okhttp|libwww|[Jj]ava/|[Hh]ttp[Cc]lient).*$"
+        }
+      ],
+      "dest": "/api/bot-page?__hecs_path=/$1"
     },
     {
-      "source": "/api/trpc/:path*",
-      "destination": "/api/trpc/[...trpc]"
+      "src": "^/(?!api(?:/|$)|_vercel(?:/|$)|assets/|__manus__/)(?!(?:.*/)?[^/]*\\.[^/]*$)(.*)$",
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "missing": [
+        {
+          "type": "header",
+          "key": "user-agent"
+        }
+      ],
+      "dest": "/api/bot-page?__hecs_path=/$1"
     },
     {
-      "source": "/((?!api/|(?:es|zh-tw)/blog(?:/|$)|blog(?:/|$)).*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/api/auth(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?$",
+      "dest": "/api/auth/[...action]?path=$1",
+      "check": true
+    },
+    {
+      "src": "^/api/trpc(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?$",
+      "dest": "/api/trpc/[...trpc]?path=$1",
+      "check": true
+    },
+    {
+      "src": "^(?:/((?!api/|(?:es|zh-tw)/blog(?:/|$)|blog(?:/|$)).*))$",
+      "dest": "/index.html",
+      "check": true
     }
   ]
 }
