@@ -122,11 +122,14 @@ export default function NewsletterSoftAsk() {
         >
           <X size={18} />
         </button>
+        <p className="text-sm font-bold text-[#1a1a1a] mb-1 pr-6">
+          You're unlocked. We also sent a welcome email.
+        </p>
         <h3 className="font-display text-xl text-[#1a1a1a] mb-2 pr-6">
           Want one swear word a week?
         </h3>
         <p className="text-sm text-[#555] leading-relaxed mb-4">
-          Short newsletter. Unsubscribe anytime.
+          Pronunciations are ready now — no need to wait on the inbox. Optional short newsletter; unsubscribe anytime.
         </p>
         <div className="flex flex-col gap-2">
           <button
