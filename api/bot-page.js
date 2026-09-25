@@ -5,7 +5,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { NOT_FOUND_HTML } from "./_lib/notFoundTemplate.js";
+import { NOT_FOUND_HTML, escapeUa } from "./_lib/notFoundTemplate.js";
 import { detectBot, isSearchEngine, clip, headerStr, insertHit, getWaitUntil } from "./_lib/pageHits.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -55,7 +55,11 @@ export default async function handler(req, res) {
     // Platform 404 is content-negotiated: HTML page when Accept has text/html, else plain text.
     const wantsHtml = headerStr(req.headers["accept"]).includes("text/html");
     const txt = wantsHtml
-      ? Buffer.from(NOT_FOUND_HTML.split("__HECS_VERCEL_ID__").join(id), "utf8")
+      ? Buffer.from(
+          NOT_FOUND_HTML.split("__HECS_VERCEL_ID__").join(id)
+            .split("__HECS_UA__").join(escapeUa(headerStr(req.headers["user-agent"]))),
+          "utf8",
+        )
       : Buffer.from(`The page could not be found\n\nNOT_FOUND\n\n${id}\n`, "utf8");
     res.statusCode = 404;
     res.setHeader("Content-Type", wantsHtml ? "text/html; charset=utf-8" : "text/plain; charset=utf-8");
