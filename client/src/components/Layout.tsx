@@ -6,6 +6,7 @@ import { AMAZON_LINK } from "@/lib/data";
 import { useAuth } from "@/_core/hooks/useAuth";
 import SignupModal from "@/components/SignupModal";
 import NewsletterSoftAsk from "@/components/NewsletterSoftAsk";
+import UnlockSuccessNotice from "@/components/UnlockSuccessNotice";
 import { useLocale } from "@/contexts/LocaleContext";
 import { getEnabledLocales, type Locale, DEFAULT_LOCALE } from "@/lib/i18n";
 
@@ -230,6 +231,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Search Dialog */}
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <UnlockSuccessNotice />
       <NewsletterSoftAsk />
       <SignupModal open={signupOpen} onOpenChange={setSignupOpen} surface="home" ctaId="nav_signin" enabled={locale !== "zh-tw"} locale={locale} sourcePath={location} />
 

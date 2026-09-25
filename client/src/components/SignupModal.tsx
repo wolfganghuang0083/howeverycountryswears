@@ -194,9 +194,9 @@ export default function SignupModal({
         {sent ? (
           <div className="text-center">
             <Mail className="mx-auto mb-3 text-[#FF1493]" size={36} />
-            <h3 className="font-display text-2xl text-[#1a1a1a] mb-2">Check your email</h3>
+            <h3 className="font-display text-2xl text-[#1a1a1a] mb-2">Check your email for the magic link</h3>
             <p className="text-sm text-[#555] leading-relaxed">
-              We sent a magic link to verify your email and unlock pronunciations.
+              Click the link to unlock. Once you do, you're in right away — we also send a welcome email (you don't need to wait for it to play audio).
               {optIn ? " Weekly note confirmation is included when you verify." : ""}
             </p>
             {previewMagicUrl ? (
