@@ -25,7 +25,7 @@ export default function NewsletterSubscribe({
   microcopy = "Free. Unsubscribe anytime. We never sell your email.",
 }: Props) {
   return (
-    <section className="py-10 border-t border-gray-200" aria-label="Join free">
+    <section id="join-free" className="py-10 border-t border-gray-200" aria-label="Join free">
       <div className="container max-w-xl mx-auto">
         <JoinFree
           mode="newsletter"

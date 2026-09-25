@@ -78,13 +78,13 @@ export default function SubscribeConfirmedPage() {
               <XCircle className="mx-auto mb-4 text-[#FF1493]" size={48} />
               <h1 className="font-display text-3xl text-[#1a1a1a] mb-2">Link invalid or expired</h1>
               <p className="text-sm text-[#555] mb-6 leading-relaxed">
-                This confirmation link is invalid, expired, or already used. You can join again from any country page.
+                This confirmation link is invalid, expired, or already used. You can join again from the homepage subscribe form.
               </p>
               <Link
-                href="/country/afghanistan"
+                href="/#join-free"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm bg-[#FFE500] text-[#1a1a1a] border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] no-underline"
               >
-                Try a country page
+                Join free
               </Link>
             </>
           )}
