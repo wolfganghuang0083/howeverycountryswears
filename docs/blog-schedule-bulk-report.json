@@ -1,4 +1,6 @@
 {
+  "source_schedule": "/workspace/hecs-handoff/2026-09-25_HECS_Blog_刊登日表_PagesCMS.csv",
+  "strategy": "draft=false + date gate; dates from KDP CSV suggested_date (not auto number order)",
   "start": "2026-09-26",
   "end": "2026-11-28",
   "count": 64,
@@ -26,528 +28,1144 @@
     40,
     41
   ],
-  "skippedLive": [
+  "frozenLive": [
+    "anime-swears-vs-street-japanese-learners",
+    "dutch-curses-disease-taboo-medical-chart",
+    "halloween-gag-gifts-friendly-fire-safe",
+    "hear-swear-phrase-tap-to-listen-ipa",
+    "how-to-read-hecs-country-page",
+    "instructors-hecs-recognition-corpus-not-script",
+    "insultos-espanoles-turistas-reconocimiento",
+    "mexico-swears-recognition-guide-2",
+    "recognition-not-permission-study-profanity",
+    "spain-swears-recognition-guide-1",
+    "spanish-insults-tourists-recognition",
+    "surreal-insults-around-the-world-spain-fish",
+    "tap-to-listen-interactive-pronunciation",
+    "white-elephant-language-nerd-gifts",
+    "why-building-cultural-guide-global-profanity"
+  ],
+  "angloPriorityCount": 15,
+  "deNlPriorityCount": 4,
+  "updatedDates": [
     {
-      "num": 1,
-      "slug": "spanish-insults-tourists-recognition",
-      "file": "spanish-insults-tourists-recognition.mdx"
+      "slug": "office-slack-screenshots-global-swears",
+      "from": "2026-10-11",
+      "to": "2026-09-26",
+      "seq": "1",
+      "map_num": "52"
     },
     {
-      "num": 2,
-      "slug": "white-elephant-language-nerd-gifts",
-      "file": "white-elephant-language-nerd-gifts.mdx"
+      "slug": "backpacking-hostels-banter-register",
+      "from": "2026-10-12",
+      "to": "2026-09-27",
+      "seq": "2",
+      "map_num": "53"
     },
     {
-      "num": 3,
-      "slug": "halloween-gag-gifts-friendly-fire-safe",
-      "file": "halloween-gag-gifts-friendly-fire-safe.mdx"
+      "slug": "sports-rivalry-chants-translate-first",
+      "from": "2026-10-14",
+      "to": "2026-09-28",
+      "seq": "3",
+      "map_num": "55"
     },
     {
-      "num": 4,
-      "slug": "dutch-curses-disease-taboo-medical-chart",
-      "file": "dutch-curses-disease-taboo-medical-chart.mdx"
+      "slug": "gift-hecs-without-edgelord-vibes",
+      "from": "2026-10-20",
+      "to": "2026-09-29",
+      "seq": "4",
+      "map_num": "61"
     },
     {
-      "num": 5,
-      "slug": "anime-swears-vs-street-japanese-learners",
-      "file": "anime-swears-vs-street-japanese-learners.mdx"
+      "slug": "conference-networking-global-taboos",
+      "from": "2026-10-22",
+      "to": "2026-09-30",
+      "seq": "5",
+      "map_num": "63"
     },
     {
-      "num": 6,
-      "slug": "surreal-insults-around-the-world-spain-fish",
-      "file": "surreal-insults-around-the-world-spain-fish.mdx"
+      "slug": "sex-taboo-vs-illness-taboo-insult-engines",
+      "from": "2026-10-24",
+      "to": "2026-10-01",
+      "seq": "6",
+      "map_num": "65"
     },
     {
-      "num": 7,
-      "slug": "recognition-not-permission-study-profanity",
-      "file": "recognition-not-permission-study-profanity.mdx"
+      "slug": "diminutives-soften-or-sharpen-insults",
+      "from": "2026-10-26",
+      "to": "2026-10-02",
+      "seq": "7",
+      "map_num": "67"
     },
     {
-      "num": 8,
-      "slug": "how-to-read-hecs-country-page",
-      "file": "how-to-read-hecs-country-page.mdx"
+      "slug": "loanword-f-bombs-land-wrong-abroad",
+      "from": "2026-10-28",
+      "to": "2026-10-03",
+      "seq": "8",
+      "map_num": "69"
     },
     {
-      "num": 9,
-      "slug": "hear-swear-phrase-tap-to-listen-ipa",
-      "file": "hear-swear-phrase-tap-to-listen-ipa.mdx"
+      "slug": "internet-vs-elder-insult-register",
+      "from": "2026-11-01",
+      "to": "2026-10-04",
+      "seq": "9",
+      "map_num": "73"
     },
     {
-      "num": 10,
-      "slug": "tap-to-listen-interactive-pronunciation",
-      "file": "tap-to-listen-interactive-pronunciation.mdx"
+      "slug": "soccer-derbies-vs-family-insults",
+      "from": "2026-11-02",
+      "to": "2026-10-05",
+      "seq": "10",
+      "map_num": "74"
     },
     {
-      "num": 11,
-      "slug": "why-building-cultural-guide-global-profanity",
-      "file": "why-building-cultural-guide-global-profanity.mdx"
+      "slug": "compound-insults-vs-single-punch",
+      "from": "2026-11-03",
+      "to": "2026-10-06",
+      "seq": "11",
+      "map_num": "75"
     },
     {
-      "num": 12,
-      "slug": "instructors-hecs-recognition-corpus-not-script",
-      "file": "instructors-hecs-recognition-corpus-not-script.mdx"
+      "slug": "censorship-workarounds-asterisks-bleeps",
+      "from": "2026-11-05",
+      "to": "2026-10-07",
+      "seq": "12",
+      "map_num": "77"
     },
     {
-      "num": 13,
-      "slug": "spain-swears-recognition-guide-1",
-      "file": "spain-swears-recognition-guide-1.mdx"
+      "slug": "quoting-ok-citation-vs-performance",
+      "from": "2026-11-15",
+      "to": "2026-10-08",
+      "seq": "13",
+      "map_num": "87"
     },
     {
-      "num": 14,
-      "slug": "mexico-swears-recognition-guide-2",
-      "file": "mexico-swears-recognition-guide-2.mdx"
+      "slug": "minimal-pairs-insults-one-sound-heat",
+      "from": "2026-11-21",
+      "to": "2026-10-09",
+      "seq": "14",
+      "map_num": "93"
+    },
+    {
+      "slug": "kids-overhearing-swears-abroad-parents",
+      "from": "2026-11-23",
+      "to": "2026-10-10",
+      "seq": "15",
+      "map_num": "95"
+    },
+    {
+      "slug": "study-abroad-hear-insults-dont-collect",
+      "from": "2026-10-09",
+      "to": "2026-10-11",
+      "seq": "16",
+      "map_num": "50"
+    },
+    {
+      "slug": "language-exchange-recognition-not-roasts",
+      "from": "2026-10-19",
+      "to": "2026-10-12",
+      "seq": "17",
+      "map_num": "60"
+    },
+    {
+      "slug": "moving-abroad-month-one-insults-hear",
+      "from": "2026-10-23",
+      "to": "2026-10-13",
+      "seq": "18",
+      "map_num": "64"
+    },
+    {
+      "slug": "translation-traps-literal-gloss-soft",
+      "from": "2026-11-06",
+      "to": "2026-10-14",
+      "seq": "19",
+      "map_num": "78"
+    },
+    {
+      "slug": "argentina-swears-recognition-guide-3",
+      "from": "2026-09-26",
+      "to": "2026-10-15",
+      "seq": "20",
+      "map_num": "15"
+    },
+    {
+      "slug": "colombia-swears-recognition-guide-4",
+      "from": "2026-09-27",
+      "to": "2026-10-16",
+      "seq": "21",
+      "map_num": "16"
+    },
+    {
+      "slug": "chile-swears-recognition-guide-5",
+      "from": "2026-09-28",
+      "to": "2026-10-17",
+      "seq": "22",
+      "map_num": "17"
+    },
+    {
+      "slug": "peru-swears-recognition-guide-1",
+      "from": "2026-09-29",
+      "to": "2026-10-18",
+      "seq": "23",
+      "map_num": "18"
+    },
+    {
+      "slug": "cuba-swears-recognition-guide-2",
+      "from": "2026-09-30",
+      "to": "2026-10-19",
+      "seq": "24",
+      "map_num": "19"
+    },
+    {
+      "slug": "romania-swears-recognition-guide-5",
+      "from": "2026-10-01",
+      "to": "2026-10-20",
+      "seq": "25",
+      "map_num": "42"
+    },
+    {
+      "slug": "ukraine-swears-recognition-guide-1",
+      "from": "2026-10-02",
+      "to": "2026-10-21",
+      "seq": "26",
+      "map_num": "43"
+    },
+    {
+      "slug": "greece-swears-recognition-guide-2",
+      "from": "2026-10-03",
+      "to": "2026-10-22",
+      "seq": "27",
+      "map_num": "44"
+    },
+    {
+      "slug": "turkey-swears-recognition-guide-3",
+      "from": "2026-10-04",
+      "to": "2026-10-23",
+      "seq": "28",
+      "map_num": "45"
+    },
+    {
+      "slug": "russia-swears-recognition-guide-4",
+      "from": "2026-10-05",
+      "to": "2026-10-24",
+      "seq": "29",
+      "map_num": "46"
+    },
+    {
+      "slug": "japan-swears-recognition-guide-5",
+      "from": "2026-10-06",
+      "to": "2026-10-25",
+      "seq": "30",
+      "map_num": "47"
+    },
+    {
+      "slug": "airport-gate-cringe-swear-recognition",
+      "from": "2026-10-07",
+      "to": "2026-10-26",
+      "seq": "31",
+      "map_num": "48"
+    },
+    {
+      "slug": "hotel-bar-banter-insult-registers",
+      "from": "2026-10-08",
+      "to": "2026-10-27",
+      "seq": "32",
+      "map_num": "49"
+    },
+    {
+      "slug": "wedding-toast-insult-near-misses",
+      "from": "2026-10-10",
+      "to": "2026-10-28",
+      "seq": "33",
+      "map_num": "51"
+    },
+    {
+      "slug": "food-tour-culinary-insult-metaphors",
+      "from": "2026-10-13",
+      "to": "2026-10-29",
+      "seq": "34",
+      "map_num": "54"
+    },
+    {
+      "slug": "dating-apps-abroad-flirty-vs-insult",
+      "from": "2026-10-15",
+      "to": "2026-10-30",
+      "seq": "35",
+      "map_num": "56"
+    },
+    {
+      "slug": "family-dinner-abroad-kinship-insults",
+      "from": "2026-10-16",
+      "to": "2026-10-31",
+      "seq": "36",
+      "map_num": "57"
+    },
+    {
+      "slug": "museum-vs-street-profanity-culture",
+      "from": "2026-10-17",
+      "to": "2026-11-01",
+      "seq": "37",
+      "map_num": "58"
+    },
+    {
+      "slug": "cruise-excursion-scripted-joke-misfires",
+      "from": "2026-10-18",
+      "to": "2026-11-02",
+      "seq": "38",
+      "map_num": "59"
+    },
+    {
+      "slug": "new-year-hear-swears-better",
+      "from": "2026-10-21",
+      "to": "2026-11-03",
+      "seq": "39",
+      "map_num": "62"
+    },
+    {
+      "slug": "blasphemy-load-europe-insult-rooms",
+      "from": "2026-10-25",
+      "to": "2026-11-04",
+      "seq": "40",
+      "map_num": "66"
+    },
+    {
+      "slug": "gesture-plus-word-insult-hands",
+      "from": "2026-10-27",
+      "to": "2026-11-05",
+      "seq": "41",
+      "map_num": "68"
+    },
+    {
+      "slug": "mother-insults-across-cultures-kinship",
+      "from": "2026-10-29",
+      "to": "2026-11-06",
+      "seq": "42",
+      "map_num": "70"
+    },
+    {
+      "slug": "animal-metaphors-insults-cute-heavy",
+      "from": "2026-10-30",
+      "to": "2026-11-07",
+      "seq": "43",
+      "map_num": "71"
+    },
+    {
+      "slug": "colonial-contact-mixed-insult-systems",
+      "from": "2026-10-31",
+      "to": "2026-11-08",
+      "seq": "44",
+      "map_num": "72"
+    },
+    {
+      "slug": "honorifics-and-insults-politeness-stress",
+      "from": "2026-11-04",
+      "to": "2026-11-09",
+      "seq": "45",
+      "map_num": "76"
+    },
+    {
+      "slug": "nordic-soft-stereotype-vs-taboo-maps",
+      "from": "2026-11-07",
+      "to": "2026-11-10",
+      "seq": "46",
+      "map_num": "79"
+    },
+    {
+      "slug": "arabic-script-regions-recognition-care",
+      "from": "2026-11-08",
+      "to": "2026-11-11",
+      "seq": "47",
+      "map_num": "80"
+    },
+    {
+      "slug": "east-asian-media-vs-local-mouth",
+      "from": "2026-11-09",
+      "to": "2026-11-12",
+      "seq": "48",
+      "map_num": "81"
+    },
+    {
+      "slug": "risk-lamps-explained-no-green-light",
+      "from": "2026-11-10",
+      "to": "2026-11-13",
+      "seq": "49",
+      "map_num": "82"
+    },
+    {
+      "slug": "outsider-status-accent-changes-insult",
+      "from": "2026-11-11",
+      "to": "2026-11-14",
+      "seq": "50",
+      "map_num": "83"
+    },
+    {
+      "slug": "how-hecs-writes-country-page-method",
+      "from": "2026-11-12",
+      "to": "2026-11-15",
+      "seq": "51",
+      "map_num": "84"
+    },
+    {
+      "slug": "phrase-card-literal-feels-risk-explained",
+      "from": "2026-11-13",
+      "to": "2026-11-16",
+      "seq": "52",
+      "map_num": "85"
+    },
+    {
+      "slug": "personal-recognition-log-not-roast-list",
+      "from": "2026-11-14",
+      "to": "2026-11-17",
+      "seq": "53",
+      "map_num": "86"
+    },
+    {
+      "slug": "ta-guide-recognition-seminar",
+      "from": "2026-11-16",
+      "to": "2026-11-18",
+      "seq": "54",
+      "map_num": "88"
+    },
+    {
+      "slug": "refuse-strength-rankings-swear-words",
+      "from": "2026-11-17",
+      "to": "2026-11-19",
+      "seq": "55",
+      "map_num": "89"
+    },
+    {
+      "slug": "ipa-without-cringe-read-skip-performance",
+      "from": "2026-11-18",
+      "to": "2026-11-20",
+      "seq": "56",
+      "map_num": "90"
+    },
+    {
+      "slug": "google-translate-audio-swear-links",
+      "from": "2026-11-19",
+      "to": "2026-11-21",
+      "seq": "57",
+      "map_num": "91"
+    },
+    {
+      "slug": "mouth-shapes-taboo-pronunciation-anxiety",
+      "from": "2026-11-20",
+      "to": "2026-11-22",
+      "seq": "58",
+      "map_num": "92"
+    },
+    {
+      "slug": "listening-drills-travelers-ear-training",
+      "from": "2026-11-22",
+      "to": "2026-11-23",
+      "seq": "59",
+      "map_num": "94"
     }
   ],
-  "priorityFirst": [],
-  "errors": [],
   "posts": [
     {
-      "num": 15,
-      "slug": "argentina-swears-recognition-guide-3",
-      "date": "2026-09-26",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 16,
-      "slug": "colombia-swears-recognition-guide-4",
-      "date": "2026-09-27",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 17,
-      "slug": "chile-swears-recognition-guide-5",
-      "date": "2026-09-28",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 18,
-      "slug": "peru-swears-recognition-guide-1",
-      "date": "2026-09-29",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 19,
-      "slug": "cuba-swears-recognition-guide-2",
-      "date": "2026-09-30",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 42,
-      "slug": "romania-swears-recognition-guide-5",
-      "date": "2026-10-01",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 43,
-      "slug": "ukraine-swears-recognition-guide-1",
-      "date": "2026-10-02",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 44,
-      "slug": "greece-swears-recognition-guide-2",
-      "date": "2026-10-03",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 45,
-      "slug": "turkey-swears-recognition-guide-3",
-      "date": "2026-10-04",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 46,
-      "slug": "russia-swears-recognition-guide-4",
-      "date": "2026-10-05",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 47,
-      "slug": "japan-swears-recognition-guide-5",
-      "date": "2026-10-06",
-      "pill": "Country",
-      "priority": 1
-    },
-    {
-      "num": 48,
-      "slug": "airport-gate-cringe-swear-recognition",
-      "date": "2026-10-07",
-      "pill": "Scene",
-      "priority": 1
-    },
-    {
-      "num": 49,
-      "slug": "hotel-bar-banter-insult-registers",
-      "date": "2026-10-08",
-      "pill": "Scene",
-      "priority": 1
-    },
-    {
-      "num": 50,
-      "slug": "study-abroad-hear-insults-dont-collect",
-      "date": "2026-10-09",
-      "pill": "Scene",
-      "priority": 1
-    },
-    {
-      "num": 51,
-      "slug": "wedding-toast-insult-near-misses",
-      "date": "2026-10-10",
-      "pill": "Scene",
-      "priority": 1
-    },
-    {
-      "num": 52,
+      "seq": 1,
+      "map_num": 52,
       "slug": "office-slack-screenshots-global-swears",
+      "date": "2026-09-26",
+      "pill": "Scene",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Office Slack Screenshots: When Global Swears Go Viral Wrong",
+      "filename": "052_2026-09-16_HECS_blog_52_office-slack-screenshots_READY.md"
+    },
+    {
+      "seq": 2,
+      "map_num": 53,
+      "slug": "backpacking-hostels-banter-register",
+      "date": "2026-09-27",
+      "pill": "Scene",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Backpacking Hostels: Banter That Crosses Register",
+      "filename": "053_2026-09-16_HECS_blog_53_backpacking-hostels-banter_READY.md"
+    },
+    {
+      "seq": 3,
+      "map_num": 55,
+      "slug": "sports-rivalry-chants-translate-first",
+      "date": "2026-09-28",
+      "pill": "Scene",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Sports Rivalry Chants You Should Translate Before Joining",
+      "filename": "055_2026-09-16_HECS_blog_55_sports-rivalry-chants_READY.md"
+    },
+    {
+      "seq": 4,
+      "map_num": 61,
+      "slug": "gift-hecs-without-edgelord-vibes",
+      "date": "2026-09-29",
+      "pill": "Scene",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "White Elephant Follow-Up: How to Gift HECS Without Edgelord Vibes",
+      "filename": "061_2026-09-16_HECS_blog_61_gift-hecs_READY.md"
+    },
+    {
+      "seq": 5,
+      "map_num": 63,
+      "slug": "conference-networking-global-taboos",
+      "date": "2026-09-30",
+      "pill": "Scene",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Conference Networking Night: Global Small Talk Taboos",
+      "filename": "063_2026-09-16_HECS_blog_63_conference-networking_READY.md"
+    },
+    {
+      "seq": 6,
+      "map_num": 65,
+      "slug": "sex-taboo-vs-illness-taboo-insult-engines",
+      "date": "2026-10-01",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "overlap_anglo",
+      "title": "Sex-Taboo vs Illness-Taboo: Two Global Insult Engines",
+      "filename": "065_2026-09-16_HECS_blog_65_sex-vs-illness-taboo_READY.md"
+    },
+    {
+      "seq": 7,
+      "map_num": 67,
+      "slug": "diminutives-soften-or-sharpen-insults",
+      "date": "2026-10-02",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Diminutives Soften or Sharpen? Insult Morphology Compare",
+      "filename": "067_2026-09-16_HECS_blog_67_diminutives-soften-or-sharpen_READY.md"
+    },
+    {
+      "seq": 8,
+      "map_num": 69,
+      "slug": "loanword-f-bombs-land-wrong-abroad",
+      "date": "2026-10-03",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Loanword F-Bombs: When English Heat Lands Wrong Abroad",
+      "filename": "069_2026-09-16_HECS_blog_69_loanword-f-bombs_READY.md"
+    },
+    {
+      "seq": 9,
+      "map_num": 73,
+      "slug": "internet-vs-elder-insult-register",
+      "date": "2026-10-04",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Internet vs Elder Register: Same Country, Two Mouths",
+      "filename": "073_2026-09-16_HECS_blog_73_internet-vs-elder_READY.md"
+    },
+    {
+      "seq": 10,
+      "map_num": 74,
+      "slug": "soccer-derbies-vs-family-insults",
+      "date": "2026-10-05",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Soccer Derbies vs Family Insults: Public vs Private Heat",
+      "filename": "074_2026-09-16_HECS_blog_74_soccer-derbies-vs-family_READY.md"
+    },
+    {
+      "seq": 11,
+      "map_num": 75,
+      "slug": "compound-insults-vs-single-punch",
+      "date": "2026-10-06",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "overlap_anglo",
+      "title": "Compound Insults vs Single Punch Words",
+      "filename": "075_2026-09-16_HECS_blog_75_compound-vs-single_READY.md"
+    },
+    {
+      "seq": 12,
+      "map_num": 77,
+      "slug": "censorship-workarounds-asterisks-bleeps",
+      "date": "2026-10-07",
+      "pill": "Compare",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Censorship Workarounds: Asterisks, Bleeps, and Still-Clear Heat",
+      "filename": "077_2026-09-16_HECS_blog_77_censorship-workarounds_READY.md"
+    },
+    {
+      "seq": 13,
+      "map_num": 87,
+      "slug": "quoting-ok-citation-vs-performance",
+      "date": "2026-10-08",
+      "pill": "Method",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "When Quoting Is OK: Citation vs Performance Online",
+      "filename": "087_2026-09-16_HECS_blog_87_quoting-citation_READY.md"
+    },
+    {
+      "seq": 14,
+      "map_num": 93,
+      "slug": "minimal-pairs-insults-one-sound-heat",
+      "date": "2026-10-09",
+      "pill": "Pronounce",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "overlap_anglo",
+      "title": "Minimal Pairs in Insults: One Sound, Different Heat",
+      "filename": "093_2026-09-16_HECS_blog_93_minimal-pairs-insults_READY.md"
+    },
+    {
+      "seq": 15,
+      "map_num": 95,
+      "slug": "kids-overhearing-swears-abroad-parents",
+      "date": "2026-10-10",
+      "pill": "Pronounce",
+      "anglo_priority": "yes",
+      "waveA_de_nl": "no",
+      "title": "Kids Overhearing Swears Abroad: Recognition for Parents",
+      "filename": "095_2026-09-16_HECS_blog_95_kids-overhearing_READY.md"
+    },
+    {
+      "seq": 16,
+      "map_num": 50,
+      "slug": "study-abroad-hear-insults-dont-collect",
       "date": "2026-10-11",
       "pill": "Scene",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "yes",
+      "title": "Study Abroad: Hearing Insults Without Collecting Them",
+      "filename": "050_2026-09-16_HECS_blog_50_study-abroad-hear-dont-collect_READY.md"
     },
     {
-      "num": 53,
-      "slug": "backpacking-hostels-banter-register",
+      "seq": 17,
+      "map_num": 60,
+      "slug": "language-exchange-recognition-not-roasts",
       "date": "2026-10-12",
       "pill": "Scene",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "yes",
+      "title": "Language Exchange Meetups: Practice Recognition Not Roasts",
+      "filename": "060_2026-09-16_HECS_blog_60_language-exchange_READY.md"
     },
     {
-      "num": 54,
-      "slug": "food-tour-culinary-insult-metaphors",
+      "seq": 18,
+      "map_num": 64,
+      "slug": "moving-abroad-month-one-insults-hear",
       "date": "2026-10-13",
       "pill": "Scene",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "yes",
+      "title": "Moving Abroad Month One: Insults You’ll Hear Before You Speak",
+      "filename": "064_2026-09-16_HECS_blog_64_moving-abroad-month-one_READY.md"
     },
     {
-      "num": 55,
-      "slug": "sports-rivalry-chants-translate-first",
+      "seq": 19,
+      "map_num": 78,
+      "slug": "translation-traps-literal-gloss-soft",
       "date": "2026-10-14",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Compare",
+      "anglo_priority": "no",
+      "waveA_de_nl": "yes",
+      "title": "Translation Traps: Why Literal Gloss Makes Insults Look Soft",
+      "filename": "078_2026-09-16_HECS_blog_78_translation-traps_READY.md"
     },
     {
-      "num": 56,
-      "slug": "dating-apps-abroad-flirty-vs-insult",
+      "seq": 20,
+      "map_num": 15,
+      "slug": "argentina-swears-recognition-guide-3",
       "date": "2026-10-15",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "What Outsiders Mishear in Argentina Profanity",
+      "filename": "015_2026-09-16_HECS_blog_15_argentina-swears-recognition_READY.md"
     },
     {
-      "num": 57,
-      "slug": "family-dinner-abroad-kinship-insults",
+      "seq": 21,
+      "map_num": 16,
+      "slug": "colombia-swears-recognition-guide-4",
       "date": "2026-10-16",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Register First: Reading Colombia Insult Heat",
+      "filename": "016_2026-09-16_HECS_blog_16_colombia-swears-recognition_READY.md"
     },
     {
-      "num": 58,
-      "slug": "museum-vs-street-profanity-culture",
+      "seq": 22,
+      "map_num": 17,
+      "slug": "chile-swears-recognition-guide-5",
       "date": "2026-10-17",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Friendly Fire Risks When You Echo Chile Swears",
+      "filename": "017_2026-09-16_HECS_blog_17_chile-swears-recognition_READY.md"
     },
     {
-      "num": 59,
-      "slug": "cruise-excursion-scripted-joke-misfires",
+      "seq": 23,
+      "map_num": 18,
+      "slug": "peru-swears-recognition-guide-1",
       "date": "2026-10-18",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "How Peru Swears: A Recognition Guide (Not a Script)",
+      "filename": "018_2026-09-16_HECS_blog_18_peru-swears-recognition_READY.md"
     },
     {
-      "num": 60,
-      "slug": "language-exchange-recognition-not-roasts",
+      "seq": 24,
+      "map_num": 19,
+      "slug": "cuba-swears-recognition-guide-2",
       "date": "2026-10-19",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "The Taboo Map Behind Cuba Insults",
+      "filename": "019_2026-09-16_HECS_blog_19_cuba-swears-recognition_READY.md"
     },
     {
-      "num": 61,
-      "slug": "gift-hecs-without-edgelord-vibes",
+      "seq": 25,
+      "map_num": 42,
+      "slug": "romania-swears-recognition-guide-5",
       "date": "2026-10-20",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Friendly Fire Risks When You Echo Romania Swears",
+      "filename": "042_2026-09-16_HECS_blog_42_romania-swears-recognition_READY.md"
     },
     {
-      "num": 62,
-      "slug": "new-year-hear-swears-better",
+      "seq": 26,
+      "map_num": 43,
+      "slug": "ukraine-swears-recognition-guide-1",
       "date": "2026-10-21",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "How Ukraine Swears: A Recognition Guide (Not a Script)",
+      "filename": "043_2026-09-16_HECS_blog_43_ukraine-swears-recognition_READY.md"
     },
     {
-      "num": 63,
-      "slug": "conference-networking-global-taboos",
+      "seq": 27,
+      "map_num": 44,
+      "slug": "greece-swears-recognition-guide-2",
       "date": "2026-10-22",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "The Taboo Map Behind Greece Insults",
+      "filename": "044_2026-09-16_HECS_blog_44_greece-swears-recognition_READY.md"
     },
     {
-      "num": 64,
-      "slug": "moving-abroad-month-one-insults-hear",
+      "seq": 28,
+      "map_num": 45,
+      "slug": "turkey-swears-recognition-guide-3",
       "date": "2026-10-23",
-      "pill": "Scene",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "What Outsiders Mishear in Turkey Profanity",
+      "filename": "045_2026-09-16_HECS_blog_45_turkey-swears-recognition_READY.md"
     },
     {
-      "num": 65,
-      "slug": "sex-taboo-vs-illness-taboo-insult-engines",
+      "seq": 29,
+      "map_num": 46,
+      "slug": "russia-swears-recognition-guide-4",
       "date": "2026-10-24",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Register First: Reading Russia Insult Heat",
+      "filename": "046_2026-09-16_HECS_blog_46_russia-swears-recognition_READY.md"
     },
     {
-      "num": 66,
-      "slug": "blasphemy-load-europe-insult-rooms",
+      "seq": 30,
+      "map_num": 47,
+      "slug": "japan-swears-recognition-guide-5",
       "date": "2026-10-25",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Country-hub",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Friendly Fire Risks When You Echo Japan Swears",
+      "filename": "047_2026-09-16_HECS_blog_47_japan-swears-recognition_READY.md"
     },
     {
-      "num": 67,
-      "slug": "diminutives-soften-or-sharpen-insults",
+      "seq": 31,
+      "map_num": 48,
+      "slug": "airport-gate-cringe-swear-recognition",
       "date": "2026-10-26",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Airport Gate Cringe: Swear Words You Should Only Recognize",
+      "filename": "048_2026-09-16_HECS_blog_48_airport-gate-cringe_READY.md"
     },
     {
-      "num": 68,
-      "slug": "gesture-plus-word-insult-hands",
+      "seq": 32,
+      "map_num": 49,
+      "slug": "hotel-bar-banter-insult-registers",
       "date": "2026-10-27",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Hotel Bar Banter vs Local Insult Registers",
+      "filename": "049_2026-09-16_HECS_blog_49_hotel-bar-banter_READY.md"
     },
     {
-      "num": 69,
-      "slug": "loanword-f-bombs-land-wrong-abroad",
+      "seq": 33,
+      "map_num": 51,
+      "slug": "wedding-toast-insult-near-misses",
       "date": "2026-10-28",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Wedding Toast Nightmares: Global Insult Near-Misses",
+      "filename": "051_2026-09-16_HECS_blog_51_wedding-toast-near-misses_READY.md"
     },
     {
-      "num": 70,
-      "slug": "mother-insults-across-cultures-kinship",
+      "seq": 34,
+      "map_num": 54,
+      "slug": "food-tour-culinary-insult-metaphors",
       "date": "2026-10-29",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Food Tour Commentary: Culinary Metaphors That Are Actually Insults",
+      "filename": "054_2026-09-16_HECS_blog_54_food-tour-culinary-insults_READY.md"
     },
     {
-      "num": 71,
-      "slug": "animal-metaphors-insults-cute-heavy",
+      "seq": 35,
+      "map_num": 56,
+      "slug": "dating-apps-abroad-flirty-vs-insult",
       "date": "2026-10-30",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Dating Apps Abroad: Flirty Heat vs Insult Heat",
+      "filename": "056_2026-09-16_HECS_blog_56_dating-apps-abroad_READY.md"
     },
     {
-      "num": 72,
-      "slug": "colonial-contact-mixed-insult-systems",
+      "seq": 36,
+      "map_num": 57,
+      "slug": "family-dinner-abroad-kinship-insults",
       "date": "2026-10-31",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Family Dinner Abroad: Kinship Insults You Must Not Echo",
+      "filename": "057_2026-09-16_HECS_blog_57_family-dinner-abroad_READY.md"
     },
     {
-      "num": 73,
-      "slug": "internet-vs-elder-insult-register",
+      "seq": 37,
+      "map_num": 58,
+      "slug": "museum-vs-street-profanity-culture",
       "date": "2026-11-01",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Museum Labels vs Street Mouth: Formal Culture vs Profanity Culture",
+      "filename": "058_2026-09-16_HECS_blog_58_museum-vs-street_READY.md"
     },
     {
-      "num": 74,
-      "slug": "soccer-derbies-vs-family-insults",
+      "seq": 38,
+      "map_num": 59,
+      "slug": "cruise-excursion-scripted-joke-misfires",
       "date": "2026-11-02",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Cruise Excursion Guides: Scripted Jokes That Misfire Locally",
+      "filename": "059_2026-09-16_HECS_blog_59_cruise-excursion-jokes_READY.md"
     },
     {
-      "num": 75,
-      "slug": "compound-insults-vs-single-punch",
+      "seq": 39,
+      "map_num": 62,
+      "slug": "new-year-hear-swears-better",
       "date": "2026-11-03",
-      "pill": "Compare",
-      "priority": 1
+      "pill": "Scene",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "New Year Travel Resolutions: Learn to Hear Swears Better",
+      "filename": "062_2026-09-16_HECS_blog_62_new-year-hear_READY.md"
     },
     {
-      "num": 76,
-      "slug": "honorifics-and-insults-politeness-stress",
+      "seq": 40,
+      "map_num": 66,
+      "slug": "blasphemy-load-europe-insult-rooms",
       "date": "2026-11-04",
       "pill": "Compare",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Blasphemy Load Across Europe: Why Some Rooms Go Cold Faster",
+      "filename": "066_2026-09-16_HECS_blog_66_blasphemy-load-europe_READY.md"
     },
     {
-      "num": 77,
-      "slug": "censorship-workarounds-asterisks-bleeps",
+      "seq": 41,
+      "map_num": 68,
+      "slug": "gesture-plus-word-insult-hands",
       "date": "2026-11-05",
       "pill": "Compare",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Gesture + Word: When Hands Carry the Insult",
+      "filename": "068_2026-09-16_HECS_blog_68_gesture-plus-word_READY.md"
     },
     {
-      "num": 78,
-      "slug": "translation-traps-literal-gloss-soft",
+      "seq": 42,
+      "map_num": 70,
+      "slug": "mother-insults-across-cultures-kinship",
       "date": "2026-11-06",
       "pill": "Compare",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Mother Insults Across Cultures: Kinship as Nuclear Heat",
+      "filename": "070_2026-09-16_HECS_blog_70_mother-insults-kinship_READY.md"
     },
     {
-      "num": 79,
-      "slug": "nordic-soft-stereotype-vs-taboo-maps",
+      "seq": 43,
+      "map_num": 71,
+      "slug": "animal-metaphors-insults-cute-heavy",
       "date": "2026-11-07",
       "pill": "Compare",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Animal Metaphors in Insults: Cute Image, Heavy Hit",
+      "filename": "071_2026-09-16_HECS_blog_71_animal-metaphors_READY.md"
     },
     {
-      "num": 80,
-      "slug": "arabic-script-regions-recognition-care",
+      "seq": 44,
+      "map_num": 72,
+      "slug": "colonial-contact-mixed-insult-systems",
       "date": "2026-11-08",
       "pill": "Compare",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Colonial Contact Zones: Mixed Insult Systems",
+      "filename": "072_2026-09-16_HECS_blog_72_colonial-contact_READY.md"
     },
     {
-      "num": 81,
-      "slug": "east-asian-media-vs-local-mouth",
+      "seq": 45,
+      "map_num": 76,
+      "slug": "honorifics-and-insults-politeness-stress",
       "date": "2026-11-09",
       "pill": "Compare",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Honorifics and Insults: Politeness Systems Under Stress",
+      "filename": "076_2026-09-16_HECS_blog_76_honorifics-insults_READY.md"
     },
     {
-      "num": 82,
-      "slug": "risk-lamps-explained-no-green-light",
+      "seq": 46,
+      "map_num": 79,
+      "slug": "nordic-soft-stereotype-vs-taboo-maps",
       "date": "2026-11-10",
-      "pill": "Method",
-      "priority": 1
+      "pill": "Compare",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Nordic Soft Stereotype vs Real Taboo Maps",
+      "filename": "079_2026-09-16_HECS_blog_79_nordic-soft-stereotype_READY.md"
     },
     {
-      "num": 83,
-      "slug": "outsider-status-accent-changes-insult",
+      "seq": 47,
+      "map_num": 80,
+      "slug": "arabic-script-regions-recognition-care",
       "date": "2026-11-11",
-      "pill": "Method",
-      "priority": 1
+      "pill": "Compare",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Arabic-Script Regions: Recognition Care Without Performance Tourism",
+      "filename": "080_2026-09-16_HECS_blog_80_arabic-script-regions_READY.md"
     },
     {
-      "num": 84,
-      "slug": "how-hecs-writes-country-page-method",
+      "seq": 48,
+      "map_num": 81,
+      "slug": "east-asian-media-vs-local-mouth",
       "date": "2026-11-12",
-      "pill": "Method",
-      "priority": 1
+      "pill": "Compare",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "East Asian Media Exports vs Local Mouth: Three Maps Not One",
+      "filename": "081_2026-09-16_HECS_blog_81_east-asian-media_READY.md"
     },
     {
-      "num": 85,
-      "slug": "phrase-card-literal-feels-risk-explained",
+      "seq": 49,
+      "map_num": 82,
+      "slug": "risk-lamps-explained-no-green-light",
       "date": "2026-11-13",
       "pill": "Method",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Risk Lamps Explained: Low, Mid, High Without a Green Light",
+      "filename": "082_2026-09-16_HECS_blog_82_risk-lamps-explained_READY.md"
     },
     {
-      "num": 86,
-      "slug": "personal-recognition-log-not-roast-list",
+      "seq": 50,
+      "map_num": 83,
+      "slug": "outsider-status-accent-changes-insult",
       "date": "2026-11-14",
       "pill": "Method",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Outsider Status: Why Your Accent Changes the Insult",
+      "filename": "083_2026-09-16_HECS_blog_83_outsider-status-accent_READY.md"
     },
     {
-      "num": 87,
-      "slug": "quoting-ok-citation-vs-performance",
+      "seq": 51,
+      "map_num": 84,
+      "slug": "how-hecs-writes-country-page-method",
       "date": "2026-11-15",
       "pill": "Method",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "How HECS Writes a Country Page (Editorial Method)",
+      "filename": "084_2026-09-16_HECS_blog_84_how-hecs-writes-country-page_READY.md"
     },
     {
-      "num": 88,
-      "slug": "ta-guide-recognition-seminar",
+      "seq": 52,
+      "map_num": 85,
+      "slug": "phrase-card-literal-feels-risk-explained",
       "date": "2026-11-16",
       "pill": "Method",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "From Phrase Card to Culture: What Literal / Feels Like / Risk Mean",
+      "filename": "085_2026-09-16_HECS_blog_85_phrase-card-literal-feels-risk_READY.md"
     },
     {
-      "num": 89,
-      "slug": "refuse-strength-rankings-swear-words",
+      "seq": 53,
+      "map_num": 86,
+      "slug": "personal-recognition-log-not-roast-list",
       "date": "2026-11-17",
       "pill": "Method",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Building a Personal Recognition Log (Without a Roast List)",
+      "filename": "086_2026-09-16_HECS_blog_86_personal-recognition-log_READY.md"
     },
     {
-      "num": 90,
-      "slug": "ipa-without-cringe-read-skip-performance",
+      "seq": 54,
+      "map_num": 88,
+      "slug": "ta-guide-recognition-seminar",
       "date": "2026-11-18",
-      "pill": "Pronounce",
-      "priority": 1
+      "pill": "Method",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Teaching Assistants Guide: Running a Recognition Seminar",
+      "filename": "088_2026-09-16_HECS_blog_88_ta-seminar_READY.md"
     },
     {
-      "num": 91,
-      "slug": "google-translate-audio-swear-links",
+      "seq": 55,
+      "map_num": 89,
+      "slug": "refuse-strength-rankings-swear-words",
       "date": "2026-11-19",
-      "pill": "Pronounce",
-      "priority": 1
+      "pill": "Method",
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Data You Won’t Get From Us: Why We Refuse Strength Rankings",
+      "filename": "089_2026-09-16_HECS_blog_89_refuse-rankings_READY.md"
     },
     {
-      "num": 92,
-      "slug": "mouth-shapes-taboo-pronunciation-anxiety",
+      "seq": 56,
+      "map_num": 90,
+      "slug": "ipa-without-cringe-read-skip-performance",
       "date": "2026-11-20",
       "pill": "Pronounce",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "IPA Without Cringe: Read the Sounds, Skip the Performance",
+      "filename": "090_2026-09-16_HECS_blog_90_ipa-without-cringe_READY.md"
     },
     {
-      "num": 93,
-      "slug": "minimal-pairs-insults-one-sound-heat",
+      "seq": 57,
+      "map_num": 91,
+      "slug": "google-translate-audio-swear-links",
       "date": "2026-11-21",
       "pill": "Pronounce",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Why We Link Google Translate Audio (And What We Don’t Promise)",
+      "filename": "091_2026-09-16_HECS_blog_91_google-translate-audio_READY.md"
     },
     {
-      "num": 94,
-      "slug": "listening-drills-travelers-ear-training",
+      "seq": 58,
+      "map_num": 92,
+      "slug": "mouth-shapes-taboo-pronunciation-anxiety",
       "date": "2026-11-22",
       "pill": "Pronounce",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Mouth Shapes and Taboo: Pronunciation Anxiety Is Normal",
+      "filename": "092_2026-09-16_HECS_blog_92_mouth-shapes-taboo-anxiety_READY.md"
     },
     {
-      "num": 95,
-      "slug": "kids-overhearing-swears-abroad-parents",
+      "seq": 59,
+      "map_num": 94,
+      "slug": "listening-drills-travelers-ear-training",
       "date": "2026-11-23",
       "pill": "Pronounce",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Listening Drills for Travelers: Ear Training Only",
+      "filename": "094_2026-09-16_HECS_blog_94_listening-drills-ear-training_READY.md"
     },
     {
-      "num": 96,
+      "seq": 60,
+      "map_num": 96,
       "slug": "voice-notes-virality-clip-is-performance",
       "date": "2026-11-24",
       "pill": "Pronounce",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Voice Notes and Virality: Why Sending the Clip Is Performance",
+      "filename": "096_2026-09-16_HECS_blog_96_voice-notes-virality_READY.md"
     },
     {
-      "num": 97,
+      "seq": 61,
+      "map_num": 97,
       "slug": "kindle-tap-to-hear-hecs-workflow",
       "date": "2026-11-25",
       "pill": "Pronounce",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Kindle Tap-to-Hear Workflow: Using HECS on Device",
+      "filename": "097_2026-09-16_HECS_blog_97_kindle-tap-to-hear_READY.md"
     },
     {
-      "num": 98,
+      "seq": 62,
+      "map_num": 98,
       "slug": "hecs-harm-without-roast-brand",
       "date": "2026-11-26",
       "pill": "Author",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "How HECS Talks About Harm Without Becoming a Roast Brand",
+      "filename": "098_2026-09-16_HECS_blog_98_harm-without-roast-brand_READY.md"
     },
     {
-      "num": 99,
+      "seq": 63,
+      "map_num": 99,
       "slug": "field-notes-100-country-recognition-atlas",
       "date": "2026-11-27",
       "pill": "Author",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Field Notes From Building a 100-Country Recognition Atlas",
+      "filename": "099_2026-09-16_HECS_blog_99_field-notes-atlas_READY.md"
     },
     {
-      "num": 100,
+      "seq": 64,
+      "map_num": 100,
       "slug": "readers-gifted-book-recognition-stories",
       "date": "2026-11-28",
       "pill": "Author",
-      "priority": 1
+      "anglo_priority": "no",
+      "waveA_de_nl": "no",
+      "title": "Readers Who Gifted the Book: Recognition Stories Welcome",
+      "filename": "100_2026-09-16_HECS_blog_100_readers-gifted-book_READY.md"
     }
   ]
 }

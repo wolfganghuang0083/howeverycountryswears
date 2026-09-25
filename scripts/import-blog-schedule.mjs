@@ -5,7 +5,8 @@
  * - Skips missing inventory numbers (documented gap #20–41)
  * - draft: false; visibility gated by date ≤ today (Asia/Tokyo) on Production
  *
- * Usage: node scripts/import-blog-schedule.mjs [--dry-run] [--source DIR] [--start YYYY-MM-DD]
+ * Usage: node scripts/import-blog-schedule.mjs [--dry-run] [--source DIR] [--start YYYY-MM-DD] [--csv PATH]
+ * Prefer dates from KDP CSV (suggested_date/slug). --start alone is fallback only.
  */
 import fs from "node:fs";
 import path from "node:path";

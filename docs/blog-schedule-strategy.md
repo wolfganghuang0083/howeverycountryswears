@@ -22,3 +22,10 @@ Numbers **#20–#41** have no READY body in the 2026-09-23 upload pack — skipp
 ## Live posts
 
 The original **15** `content/blog/*.mdx` dated `2026-09-16` were **not overwritten** (slug match skip in `scripts/import-blog-schedule.mjs`).
+
+## KDP 刊登日表（權威）
+
+Dates come from `/workspace/hecs-handoff/2026-09-25_HECS_Blog_刊登日表_PagesCMS.csv` (`suggested_date` / `slug`):
+- LIVE_FROZEN #01–#14 + `insultos-espanoles-turistas-reconocimiento` untouched
+- 64 posts: 2026-09-26 → 2026-11-28 (Tokyo), order = anglo 15 → DE/NL 4 → rest by map_num
+- #20–#41 not scheduled (not READY)
