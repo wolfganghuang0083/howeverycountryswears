@@ -5,6 +5,7 @@ import superjson from "superjson";
 import { trpc } from "./lib/trpc";
 import App from "./App";
 import "./index.css";
+import { initPageHitBeacon } from "./lib/pageHitBeacon";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,3 +38,5 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </trpc.Provider>
 );
+
+initPageHitBeacon();

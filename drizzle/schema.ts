@@ -179,6 +179,7 @@ export const pageHits = pgTable(
     botName: text("bot_name"),
     country: text("country"),
     referer: text("referer"),
+    source: text("source"), // 'beacon' | 'server'
   },
   (t) => [index("page_hits_ts_idx").on(t.ts)],
 );

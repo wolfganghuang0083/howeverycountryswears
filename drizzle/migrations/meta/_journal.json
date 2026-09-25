@@ -36,6 +36,13 @@
       "when": 1780100000000,
       "tag": "0004_page_hits",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780200000000,
+      "tag": "0005_page_hits_source",
+      "breakpoints": true
     }
   ]
 }
