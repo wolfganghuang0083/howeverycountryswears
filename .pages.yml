@@ -1,4 +1,7 @@
-# HECS Blog — Pages CMS pilot (Preview / feature branch only)
+# HECS Blog — Pages CMS (date schedule)
+# Production visitors: draft=false AND date≤today Asia/Tokyo (client + prerender).
+# Preview (VERCEL_ENV=preview): all posts visible for CMS acceptance.
+# Strategy: draft=false + date gate (CMS list shows date+draft clearly).
 media:
   input: client/public/blog
   output: /blog

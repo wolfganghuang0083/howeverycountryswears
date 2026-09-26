@@ -175,18 +175,73 @@ export function extractToc(html: string): TocItem[] {
   return withHeadingIds(html).toc;
 }
 
-/** Preview may render drafts; production sitemap should exclude them. */
-export function getAllBlogPosts(opts?: { includeDrafts?: boolean }): BlogPost[] {
-  const includeDrafts = opts?.includeDrafts ?? (import.meta.env.PROD ? false : true);
-  return allPosts.filter((p) => includeDrafts || !p.draft);
+
+/** YYYY-MM-DD in Asia/Tokyo (lexicographic-safe for ISO dates). */
+export function todayTokyo(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
 }
 
-export function getBlogPost(slug: string): BlogPost | undefined {
+/**
+ * Preview / local: show drafts + future dates (CMS acceptance).
+ * Production (VERCEL_ENV=production): draft=false AND date ≤ today Tokyo.
+ */
+export function isBlogCmsPreview(): boolean {
+  const v = (import.meta.env.VITE_HECS_VERCEL_ENV as string | undefined) || "";
+  if (v === "production") return false;
+  if (v === "preview" || v === "development") return true;
+  // vite / vite build without Vercel: match prior draft behaviour
+  return !import.meta.env.PROD;
+}
+
+export function isBlogPublic(
+  post: Pick<BlogPost, "draft" | "date">,
+  opts?: { asOf?: string; preview?: boolean },
+): boolean {
+  const preview = opts?.preview ?? isBlogCmsPreview();
+  if (preview) return true;
+  if (post.draft) return false;
+  const asOf = opts?.asOf ?? todayTokyo();
+  const d = String(post.date || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  return d <= asOf;
+}
+
+/** Preview may render drafts + future dates; Production uses date ≤ today Tokyo. */
+export function getAllBlogPosts(
+  opts?: { includeDrafts?: boolean; asOf?: string; preview?: boolean },
+): BlogPost[] {
+  const preview = opts?.preview ?? isBlogCmsPreview();
+  // includeDrafts retained for callers; on Production, public gate wins.
+  const includeDrafts = opts?.includeDrafts ?? preview;
+  return allPosts.filter((p) => {
+    if (preview) return includeDrafts || !p.draft;
+    return isBlogPublic(p, { asOf: opts?.asOf, preview: false });
+  });
+}
+
+export function getBlogPost(
+  slug: string,
+  opts?: { asOf?: string; preview?: boolean },
+): BlogPost | undefined {
+  const post = allPosts.find((p) => p.slug === slug);
+  if (!post) return undefined;
+  const preview = opts?.preview ?? isBlogCmsPreview();
+  if (preview) return post;
+  return isBlogPublic(post, { asOf: opts?.asOf, preview: false }) ? post : undefined;
+}
+
+/** Raw lookup ignoring publish gate (Preview CMS / related override). */
+export function getBlogPostRaw(slug: string): BlogPost | undefined {
   return allPosts.find((p) => p.slug === slug);
 }
 
-export function getPublishedBlogPosts(): BlogPost[] {
-  return getAllBlogPosts({ includeDrafts: false });
+export function getPublishedBlogPosts(opts?: { asOf?: string }): BlogPost[] {
+  return getAllBlogPosts({ includeDrafts: false, preview: false, asOf: opts?.asOf });
 }
 
 /** Locale for listing: es shows es posts; other locales show en posts. */
@@ -270,7 +325,10 @@ export function getRelatedPosts(
 ): BlogPost[] {
   const min = opts?.min ?? 3;
   const max = opts?.max ?? 5;
-  const all = getAllBlogPosts({ includeDrafts: opts?.includeDrafts ?? (import.meta.env.PROD ? false : true) });
+  const all = getAllBlogPosts({
+    includeDrafts: opts?.includeDrafts,
+    preview: opts?.includeDrafts === true ? true : undefined,
+  });
   const lang = post.lang || "en";
   const sameLang = all.filter((p) => (p.lang || "en") === lang);
   const enPool = all.filter((p) => (p.lang || "en") === "en");
@@ -283,7 +341,7 @@ export function getRelatedPosts(
   if (usedOverride) {
     for (const slug of override) {
       if (seen.has(slug)) continue;
-      const p = getBlogPost(slug);
+      const p = getBlogPost(slug) || (isBlogCmsPreview() ? getBlogPostRaw(slug) : undefined);
       if (!p) continue;
       out.push(p);
       seen.add(slug);
