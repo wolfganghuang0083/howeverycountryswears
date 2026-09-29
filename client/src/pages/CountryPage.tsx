@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
+import SameCountryBlogRelated from "@/components/SameCountryBlogRelated";
 import SignupModal from "@/components/SignupModal";
 import {
   getCountryBySlug,
@@ -561,6 +562,9 @@ export default function CountryPage() {
           </div>
         </div>
       </section>
+
+      {/* Auto same-country live blog posts (hide if none); curated hub cards stay additive */}
+      <SameCountryBlogRelated countrySlug={country.slug} locale={locale} max={3} enabled={!isZhTw} />
 
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
       <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />

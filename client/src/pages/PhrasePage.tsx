@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import { trackPurchaseClick } from "@/lib/analytics";
 import PhraseCard from "@/components/PhraseCard";
+import SameCountryBlogRelated from "@/components/SameCountryBlogRelated";
 import { getPhraseById, getAllCountries, AMAZON_LINK, type Card as CardType, type Country } from "@/lib/data";
 import { useParams, Link } from "wouter";
 import { ArrowLeft, BookOpen, Star, MessageSquare, Send, User as UserIcon } from "lucide-react";
@@ -401,6 +402,9 @@ export default function PhrasePage() {
           </div>
         </section>
       )}
+
+      {/* Auto same-country live blog posts (≤3; hide if none) */}
+      <SameCountryBlogRelated countrySlug={country.slug} locale={locale} max={3} enabled={!isZhTw} />
 
       {/* Contextual Book CTA */}
       <section className="py-10 bg-[#1a1a1a]">
