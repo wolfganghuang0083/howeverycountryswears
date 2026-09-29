@@ -20,10 +20,64 @@ const LOGIN_SUCCESS_SESSION_KEY = "hecs_login_success_fired";
 /** In-memory guard so parallel useAuth mounts cannot double-fire before sessionStorage writes. */
 let loginSuccessFiredThisLoad = false;
 
+const GA_MEASUREMENT_ID = "G-GVS8FVW8NN";
+
+/** Current SPA location for GA4 page dims (pathname + full URL). */
+export function getPageContext(): { page_path: string; page_location: string } {
+  if (typeof window === "undefined") {
+    return { page_path: "", page_location: "" };
+  }
+  return {
+    page_path: window.location.pathname,
+    page_location: window.location.href,
+  };
+}
+
+/**
+ * Send GA4 event with page_path + page_location always present so Explore
+ * breakdowns are not "(not set)". Callers may override either param.
+ */
 function trackEvent(eventName: string, params?: Record<string, unknown>) {
   if (typeof window !== "undefined" && window.gtag) {
-    window.gtag("event", eventName, params);
+    const page = getPageContext();
+    const merged: Record<string, unknown> = { ...page, ...params };
+    // Caller may pass page_path: undefined (e.g. SSR guard) — keep auto values.
+    if (merged.page_path == null || merged.page_path === "") {
+      merged.page_path = page.page_path;
+    }
+    if (merged.page_location == null || merged.page_location === "") {
+      merged.page_location = page.page_location;
+    }
+    window.gtag("event", eventName, merged);
   }
+}
+
+/** Last path sent to gtag config — avoids double page_view on first paint. */
+let lastSpaPagePath: string | null = null;
+
+/**
+ * Sync GA4 page_path/page_location on SPA route changes (wouter).
+ * First call only updates config (index.html already sent the landing page_view).
+ */
+export function trackSpaPageView(pathname?: string) {
+  if (typeof window === "undefined" || !window.gtag) return;
+  const page_path = pathname ?? window.location.pathname;
+  const page_location = window.location.href;
+  if (page_path === lastSpaPagePath) return;
+  const isFirst = lastSpaPagePath === null;
+  lastSpaPagePath = page_path;
+  if (isFirst) {
+    window.gtag("config", GA_MEASUREMENT_ID, {
+      page_path,
+      page_location,
+      send_page_view: false,
+    });
+    return;
+  }
+  window.gtag("config", GA_MEASUREMENT_ID, {
+    page_path,
+    page_location,
+  });
 }
 
 /** Infer page_type from pathname for v0 alias params. */

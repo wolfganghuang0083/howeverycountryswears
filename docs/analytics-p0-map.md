@@ -29,3 +29,13 @@
 3. Amazon CTA (About, phrase footer, etc.) → `purchase_click` + `book_cta_click`.
 4. Blog “Get the book” → same with `context=blog_cta`, `destination=/get-the-book`.
 5. Signed-in session → one `login_success` per tab session (not every navigation).
+
+## page_path / page_location (GA4 Explore)
+
+Custom events historically omitted `page_path`, so Explore showed **(not set)** while `page_location` still worked. Fix (client):
+
+1. `trackEvent` always attaches `page_path` (pathname) + `page_location` (href).
+2. `trackSpaPageView` + `GaSpaPageTracker` update gtag `config` on wouter route changes so automatic dims match `/blog/*` etc.
+
+數據席: break down `blog_read` / `newsletter_*` by **Page path** = `/blog/<slug>` (or event param `page_path`). Filter `page_path` begins with `/blog/`.
+

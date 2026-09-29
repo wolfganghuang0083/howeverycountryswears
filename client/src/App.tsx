@@ -1,11 +1,12 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LocaleProvider } from "./contexts/LocaleContext";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
+import { trackSpaPageView } from "@/lib/analytics";
 
 const Home = lazy(() => import("./pages/Home"));
 const CountryPage = lazy(() => import("./pages/CountryPage"));
@@ -34,9 +35,20 @@ function LoadingFallback() {
   );
 }
 
+/** Keep GA4 page_path in sync with wouter SPA navigations. */
+function GaSpaPageTracker() {
+  const [location] = useLocation();
+  useEffect(() => {
+    trackSpaPageView(location.split("?")[0] || location);
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <>
+      <GaSpaPageTracker />
+      <Suspense fallback={<LoadingFallback />}>
       <Switch>
         {/* English (default) routes */}
         <Route path="/" component={Home} />
@@ -92,6 +104,7 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
     </Suspense>
+    </>
   );
 }
 
