@@ -49,7 +49,7 @@ export default function SameCountryBlogRelated({
   if (!enabled || posts.length === 0) return null;
 
   const isEs = locale === "es";
-  const heading = isEs ? "Del blog" : "From the blog";
+  const heading = isEs ? "También te puede interesar:" : "You may also be interested in:";
   const viewAllLabel = isEs ? "Ver más en el blog →" : "More on the blog →";
   const indexHref = getBlogIndexPath(locale as Locale, countrySlug);
 
