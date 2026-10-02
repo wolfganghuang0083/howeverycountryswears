@@ -300,6 +300,15 @@ function mdToHtml(md) {
       i++;
       continue;
     }
+    // Inline specimen shortcode — whole line, not wrapped in <p>, not escaped
+    const specimenMatch = line.trim().match(/^\{\{specimen:([a-z0-9-]+):(\d+)\}\}$/);
+    if (specimenMatch) {
+      out.push(
+        `<span data-hecs-specimen="${specimenMatch[1]}:${specimenMatch[2]}"></span>`,
+      );
+      i++;
+      continue;
+    }
     const paras = [line];
     i++;
     while (
@@ -308,7 +317,8 @@ function mdToHtml(md) {
       !/^#{1,6}\s/.test(lines[i]) &&
       !lines[i].startsWith("|") &&
       !/^[-*]\s/.test(lines[i]) &&
-      !/^\d+\.\s/.test(lines[i])
+      !/^\d+\.\s/.test(lines[i]) &&
+      !/^\{\{specimen:[a-z0-9-]+:\d+\}\}$/.test(lines[i].trim())
     ) {
       paras.push(lines[i]);
       i++;

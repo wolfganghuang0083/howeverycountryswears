@@ -11,22 +11,35 @@ import { useMemo } from "react";
 /**
  * Frontmatter-driven PhraseCard embeds for blog posts.
  * Recognition specimens only — not a how-to / inventory dump.
- * Hard cap: MAX_BLOG_PHRASE_EMBEDS (3).
+ * Hard cap: MAX_BLOG_PHRASE_EMBEDS (3), minus any inline specimen keys.
  */
 export default function BlogPhraseEmbeds({
   embeds,
   lang,
+  excludeKeys,
 }: {
   embeds: BlogPhraseEmbed[];
   lang?: string;
+  /** country:number keys already used by inline BlogSpecimenTag markers */
+  excludeKeys?: Set<string> | string[];
 }) {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { locale } = useLocale();
 
-  const capped = useMemo(
-    () => (embeds || []).slice(0, MAX_BLOG_PHRASE_EMBEDS),
-    [embeds],
-  );
+  const exclude = useMemo(() => {
+    if (!excludeKeys) return new Set<string>();
+    return excludeKeys instanceof Set
+      ? excludeKeys
+      : new Set(excludeKeys);
+  }, [excludeKeys]);
+
+  const capped = useMemo(() => {
+    const filtered = (embeds || []).filter(
+      (e) => !exclude.has(`${e.country}:${e.number}`),
+    );
+    const room = Math.max(0, MAX_BLOG_PHRASE_EMBEDS - exclude.size);
+    return filtered.slice(0, room);
+  }, [embeds, exclude]);
 
   const resolved = useMemo(() => {
     const out: NonNullable<ReturnType<typeof getPhrase>>[] = [];
