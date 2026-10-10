@@ -12,19 +12,80 @@ import {
   getRelatedHeading,
   getRelatedPosts,
   withHeadingIds,
+  MAX_BLOG_PHRASE_EMBEDS,
   type BlogPost,
   type TocItem,
 } from "@/lib/blog";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, BookOpen, Compass, List } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useLocale } from "@/contexts/LocaleContext";
 import NotFound from "@/pages/NotFound";
 import BlogPhraseEmbeds from "@/components/BlogPhraseEmbeds";
+import BlogSpecimenTag from "@/components/BlogSpecimenTag";
 import type { Locale } from "@/lib/i18n";
 import { trackBlogRead, trackPurchaseClick } from "@/lib/analytics";
 
 const SITE = "https://howeverycountryswears.com";
+
+
+/** Split blog HTML on specimen markers; hard-cap MAX_BLOG_PHRASE_EMBEDS unique tags. */
+function useBlogBodyWithSpecimens(
+  html: string,
+  sourcePath: string,
+  lang?: string,
+): { body: ReactNode; usedKeys: string[] } {
+  return useMemo(() => {
+    const usedKeys: string[] = [];
+    const parts: ReactNode[] = [];
+    let last = 0;
+    let seg = 0;
+    const re = /<span data-hecs-specimen="([a-z0-9-]+):(\d+)"><\/span>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(html)) !== null) {
+      if (match.index > last) {
+        const chunk = html.slice(last, match.index);
+        parts.push(
+          <div
+            key={`h-${seg++}`}
+            className="contents"
+            dangerouslySetInnerHTML={{ __html: chunk }}
+          />,
+        );
+      }
+      const country = match[1];
+      const number = parseInt(match[2], 10);
+      const key = `${country}:${number}`;
+      if (
+        usedKeys.length < MAX_BLOG_PHRASE_EMBEDS &&
+        Number.isFinite(number) &&
+        !usedKeys.includes(key)
+      ) {
+        usedKeys.push(key);
+        parts.push(
+          <BlogSpecimenTag
+            key={`s-${key}-${seg++}`}
+            country={country}
+            number={number}
+            sourcePath={sourcePath}
+            lang={lang}
+          />,
+        );
+      }
+      last = match.index + match[0].length;
+    }
+    if (last < html.length) {
+      parts.push(
+        <div
+          key={`h-${seg++}`}
+          className="contents"
+          dangerouslySetInnerHTML={{ __html: html.slice(last) }}
+        />,
+      );
+    }
+    return { body: <>{parts}</>, usedKeys };
+  }, [html, sourcePath, lang]);
+}
 
 function BlogToc({ toc, locale }: { toc: TocItem[]; locale: string }) {
   if (toc.length === 0) return null;
@@ -215,6 +276,13 @@ export default function BlogPostPage() {
     [post],
   );
 
+  const sourcePath = post ? getBlogPostPath(post) : "";
+  const { body: blogBody, usedKeys: specimenKeys } = useBlogBodyWithSpecimens(
+    html,
+    sourcePath,
+    post?.lang,
+  );
+
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!post) return;
@@ -381,10 +449,15 @@ export default function BlogPostPage() {
               [&_th]:border [&_th]:border-[#ccc] [&_th]:bg-[#FAFAFA] [&_th]:p-2 [&_th]:text-left
               [&_td]:border [&_td]:border-[#ccc] [&_td]:p-2
               [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          >
+            {blogBody}
+          </div>
 
-          <BlogPhraseEmbeds embeds={post.phraseEmbeds} lang={post.lang} />
+          <BlogPhraseEmbeds
+            embeds={post.phraseEmbeds}
+            lang={post.lang}
+            excludeKeys={specimenKeys}
+          />
 
           {post.faq.length > 0 ? (
             <section className="mt-12 pt-8 border-t-2 border-[#1a1a1a]">

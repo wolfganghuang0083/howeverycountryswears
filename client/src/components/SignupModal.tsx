@@ -23,7 +23,7 @@ export function setNewsletterOptInCookie(optIn: boolean) {
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  surface: "graycard" | "country" | "home" | "nav";
+  surface: "graycard" | "country" | "home" | "nav" | "blog";
   ctaId: string;
   country?: string;
   sourcePath?: string;
@@ -160,7 +160,7 @@ export default function SignupModal({
           surface,
           cta_id: ctaId,
           method: "email",
-          country: surface === "country" || surface === "graycard" ? country : undefined,
+          country: surface === "country" || surface === "graycard" || surface === "blog" ? country : undefined,
         });
       }
     } catch (err: unknown) {
