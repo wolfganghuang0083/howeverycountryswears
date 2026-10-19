@@ -6,9 +6,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getAllCountries, isLockedContent, type Country } from "@/lib/data";
 
 /** Free (non-book-exclusive) countries — computed from data, not hard-coded. */
-const FREE_COUNTRY_COUNT = getAllCountries("en").filter(
+export const FREE_COUNTRY_COUNT = getAllCountries("en").filter(
   (c) => !isLockedContent(c.part_id, c.slug),
 ).length;
+
+/** SignupModal copy for book-exclusive country pages (logged-out). */
+export const BOOK_EXCLUSIVE_SIGNUP_TITLE = `Free audio for ${FREE_COUNTRY_COUNT} countries — free account`;
+export const BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE = `Audio for the ${FREE_COUNTRY_COUNT} free countries unlocks after verification.`;
 
 type Props = {
   country: Country;
@@ -120,15 +124,9 @@ export default function CountrySpecimenSignup({
         enabled
         locale={locale}
         sourcePath={sourcePath}
-        titleOverride={
-          bookExclusiveLoggedOut
-            ? `Free audio for ${FREE_COUNTRY_COUNT} countries — free account`
-            : undefined
-        }
+        titleOverride={bookExclusiveLoggedOut ? BOOK_EXCLUSIVE_SIGNUP_TITLE : undefined}
         audioNoteOverride={
-          bookExclusiveLoggedOut
-            ? `Audio for the ${FREE_COUNTRY_COUNT} free countries unlocks after verification.`
-            : undefined
+          bookExclusiveLoggedOut ? BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE : undefined
         }
       />
     </section>

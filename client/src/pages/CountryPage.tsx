@@ -3,7 +3,10 @@ import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
 import SameCountryBlogRelated from "@/components/SameCountryBlogRelated";
 import SignupModal from "@/components/SignupModal";
-import CountrySpecimenSignup from "@/components/CountrySpecimenSignup";
+import CountrySpecimenSignup, {
+  BOOK_EXCLUSIVE_SIGNUP_TITLE,
+  BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE,
+} from "@/components/CountrySpecimenSignup";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -249,6 +252,8 @@ export default function CountryPage() {
                     isAuthenticated={isAuthenticated}
                     memberTier={user?.memberTier}
                     userRole={user?.role}
+                    signupTitleOverride={BOOK_EXCLUSIVE_SIGNUP_TITLE}
+                    signupAudioNoteOverride={BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE}
                   />
                 </motion.div>
               ))}
