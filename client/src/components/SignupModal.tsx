@@ -29,6 +29,9 @@ type Props = {
   sourcePath?: string;
   locale?: string;
   enabled?: boolean;
+  /** Optional copy overrides (book-exclusive country card only). */
+  titleOverride?: string;
+  audioNoteOverride?: string;
 };
 
 function OptInCheckbox({
@@ -63,6 +66,8 @@ export default function SignupModal({
   sourcePath,
   locale = "en",
   enabled = true,
+  titleOverride,
+  audioNoteOverride,
 }: Props) {
   const [email, setEmail] = useState("");
   const [optIn, setOptIn] = useState(false); // GDPR: default unchecked
@@ -237,10 +242,11 @@ export default function SignupModal({
               </div>
               <div>
                 <h3 className="font-display text-xl md:text-2xl text-[#1a1a1a] mb-1">
-                  Unlock pronunciations — free account
+                  {titleOverride ?? "Unlock pronunciations — free account"}
                 </h3>
                 <p className="text-sm text-[#555] leading-relaxed">
-                  Register with a verified email. No password. Audio unlocks after verification.
+                  Register with a verified email. No password.{" "}
+                  {audioNoteOverride ?? "Audio unlocks after verification."}
                 </p>
               </div>
             </div>

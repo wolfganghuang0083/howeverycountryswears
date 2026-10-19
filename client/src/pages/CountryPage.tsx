@@ -3,6 +3,7 @@ import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
 import SameCountryBlogRelated from "@/components/SameCountryBlogRelated";
 import SignupModal from "@/components/SignupModal";
+import CountrySpecimenSignup from "@/components/CountrySpecimenSignup";
 import {
   getCountryBySlug,
   getAdjacentCountries,
@@ -210,6 +211,14 @@ export default function CountryPage() {
           </div>
         </section>
 
+        {/* Pronunciation-card free signup entry (EN) */}
+        <CountrySpecimenSignup
+          country={country}
+          sourcePath={localePath(`/country/${country.slug}`)}
+          locale={locale}
+          enabled={!isZhTw}
+        />
+
         {/* Partial Preview - show first 3 cards */}
         <section className="py-10 md:py-16">
           <div className="container">
@@ -293,6 +302,16 @@ export default function CountryPage() {
             </div>
           </div>
         </section>
+
+        {/* Same-country posts + Wave A recognition guides (EN) */}
+        <SameCountryBlogRelated
+          countrySlug={country.slug}
+          countryNumber={country.number}
+          locale={locale}
+          max={3}
+          enabled={!isZhTw}
+          waveA
+        />
       </Layout>
     );
   }
@@ -375,6 +394,14 @@ export default function CountryPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Pronunciation-card free signup entry (EN) */}
+      <CountrySpecimenSignup
+        country={country}
+        sourcePath={localePath(`/country/${country.slug}`)}
+        locale={locale}
+        enabled={!isZhTw}
+      />
 
       {/* Phrase Cards */}
       <section className="py-10 md:py-16">
@@ -564,7 +591,14 @@ export default function CountryPage() {
       </section>
 
       {/* Auto same-country live blog posts (hide if none); curated hub cards stay additive */}
-      <SameCountryBlogRelated countrySlug={country.slug} locale={locale} max={3} enabled={!isZhTw} />
+      <SameCountryBlogRelated
+        countrySlug={country.slug}
+        countryNumber={country.number}
+        locale={locale}
+        max={3}
+        enabled={!isZhTw}
+        waveA
+      />
 
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
       <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
