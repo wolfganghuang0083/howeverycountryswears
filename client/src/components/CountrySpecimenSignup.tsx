@@ -3,7 +3,12 @@ import { Sparkles } from "lucide-react";
 import BlogSpecimenTag from "@/components/BlogSpecimenTag";
 import SignupModal from "@/components/SignupModal";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { isLockedContent, type Country } from "@/lib/data";
+import { getAllCountries, isLockedContent, type Country } from "@/lib/data";
+
+/** Free (non-book-exclusive) countries — computed from data, not hard-coded. */
+const FREE_COUNTRY_COUNT = getAllCountries("en").filter(
+  (c) => !isLockedContent(c.part_id, c.slug),
+).length;
 
 type Props = {
   country: Country;
@@ -44,10 +49,12 @@ export default function CountrySpecimenSignup({
   let kicker = "Hear it first";
   let heading = "Read it, then hear it said right";
   let body =
-    "Spelling only gets you halfway. A free account plays every phrase across 66 countries — and lets you rate them and see how everyone else did.";
+    `Spelling only gets you halfway. A free account plays every phrase across ${FREE_COUNTRY_COUNT} countries — and lets you rate them and see how everyone else did.`;
   if (isLocked && !canPlay) {
     heading = "Train your ear before you open the book";
-    body = `${country.name}'s full audio set lives in the book. A free account still plays every phrase across 66 countries, so your ear gets a head start.`;
+    // Book-exclusive pages: a free account cannot play any phrase here
+    // (PhraseCard canPlay needs bookBuyer when locked), so no "first 3" claim.
+    body = `${country.name}'s full audio set lives in the book. A free account plays every phrase in the ${FREE_COUNTRY_COUNT} free countries, so your ear gets a head start.`;
   }
   if (canPlay) {
     kicker = "You're in";
