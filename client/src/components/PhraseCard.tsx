@@ -25,6 +25,9 @@ interface PhraseCardProps {
   reviewCount?: number;
   /** If true, allow playing pronunciation without authentication (for homepage free preview) */
   freePreview?: boolean;
+  /** Optional SignupModal copy overrides (book-exclusive country page only). */
+  signupTitleOverride?: string;
+  signupAudioNoteOverride?: string;
 }
 
 export default function PhraseCard({
@@ -41,6 +44,8 @@ export default function PhraseCard({
   linkToDetail = false,
   reviewCount,
   freePreview = false,
+  signupTitleOverride,
+  signupAudioNoteOverride,
 }: PhraseCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -145,6 +150,8 @@ export default function PhraseCard({
       enabled={!isZhTw}
       locale={locale}
       sourcePath={localePath(`/country/${country.slug}`)}
+      titleOverride={signupTitleOverride}
+      audioNoteOverride={signupAudioNoteOverride}
     />
   );
 
