@@ -652,7 +652,7 @@ export default function CountryPage() {
               <p className="text-gray-400 text-sm mb-6">
                 {isZhTw
                   ? "1,000+ 個片語 · 每個詞條附發音連結 · 深度文化背景"
-                  : "1,000+ phrases · secondary to Join free membership"}
+                  : "1,000+ phrases in the full book · pronunciation links · deeper cultural context"}
               </p>
               <a
                 href={`/go/book?surface=country&cta_id=country_page_footer&country=${country.slug}`}
