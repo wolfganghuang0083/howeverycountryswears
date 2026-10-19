@@ -50,6 +50,7 @@ export default function CountrySpecimenSignup({
   let heading = "Read it, then hear it said right";
   let body =
     `Spelling only gets you halfway. A free account plays every phrase across ${FREE_COUNTRY_COUNT} countries — and lets you rate them and see how everyone else did.`;
+  const bookExclusiveLoggedOut = isLocked && !isAuthenticated;
   if (isLocked && !canPlay) {
     heading = "Train your ear before you open the book";
     // Book-exclusive pages: a free account cannot play any phrase here
@@ -75,16 +76,22 @@ export default function CountrySpecimenSignup({
             {heading}
           </h2>
           <p className="text-sm text-[#555] leading-relaxed m-0">{body}</p>
-          <div className="mt-1">
-            <BlogSpecimenTag
-              country={country.slug}
-              number={first.number}
-              sourcePath={sourcePath}
-              surface="country"
-              ctaId={CTA_ID}
-              hideMicrocopy
-            />
-          </div>
+          {bookExclusiveLoggedOut ? (
+            <p className="text-xs font-semibold text-[#777] leading-snug m-0 mt-3 mb-3">
+              {country.name} audio unlocks with the book, not with a free account.
+            </p>
+          ) : (
+            <div className="mt-1">
+              <BlogSpecimenTag
+                country={country.slug}
+                number={first.number}
+                sourcePath={sourcePath}
+                surface="country"
+                ctaId={CTA_ID}
+                hideMicrocopy
+              />
+            </div>
+          )}
           {!isAuthenticated ? (
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <button
@@ -113,6 +120,16 @@ export default function CountrySpecimenSignup({
         enabled
         locale={locale}
         sourcePath={sourcePath}
+        titleOverride={
+          bookExclusiveLoggedOut
+            ? `Free audio for ${FREE_COUNTRY_COUNT} countries — free account`
+            : undefined
+        }
+        audioNoteOverride={
+          bookExclusiveLoggedOut
+            ? `Audio for the ${FREE_COUNTRY_COUNT} free countries unlocks after verification.`
+            : undefined
+        }
       />
     </section>
   );
