@@ -17,6 +17,11 @@ type Props = {
   number: number;
   sourcePath: string;
   lang?: string;
+  /** Signup surface / cta id (defaults keep the blog behaviour from #47). */
+  surface?: "blog" | "country";
+  ctaId?: string;
+  /** Hide the small microcopy line under the chip (host renders its own). */
+  hideMicrocopy?: boolean;
 };
 
 /**
@@ -29,6 +34,9 @@ export default function BlogSpecimenTag({
   number,
   sourcePath,
   lang,
+  surface = "blog",
+  ctaId = "blog_specimen_tag",
+  hideMicrocopy = false,
 }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { locale } = useLocale();
@@ -58,7 +66,10 @@ export default function BlogSpecimenTag({
         if (!(isAuthenticated && isLocked && !isBookBuyer)) {
           setShowSignup(true);
         }
-        trackPaywallView({ country: c.slug, context: "blog_specimen_tag" });
+        trackPaywallView({
+          country: c.slug,
+          context: ctaId as Parameters<typeof trackPaywallView>[0]["context"],
+        });
         return;
       }
 
@@ -79,7 +90,7 @@ export default function BlogSpecimenTag({
       }
       setTimeout(() => setIsPlaying(false), 2000);
     },
-    [hit, isAuthenticated, user, listenMutation],
+    [hit, isAuthenticated, user, listenMutation, ctaId],
   );
 
   if (!hit) return null;
@@ -132,16 +143,18 @@ export default function BlogSpecimenTag({
             <span>{btnLabel}</span>
           </button>
         </span>
-        <span className="text-[11px] text-[#666] leading-snug pl-0.5">
-          {microcopy}
-          <span className="text-[#999]"> · Recognition ≠ permission</span>
-        </span>
+        {hideMicrocopy ? null : (
+          <span className="text-[11px] text-[#666] leading-snug pl-0.5">
+            {microcopy}
+            <span className="text-[#999]"> · Recognition ≠ permission</span>
+          </span>
+        )}
       </span>
       <SignupModal
         open={showSignup}
         onOpenChange={setShowSignup}
-        surface="blog"
-        ctaId="blog_specimen_tag"
+        surface={surface}
+        ctaId={ctaId}
         country={c.slug}
         enabled={!isZhTw}
         locale={locale}
