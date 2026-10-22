@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { recordListen } from "@/lib/listenQueue";
 import { Volume2, Lock } from "lucide-react";
 import { getPhrase, isLockedContent } from "@/lib/data";
 import { playPronunciation } from "@/lib/pronunciation";
@@ -46,7 +47,6 @@ export default function BlogSpecimenTag({
   const hit = getPhrase(country, number, locale);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const listenMutation = trpc.tracking.listenPhrase.useMutation();
 
   const handlePlay = useCallback(
     (e: React.MouseEvent) => {
@@ -83,14 +83,11 @@ export default function BlogSpecimenTag({
       });
       trackFirstPlay();
       if (isAuthenticated) {
-        listenMutation.mutate({
-          countrySlug: c.slug,
-          cardNumber: card.number,
-        });
+        recordListen();
       }
       setTimeout(() => setIsPlaying(false), 2000);
     },
-    [hit, isAuthenticated, user, listenMutation, ctaId],
+    [hit, isAuthenticated, user, ctaId],
   );
 
   if (!hit) return null;

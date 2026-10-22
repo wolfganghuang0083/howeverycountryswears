@@ -154,6 +154,14 @@ export const appRouter = router({
         const newBadges = await checkAndAwardBadges(ctx.user.userId);
         return { newBadges };
       }),
+    // Batched play logging: one UPDATE (+count) and one badge check per flush.
+    listenPhrasesBatch: protectedProcedure
+      .input(z.object({ count: z.number().int().min(1).max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        await incrementPhrasesListened(ctx.user.userId, input.count);
+        const newBadges = await checkAndAwardBadges(ctx.user.userId);
+        return { newBadges };
+      }),
   }),
 
   // ========== SUBMISSIONS ==========

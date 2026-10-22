@@ -55,6 +55,46 @@ export async function insertHit(row, dbUrlOverride) {
   }
 }
 
+const MAX_TS_SKEW_MS = 15 * 60 * 1000;
+
+/** Client timestamp (ms) -> ISO, clamped to [now-15min, now]; invalid -> now. */
+export function clampTs(t, now = Date.now()) {
+  const n = typeof t === "number" && Number.isFinite(t) ? t : now;
+  return new Date(Math.min(now, Math.max(now - MAX_TS_SKEW_MS, n))).toISOString();
+}
+
+/** Build one multi-row INSERT (exported for tests). */
+export function buildInsertHits(rows) {
+  const params = [];
+  const tuples = rows.map((r, i) => {
+    const b = i * 8;
+    params.push(r.ts || new Date().toISOString(), r.path, r.ua, r.isBot, r.botName, r.country, r.referer, r.source);
+    return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8})`;
+  });
+  return {
+    text: `INSERT INTO page_hits (ts, path, user_agent, is_bot, bot_name, country, referer, source) VALUES ${tuples.join(", ")}`,
+    params,
+  };
+}
+
+/** Insert many rows in ONE statement; never throws; bounded by a short timeout. */
+export async function insertHits(rows, dbUrlOverride) {
+  if (!rows || rows.length === 0) return true;
+  try {
+    const dbUrl = dbUrlOverride || process.env.DATABASE_URL;
+    if (!dbUrl) return false;
+    const sql = neon(dbUrl, { fetchOptions: { signal: AbortSignal.timeout(WRITE_TIMEOUT_MS) } });
+    const { text, params } = buildInsertHits(rows);
+    await Promise.race([
+      sql.query(text, params),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), WRITE_TIMEOUT_MS + 200)),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Run a promise after the response: Vercel waitUntil if available, else the caller awaits it. */
 export function getWaitUntil() {
   try {

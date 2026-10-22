@@ -1,4 +1,5 @@
 import { Card, getRiskColor, type Country, SITE_DOMAIN, isLockedContent } from "@/lib/data";
+import { recordListen } from "@/lib/listenQueue";
 import { playPronunciation, shareToTwitter, shareToFacebook, shareToWhatsApp } from "@/lib/pronunciation";
 import { Volume2, Lock, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
@@ -69,7 +70,6 @@ export default function PhraseCard({
   const canRate = isAuthenticated;
 
   const rateMutation = trpc.rating.rate.useMutation();
-  const listenMutation = trpc.tracking.listenPhrase.useMutation();
 
   const handlePlay = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,10 +87,10 @@ export default function PhraseCard({
     trackPhrasePlay({ country: country.slug, phrase_index: card.number, is_free_preview: freePreview, is_locked: isLocked });
     trackFirstPlay();
     if (isAuthenticated) {
-      listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
+      recordListen();
     }
     setTimeout(() => setIsPlaying(false), 2000);
-  }, [card.phrase, country.lang_code, country.slug, card.number, canPlay, isAuthenticated, isLocked, freePreview, listenMutation]);
+  }, [card.phrase, country.lang_code, country.slug, card.number, canPlay, isAuthenticated, isLocked, freePreview]);
 
   const handleRate = useCallback((value: number) => {
     if (!isAuthenticated) { return; }
