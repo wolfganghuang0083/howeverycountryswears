@@ -58,6 +58,16 @@ function newsletterOptInCookie(value: "0" | "1" | "", maxAge = 3600): string {
   });
 }
 
+// Non-httpOnly companion flag (no secret, value "1"): lets the client know a session
+// cookie probably exists so it can skip /api/auth/me for logged-out visitors.
+// hecs_session itself stays httpOnly. Same lifetime as the session.
+const AUTH_FLAG_COOKIE = "hecs_auth";
+function authFlagCookie(on: boolean): string {
+  return serialize(AUTH_FLAG_COOKIE, on ? "1" : "", {
+    httpOnly: false, secure: true, sameSite: "lax", path: "/", maxAge: on ? 60 * 60 * 24 * 30 : 0,
+  });
+}
+
 function appendSetCookie(res: VercelResponse, cookie: string) {
   const prev = res.getHeader("Set-Cookie");
   if (!prev) {
@@ -114,6 +124,7 @@ async function setSessionCookie(
       maxAge: 60 * 60 * 24 * 30,
     }),
   );
+  appendSetCookie(res, authFlagCookie(true));
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -444,10 +455,15 @@ async function handleMagicVerify(req: VercelRequest, res: VercelResponse) {
 async function handleMe(req: VercelRequest, res: VercelResponse) {
   const cookies = parse(req.headers.cookie || "");
   const token = cookies[COOKIE_NAME];
-  if (!token) return res.status(200).json({ user: null });
+  if (!token) {
+    if (cookies[AUTH_FLAG_COOKIE]) res.setHeader("Set-Cookie", authFlagCookie(false));
+    return res.status(200).json({ user: null });
+  }
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
+    // Backfill the flag for sessions created before it existed.
+    if (!cookies[AUTH_FLAG_COOKIE]) res.setHeader("Set-Cookie", authFlagCookie(true));
     return res.status(200).json({
       user: {
         id: payload.userId,
@@ -464,7 +480,7 @@ async function handleMe(req: VercelRequest, res: VercelResponse) {
     const cookie = serialize(COOKIE_NAME, "", {
       httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0,
     });
-    res.setHeader("Set-Cookie", cookie);
+    res.setHeader("Set-Cookie", [cookie, authFlagCookie(false)]);
     return res.status(200).json({ user: null });
   }
 }
@@ -473,7 +489,7 @@ function handleLogout(req: VercelRequest, res: VercelResponse) {
   const cookie = serialize(COOKIE_NAME, "", {
     httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0,
   });
-  res.setHeader("Set-Cookie", cookie);
+  res.setHeader("Set-Cookie", [cookie, authFlagCookie(false)]);
   return res.status(200).json({ success: true });
 }
 

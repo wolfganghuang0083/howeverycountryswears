@@ -28,6 +28,18 @@ function inferLoginMethod(user: AuthUser | null): string {
   return "oauth";
 }
 
+// Skip /api/auth/me when the non-httpOnly companion flag "hecs_auth" is absent.
+// One-time probe per browser (localStorage) covers sessions created before the flag existed;
+// /api/auth/me backfills the flag for them.
+const PROBE_KEY = "hecs_auth_probe_v1";
+function shouldFetchMe(): boolean {
+  try {
+    if (/(?:^|;\s*)hecs_auth=1(?:;|$)/.test(document.cookie)) return true;
+    if (!localStorage.getItem(PROBE_KEY)) { localStorage.setItem(PROBE_KEY, "1"); return true; }
+    return false;
+  } catch { return true; }
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -40,6 +52,10 @@ export function useAuth() {
     let cancelled = false;
 
     async function fetchUser() {
+      if (!shouldFetchMe()) {
+        setState({ user: null, loading: false, error: null, isAuthenticated: false });
+        return;
+      }
       try {
         const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch user");

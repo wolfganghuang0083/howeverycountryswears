@@ -1,9 +1,12 @@
 // POST /api/hit — human page-view beacon (navigator.sendBeacon / fetch keepalive).
-// Responds 204 immediately; the insert runs after the response and DB errors are ignored.
-import { detectBot, isSearchEngine, clip, headerStr, insertHit, getWaitUntil } from "./_lib/pageHits.js";
+// Accepts a batch {hits:[{p,r,t}]} (client queue) or the legacy single {p,r}.
+// Responds 204 immediately; ONE multi-row insert runs after the response; DB errors ignored.
+// (api/bot-page.js — the bot-only server route — still uses insertHit unchanged.)
+import { detectBot, isSearchEngine, clip, headerStr, insertHits, clampTs, getWaitUntil } from "./_lib/pageHits.js";
 
-const MAX_BODY = 2048;
+const MAX_BODY = 32768;
 const MAX_PATH = 512;
+const MAX_HITS = 20;
 
 function parseBody(body) {
   if (!body) return null;
@@ -16,41 +19,48 @@ function parseBody(body) {
   return null;
 }
 
+export function buildRows(data, headers, now = Date.now()) {
+  const site = headerStr(headers["sec-fetch-site"]);
+  const ua = headerStr(headers["user-agent"]);
+  if (!data || site === "cross-site" || isSearchEngine(ua)) return [];
+  const list = Array.isArray(data.hits) ? data.hits.slice(0, MAX_HITS) : [data];
+  const bot = detectBot(ua);
+  const country = clip(headerStr(headers["x-vercel-ip-country"]), 8);
+  const rows = [];
+  for (const h of list) {
+    const p = h && h.p;
+    const r = h && h.r;
+    if (
+      typeof p === "string" && p.startsWith("/") && p.length <= MAX_PATH &&
+      !p.startsWith("/api/") &&
+      (r === undefined || typeof r === "string")
+    ) {
+      rows.push({
+        ts: clampTs(h.t, now),
+        path: p,
+        ua: clip(ua, 512) || "",
+        isBot: bot !== null,
+        botName: bot,
+        country,
+        referer: clip(r, 512),
+        source: "beacon",
+      });
+    }
+  }
+  return rows;
+}
+
 export default async function handler(req, res) {
   res.statusCode = 204;
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") { res.end(); return; }
 
-  let row = null;
-  try {
-    const site = headerStr(req.headers["sec-fetch-site"]);
-    const data = parseBody(req.body);
-    const p = data && data.p;
-    const r = data && data.r;
-    const ua = headerStr(req.headers["user-agent"]);
-    if (
-      site !== "cross-site" &&
-      typeof p === "string" && p.startsWith("/") && p.length <= MAX_PATH &&
-      !p.startsWith("/api/") &&
-      (r === undefined || typeof r === "string") &&
-      !isSearchEngine(ua)
-    ) {
-      const bot = detectBot(ua);
-      row = {
-        path: p,
-        ua: clip(ua, 512) || "",
-        isBot: bot !== null,
-        botName: bot,
-        country: clip(headerStr(req.headers["x-vercel-ip-country"]), 8),
-        referer: clip(r, 512),
-        source: "beacon",
-      };
-    }
-  } catch { row = null; }
+  let rows = [];
+  try { rows = buildRows(parseBody(req.body), req.headers); } catch { rows = []; }
 
   res.end();
-  if (!row) return;
-  const job = insertHit(row);
+  if (rows.length === 0) return;
+  const job = insertHits(rows);
   const wu = getWaitUntil();
   if (wu) wu(job); else await job;
 }

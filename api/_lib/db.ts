@@ -349,10 +349,11 @@ export async function incrementCountriesVisited(userId: number) {
   }).where(eq(users.id, userId));
 }
 
-export async function incrementPhrasesListened(userId: number) {
+export async function incrementPhrasesListened(userId: number, by = 1) {
+  const n = Math.max(1, Math.min(500, Math.floor(by)));
   const db = getDb();
   await db.update(users).set({
-    phrasesListened: sql`${users.phrasesListened} + 1`,
+    phrasesListened: sql`${users.phrasesListened} + ${n}`,
     updatedAt: new Date(),
   }).where(eq(users.id, userId));
 }
