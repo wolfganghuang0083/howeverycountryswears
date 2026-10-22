@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import { BOOK_EXCLUSIVE_COUNTRY_COUNT } from "@/lib/signupCopy";
 import { FREE_COUNTRY_COUNT } from "@/components/CountrySpecimenSignup";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -620,13 +621,13 @@ export default function CommunityPage() {
                 <div className="space-y-2.5">
                   {(isZhTw ? [
                     "投稿你自己的髒話片語",
-                    "解鎖 Part 8–11 獨家內容（45 國）",
+                    `解鎖 Part 8–11 獨家內容（${BOOK_EXCLUSIVE_COUNTRY_COUNT} 國）`,
                     "完整 1,000+ 片語發音",
                     "獲得積分、徽章和國家大使頭銜",
                     "優先取得未來語言版本",
                   ] : [
                     "Submit your own swear phrases",
-                    "Unlock Part 8–11 exclusive content (45 countries)",
+                    `Unlock Part 8–11 exclusive content (${BOOK_EXCLUSIVE_COUNTRY_COUNT} countries)`,
                     "Full 1,000+ phrase pronunciation",
                     "Earn points, badges, and Ambassador title",
                     "Priority access to future editions",

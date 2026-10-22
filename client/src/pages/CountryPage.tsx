@@ -471,7 +471,7 @@ export default function CountryPage() {
                         <>
                           <p className="text-[#666] mb-2 text-sm">
                             {isZhTw
-                              ? `喜歡${country.name}的髒話？探索其他國家的獨特罵罵文化。`
+                              ? `喜歡${country.name}的髒話？探索其他國家的獨特髒話文化。`
                               : `Enjoying ${country.name}'s profanity? Explore other countries' unique swearing cultures.`}
                           </p>
                           <Link
@@ -666,7 +666,7 @@ export default function CountryPage() {
               </p>
               <p className="text-gray-400 text-sm mb-6">
                 {isZhTw
-                  ? "評分片語，看看其他人怎麼評，探索全球罵罵文化"
+                  ? "評分片語，看看其他人怎麼評，探索全球髒話文化"
                   : "Rate phrases, see how others rated them, explore global swearing cultures"}
               </p>
               <a
@@ -707,7 +707,7 @@ export default function CountryPage() {
         </div>
       </section>
       {!isZhTw && showStickyJoin && !audioReady ? (
-        <div className="fixed bottom-0 inset-x-0 z-40 border-t-2 border-[#1a1a1a] bg-[#FFE500] shadow-[0_-4px_0_#1a1a1a]">
+        <div data-sticky-join-bar className="fixed bottom-0 inset-x-0 z-40 border-t-2 border-[#1a1a1a] bg-[#FFE500] shadow-[0_-4px_0_#1a1a1a]">
           <div className="container py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-sm font-bold text-[#1a1a1a] m-0 text-center sm:text-left">
               Rate phrases and track what you've heard — free account

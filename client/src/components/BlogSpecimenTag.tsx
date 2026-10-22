@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { BOOK_EXCLUSIVE_SIGNUP_TITLE, bookExclusiveAudioNote } from "@/lib/signupCopy";
 import { Volume2, Lock } from "lucide-react";
 import { getPhrase, isLockedContent } from "@/lib/data";
 import { playPronunciation } from "@/lib/pronunciation";
@@ -161,6 +162,8 @@ export default function BlogSpecimenTag({
         enabled={!isZhTw}
         locale={locale}
         sourcePath={sourcePath}
+        titleOverride={isLocked ? BOOK_EXCLUSIVE_SIGNUP_TITLE : undefined}
+        audioNoteOverride={isLocked ? bookExclusiveAudioNote(c.name) : undefined}
       />
     </>
   );

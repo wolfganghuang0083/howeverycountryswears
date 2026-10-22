@@ -242,7 +242,7 @@ export default function SignupModal({
               </div>
               <div>
                 <h3 className="font-display text-xl md:text-2xl text-[#1a1a1a] mb-1">
-                  {titleOverride ?? "Join free — free account"}
+                  {titleOverride ?? "Join free — rate phrases and track what you've heard"}
                 </h3>
                 <p className="text-sm text-[#555] leading-relaxed">
                   Register with a verified email. No password.{" "}

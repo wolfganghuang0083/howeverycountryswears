@@ -26,6 +26,20 @@ export default function SoftSignupPrompt({
   const [plays, setPlays] = useState(0);
   const [showSignup, setShowSignup] = useState(false);
   const enabled = locale !== "zh-tw";
+  // Stack above the country-page sticky Join bar (if present) instead of overlapping it.
+  const [stickyOffset, setStickyOffset] = useState(0);
+  useEffect(() => {
+    if (!visible) return;
+    const measure = () => {
+      const bar = document.querySelector<HTMLElement>("[data-sticky-join-bar]");
+      setStickyOffset(bar ? bar.getBoundingClientRect().height : 0);
+    };
+    measure();
+    const mo = new MutationObserver(measure);
+    mo.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("resize", measure);
+    return () => { mo.disconnect(); window.removeEventListener("resize", measure); };
+  }, [visible]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -66,6 +80,7 @@ export default function SoftSignupPrompt({
           role="status"
           aria-live="polite"
           data-soft-signup-prompt
+          style={stickyOffset ? { bottom: stickyOffset + 12 } : undefined}
           className="fixed z-[60] left-3 right-3 bottom-3 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-sm rounded-xl border-2 border-[#1a1a1a] bg-white shadow-[4px_4px_0px_#1a1a1a] p-4"
         >
           <button

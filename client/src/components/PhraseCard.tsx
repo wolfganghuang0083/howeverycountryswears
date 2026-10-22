@@ -1,4 +1,5 @@
 import { Card, getRiskColor, type Country, SITE_DOMAIN, isLockedContent } from "@/lib/data";
+import { BOOK_EXCLUSIVE_SIGNUP_TITLE, bookExclusiveAudioNote } from "@/lib/signupCopy";
 import { playPronunciation, shareToTwitter, shareToFacebook, shareToWhatsApp } from "@/lib/pronunciation";
 import { Volume2, Lock, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
@@ -151,8 +152,8 @@ export default function PhraseCard({
       enabled={!isZhTw}
       locale={locale}
       sourcePath={localePath(`/country/${country.slug}`)}
-      titleOverride={signupTitleOverride}
-      audioNoteOverride={signupAudioNoteOverride}
+      titleOverride={signupTitleOverride ?? (isLocked ? BOOK_EXCLUSIVE_SIGNUP_TITLE : undefined)}
+      audioNoteOverride={isLocked ? bookExclusiveAudioNote(country.name) : signupAudioNoteOverride}
     />
   );
 

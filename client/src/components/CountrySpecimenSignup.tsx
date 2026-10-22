@@ -6,15 +6,12 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getAllCountries, isLockedContent, type Country } from "@/lib/data";
 import { canPlayAudio } from "@/lib/audioAccess";
 
-/** Free (non-book-exclusive) countries — computed from data, not hard-coded. */
-export const FREE_COUNTRY_COUNT = getAllCountries("en").filter(
-  (c) => !isLockedContent(c.part_id, c.slug),
-).length;
-
-/** SignupModal copy for book-exclusive country pages (logged-out). */
-// DRAFT copy (商業席 review): audio no longer needs an account.
-export const BOOK_EXCLUSIVE_SIGNUP_TITLE = `Join free — rate phrases across ${FREE_COUNTRY_COUNT} countries`;
-export const BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE = `Audio in the ${FREE_COUNTRY_COUNT} free countries already plays without an account.`;
+export {
+  FREE_COUNTRY_COUNT,
+  BOOK_EXCLUSIVE_SIGNUP_TITLE,
+  BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE,
+} from "@/lib/signupCopy";
+import { FREE_COUNTRY_COUNT, BOOK_EXCLUSIVE_SIGNUP_TITLE, BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE } from "@/lib/signupCopy";
 
 type Props = {
   country: Country;

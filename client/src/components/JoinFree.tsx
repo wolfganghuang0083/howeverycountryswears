@@ -44,7 +44,8 @@ const NEWSLETTER_OPTIN =
 const DEFAULT_NEWSLETTER_HEADLINE = "One swear word a week — free";
 const DEFAULT_NEWSLETTER_MICRO =
   "A new country each week, with a short cultural note. Free. Unsubscribe anytime. We never sell your email.";
-const AUDIO_HEADLINE = "Unlock all pronunciations — free";
+// DRAFT (商業席): no longer claims audio needs an account.
+const AUDIO_HEADLINE = "Join free — rate phrases and track what you've heard";
 const AUDIO_MICRO = "Enter your email to hear every phrase. No account required.";
 
 export default function JoinFree({
