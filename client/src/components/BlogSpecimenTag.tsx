@@ -11,6 +11,7 @@ import {
   trackPaywallView,
 } from "@/lib/analytics";
 import SignupModal from "@/components/SignupModal";
+import { canPlayAudio, registerAnonymousPlay } from "@/lib/audioAccess";
 
 type Props = {
   country: string;
@@ -26,7 +27,7 @@ type Props = {
 
 /**
  * Compact inline pronunciation specimen chip for blog body.
- * Locked (gray) → SignupModal; canPlay (yellow) → play audio.
+ * Book-exclusive (gray) → SignupModal; otherwise (yellow) → play audio for everyone.
  * Copy locked (Albedo): Hear pronunciation / Recognition map microcopy.
  */
 export default function BlogSpecimenTag({
@@ -60,7 +61,7 @@ export default function BlogSpecimenTag({
       const isAdmin = userRole === "admin";
       const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
       const isLocked = isLockedContent(c.part_id, c.slug);
-      const canPlay = isAuthenticated && (isBookBuyer || !isLocked);
+      const canPlay = canPlayAudio({ isLocked, isBookBuyer });
 
       if (!canPlay) {
         if (!(isAuthenticated && isLocked && !isBookBuyer)) {
@@ -88,6 +89,7 @@ export default function BlogSpecimenTag({
           cardNumber: card.number,
         });
       }
+      if (!isAuthenticated) registerAnonymousPlay();
       setTimeout(() => setIsPlaying(false), 2000);
     },
     [hit, isAuthenticated, user, listenMutation, ctaId],
@@ -101,7 +103,7 @@ export default function BlogSpecimenTag({
   const isAdmin = userRole === "admin";
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(c.part_id, c.slug);
-  const canPlay = isAuthenticated && (isBookBuyer || !isLocked);
+  const canPlay = canPlayAudio({ isLocked, isBookBuyer });
 
   const btnLabel = isPlaying
     ? isEs
