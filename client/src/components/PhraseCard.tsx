@@ -1,4 +1,5 @@
 import { Card, getRiskColor, type Country, SITE_DOMAIN, isLockedContent } from "@/lib/data";
+import { BOOK_EXCLUSIVE_SIGNUP_TITLE, bookExclusiveAudioNote } from "@/lib/signupCopy";
 import { playPronunciation, shareToTwitter, shareToFacebook, shareToWhatsApp } from "@/lib/pronunciation";
 import { Volume2, Lock, Star, Link2, Twitter, Facebook, MessageCircle } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
@@ -7,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocale } from "@/contexts/LocaleContext";
 import { trackPhrasePlay, trackPhraseShare, trackPhraseRate, trackFirstPlay, trackFirstShare, trackPaywallView } from "@/lib/analytics";
 import SignupModal from "@/components/SignupModal";
+import { canPlayAudio, registerAnonymousPlay } from "@/lib/audioAccess";
 
 interface PhraseCardProps {
   card: Card;
@@ -61,11 +63,9 @@ export default function PhraseCard({
   const isBookBuyer = memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(country.part_id, country.slug);
 
-  // Audio: free preview OR verified session (+ bookBuyer for Part 8–11).
-  // Unverified localStorage unlock removed — registration required.
-  const canPlay =
-    freePreview ||
-    (isAuthenticated && (isBookBuyer || !isLocked));
+  // Audio (traffic-first): free countries play for everyone; Part 8–11
+  // book-exclusive audio still needs bookBuyer (or homepage freePreview).
+  const canPlay = canPlayAudio({ isLocked, isBookBuyer, freePreview });
   const canRate = isAuthenticated;
 
   const rateMutation = trpc.rating.rate.useMutation();
@@ -88,6 +88,8 @@ export default function PhraseCard({
     trackFirstPlay();
     if (isAuthenticated) {
       listenMutation.mutate({ countrySlug: country.slug, cardNumber: card.number });
+    } else {
+      registerAnonymousPlay();
     }
     setTimeout(() => setIsPlaying(false), 2000);
   }, [card.phrase, country.lang_code, country.slug, card.number, canPlay, isAuthenticated, isLocked, freePreview, listenMutation]);
@@ -150,8 +152,8 @@ export default function PhraseCard({
       enabled={!isZhTw}
       locale={locale}
       sourcePath={localePath(`/country/${country.slug}`)}
-      titleOverride={signupTitleOverride}
-      audioNoteOverride={signupAudioNoteOverride}
+      titleOverride={signupTitleOverride ?? (isLocked ? BOOK_EXCLUSIVE_SIGNUP_TITLE : undefined)}
+      audioNoteOverride={isLocked ? bookExclusiveAudioNote(country.name) : signupAudioNoteOverride}
     />
   );
 

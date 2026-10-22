@@ -180,7 +180,7 @@ export default function SignupModal({
       className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Sign up to unlock pronunciations"
+      aria-label="Join free"
       onClick={() => onOpenChange(false)}
     >
       <div
@@ -242,11 +242,11 @@ export default function SignupModal({
               </div>
               <div>
                 <h3 className="font-display text-xl md:text-2xl text-[#1a1a1a] mb-1">
-                  {titleOverride ?? "Unlock pronunciations — free account"}
+                  {titleOverride ?? "Join free — rate phrases and track what you've heard"}
                 </h3>
                 <p className="text-sm text-[#555] leading-relaxed">
                   Register with a verified email. No password.{" "}
-                  {audioNoteOverride ?? "Audio unlocks after verification."}
+                  {audioNoteOverride ?? "Rate phrases and keep track of what you've heard."}
                 </p>
               </div>
             </div>

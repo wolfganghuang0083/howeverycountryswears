@@ -6,6 +6,7 @@ import SignupModal from "@/components/SignupModal";
 import CountrySpecimenSignup, {
   BOOK_EXCLUSIVE_SIGNUP_TITLE,
   BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE,
+  FREE_COUNTRY_COUNT,
 } from "@/components/CountrySpecimenSignup";
 import {
   getCountryBySlug,
@@ -455,8 +456,8 @@ export default function CountryPage() {
                         <>
                           <p className="text-[#666] mb-2 text-sm">
                             {isZhTw
-                              ? "免費註冊即可收聽所有發音，評分片語，並看看其他人怎麼評。"
-                              : "Sign up free to hear all pronunciations, rate phrases, and see how others rated them."}
+                              ? "免費註冊即可評分片語，並看看其他人怎麼評。"
+                              : "Sign up free to rate phrases and see how others rated them."}
                           </p>
                           <a
                             href={getLoginUrl(localePath(`/country/${country.slug}`))}
@@ -470,7 +471,7 @@ export default function CountryPage() {
                         <>
                           <p className="text-[#666] mb-2 text-sm">
                             {isZhTw
-                              ? `喜歡${country.name}的髒話？探索其他國家的獨特罵罵文化。`
+                              ? `喜歡${country.name}的髒話？探索其他國家的獨特髒話文化。`
                               : `Enjoying ${country.name}'s profanity? Explore other countries' unique swearing cultures.`}
                           </p>
                           <Link
@@ -654,18 +655,18 @@ export default function CountryPage() {
           {!isAuthenticated ? (
             <>
               <p className="text-gray-400 text-sm mb-2">
-                {isZhTw ? "免費註冊即可收聽發音" : "Sign up free to hear pronunciations"}
+                {isZhTw ? "免費註冊即可評分片語" : "Sign up free to rate phrases"}
               </p>
               <p className="text-white font-display text-2xl md:text-3xl mb-2">
                 {isZhTw ? (
-                  <>免費收聽 <span className="text-[#FFE500]">66 個國家</span>的發音</>
+                  <>免費評分 <span className="text-[#FFE500]">{FREE_COUNTRY_COUNT} 個國家</span>的片語</>
                 ) : (
-                  <>Hear pronunciations from <span className="text-[#FFE500]">66 countries</span> for free</>
+                  <>Rate phrases from <span className="text-[#FFE500]">{FREE_COUNTRY_COUNT} countries</span> for free</>
                 )}
               </p>
               <p className="text-gray-400 text-sm mb-6">
                 {isZhTw
-                  ? "評分片語，看看其他人怎麼評，探索全球罵罵文化"
+                  ? "評分片語，看看其他人怎麼評，探索全球髒話文化"
                   : "Rate phrases, see how others rated them, explore global swearing cultures"}
               </p>
               <a
@@ -706,10 +707,10 @@ export default function CountryPage() {
         </div>
       </section>
       {!isZhTw && showStickyJoin && !audioReady ? (
-        <div className="fixed bottom-0 inset-x-0 z-40 border-t-2 border-[#1a1a1a] bg-[#FFE500] shadow-[0_-4px_0_#1a1a1a]">
+        <div data-sticky-join-bar className="fixed bottom-0 inset-x-0 z-40 border-t-2 border-[#1a1a1a] bg-[#FFE500] shadow-[0_-4px_0_#1a1a1a]">
           <div className="container py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-sm font-bold text-[#1a1a1a] m-0 text-center sm:text-left">
-              Unlock all pronunciations — free account
+              Rate phrases and track what you've heard — free account
             </p>
             <button
               type="button"

@@ -392,6 +392,25 @@ export function trackCountriesExploredMilestone(count: number) {
 }
 
 /** Track first play event */
+/** Soft (non-blocking) signup prompt shown — e.g. after 3rd logged-out play. */
+export function trackSignupPromptView(params: {
+  surface: string;
+  cta_id: string;
+  trigger: string;
+  play_count?: number;
+}) {
+  trackEvent("signup_prompt_view", params);
+}
+
+/** Click on a soft signup prompt's Join free button. */
+export function trackSignupClick(params: {
+  surface: string;
+  cta_id: string;
+  play_count?: number;
+}) {
+  trackEvent("signup_click", params);
+}
+
 export function trackFirstPlay() {
   const milestones = getMilestones();
   if (!milestones.has("first_play")) {

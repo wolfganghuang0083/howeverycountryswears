@@ -44,7 +44,8 @@ const NEWSLETTER_OPTIN =
 const DEFAULT_NEWSLETTER_HEADLINE = "One swear word a week — free";
 const DEFAULT_NEWSLETTER_MICRO =
   "A new country each week, with a short cultural note. Free. Unsubscribe anytime. We never sell your email.";
-const AUDIO_HEADLINE = "Unlock all pronunciations — free";
+// DRAFT (商業席): no longer claims audio needs an account.
+const AUDIO_HEADLINE = "Join free — rate phrases and track what you've heard";
 const AUDIO_MICRO = "Enter your email to hear every phrase. No account required.";
 
 export default function JoinFree({
@@ -343,7 +344,8 @@ export default function JoinFree({
           }}
           className={`fixed bottom-0 inset-x-0 z-50 md:hidden border-t-2 border-[#1a1a1a] bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.12)] px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-sm font-bold text-[#1a1a1a] ${className}`}
         >
-          🔒 Unlock all pronunciations free — just your email
+          {/* DRAFT (商業席): audio no longer needs an account */}
+          One swear word a week — free, just your email
         </button>
         {isOpen
           ? createPortal(

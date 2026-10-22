@@ -4,15 +4,14 @@ import BlogSpecimenTag from "@/components/BlogSpecimenTag";
 import SignupModal from "@/components/SignupModal";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getAllCountries, isLockedContent, type Country } from "@/lib/data";
+import { canPlayAudio } from "@/lib/audioAccess";
 
-/** Free (non-book-exclusive) countries — computed from data, not hard-coded. */
-export const FREE_COUNTRY_COUNT = getAllCountries("en").filter(
-  (c) => !isLockedContent(c.part_id, c.slug),
-).length;
-
-/** SignupModal copy for book-exclusive country pages (logged-out). */
-export const BOOK_EXCLUSIVE_SIGNUP_TITLE = `Free audio for ${FREE_COUNTRY_COUNT} countries — free account`;
-export const BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE = `Audio for the ${FREE_COUNTRY_COUNT} free countries unlocks after verification.`;
+export {
+  FREE_COUNTRY_COUNT,
+  BOOK_EXCLUSIVE_SIGNUP_TITLE,
+  BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE,
+} from "@/lib/signupCopy";
+import { FREE_COUNTRY_COUNT, BOOK_EXCLUSIVE_SIGNUP_TITLE, BOOK_EXCLUSIVE_SIGNUP_AUDIO_NOTE } from "@/lib/signupCopy";
 
 type Props = {
   country: Country;
@@ -45,7 +44,7 @@ export default function CountrySpecimenSignup({
   const isAdmin = user?.role === "admin";
   const isBookBuyer = user?.memberTier === "bookBuyer" || isAdmin;
   const isLocked = isLockedContent(country.part_id, country.slug);
-  const canPlay = isAuthenticated && (isBookBuyer || !isLocked);
+  const canPlay = canPlayAudio({ isLocked, isBookBuyer });
 
   // Logged-in readers on a book-exclusive country: existing paywall handles it.
   if (isAuthenticated && !canPlay) return null;
@@ -53,15 +52,14 @@ export default function CountrySpecimenSignup({
   let kicker = "Hear it first";
   let heading = "Read it, then hear it said right";
   let body =
-    `Spelling only gets you halfway. A free account plays every phrase across ${FREE_COUNTRY_COUNT} countries — and lets you rate them and see how everyone else did.`;
+    "Spelling only gets you halfway. Tap play on any phrase here — no account needed. Join free if you'd like to rate phrases and see how everyone else rated them.";
   const bookExclusiveLoggedOut = isLocked && !isAuthenticated;
   if (isLocked && !canPlay) {
     heading = "Train your ear before you open the book";
-    // Book-exclusive pages: a free account cannot play any phrase here
-    // (PhraseCard canPlay needs bookBuyer when locked), so no "first 3" claim.
-    body = `${country.name}'s full audio set lives in the book. A free account plays every phrase in the ${FREE_COUNTRY_COUNT} free countries, so your ear gets a head start.`;
+    // Book-exclusive audio still needs the book (bookBuyer).
+    body = `${country.name}'s full audio set lives in the book. Every phrase in the ${FREE_COUNTRY_COUNT} free countries plays right here, no account needed, so your ear gets a head start.`;
   }
-  if (canPlay) {
+  if (isAuthenticated && canPlay) {
     kicker = "You're in";
     heading = "Press play — every phrase here talks back";
     body =
