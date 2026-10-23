@@ -1,12 +1,15 @@
 // Serves HTML to non-search-engine bot UAs (routed here by vercel.json `has: user-agent`)
-// and logs the hit. The response must be byte-identical to what the static route serves:
+// (no DB logging). The response must be byte-identical to what the static route serves:
 //   filesystem (dist/<path>/index.html, dist/index.html for "/") -> SPA fallback (dist/index.html)
 //   -> platform 404 for blog paths. Logging runs after the response and never fails the page.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NOT_FOUND_HTML, escapeUa } from "./_lib/notFoundTemplate.js";
-import { detectBot, isSearchEngine, clip, headerStr, insertHit, getWaitUntil } from "./_lib/pageHits.js";
+// Inlined (was imported from _lib/pageHits.js) so this route never loads the DB driver.
+function headerStr(h) {
+  return Array.isArray(h) ? h[0] || "" : typeof h === "string" ? h : "";
+}
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DIST_CANDIDATES = [path.join(process.cwd(), "dist"), path.join(HERE, "..", "dist")];
@@ -68,30 +71,5 @@ export default async function handler(req, res) {
     res.setHeader("Content-Length", String(txt.length));
     res.end(req.method === "HEAD" ? undefined : txt);
   }
-
-  // ---- logging (after the response; never throws) ----
-  try {
-    const ua = headerStr(req.headers["user-agent"]);
-    if (isSearchEngine(ua)) return; // defense in depth: search engines are never logged
-    let p = "/";
-    try { p = decodeURIComponent(rawPath || "/"); } catch { p = rawPath || "/"; }
-    if (!p.startsWith("/")) p = "/" + p;
-    const row = {
-      path: p.slice(0, 512),
-      ua: clip(ua, 512) || "",
-      isBot: true,
-      botName: detectBot(ua) || "other",
-      country: clip(headerStr(req.headers["x-vercel-ip-country"]), 8),
-      referer: clip(headerStr(req.headers["referer"]), 512),
-      source: "server",
-    };
-    // Preview-only test hook to simulate DB failure (unreachable host => timeout path).
-    const failUrl =
-      process.env.VERCEL_ENV !== "production" && q.__hecs_dbfail === "1"
-        ? "postgresql://probe:probe@10.255.255.1/neondb"
-        : undefined;
-    const job = insertHit(row, failUrl);
-    const wu = getWaitUntil();
-    if (wu) wu(job); else await job;
-  } catch { /* ignore */ }
+  // No page_hits logging: bot views no longer touch the database (lets Neon suspend).
 }
