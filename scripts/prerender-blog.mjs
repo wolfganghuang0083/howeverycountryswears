@@ -873,6 +873,8 @@ function writeHtml(posts) {
     canonical: `${SITE}/es/blog/`,
     lang: "es",
   });
+  writeBlogSitemap(posts);
+  writeCountryRelated(shell, posts);
   console.log(`OK blog html posts=${posts.length}`);
 }
 
@@ -932,6 +934,73 @@ function writeIndexHtml(shell, posts, { dir, pathPrefix, canonical, lang }) {
   });
   fs.writeFileSync(path.join(dir, "index.html"), indexHtml, "utf8");
   console.log(`wrote ${path.relative(ROOT, path.join(dir, "index.html"))}`);
+}
+
+
+// --- Sitemap: append all published blog posts (en + es) with trailing slash + lastmod ---
+function writeBlogSitemap(posts) {
+  const smPath = path.join(DIST, "sitemap.xml");
+  if (!fs.existsSync(smPath)) {
+    console.log("skip sitemap: dist/sitemap.xml missing");
+    return;
+  }
+  let xml = fs.readFileSync(smPath, "utf8");
+  // Drop any existing blog entries (e.g. legacy no-slash /blog) to avoid duplicates.
+  xml = xml.replace(
+    /\s*<url>\s*<loc>https:\/\/howeverycountryswears\.com\/(?:es\/)?blog(?:\/[^<]*)?<\/loc>[\s\S]*?<\/url>/g,
+    "",
+  );
+  const published = posts.filter((p) => !p.draft);
+  const latest = (list) =>
+    list.map((p) => p.date).filter(Boolean).sort().slice(-1)[0] || "";
+  const entry = (loc, lastmod, priority) =>
+    `  <url>\n    <loc>${escapeHtml(loc)}</loc>\n` +
+    (lastmod ? `    <lastmod>${escapeHtml(lastmod)}</lastmod>\n` : "") +
+    `    <priority>${priority}</priority>\n  </url>`;
+  const en = published.filter((p) => (p.lang || "en") === "en");
+  const es = published.filter((p) => p.lang === "es");
+  const entries = [entry(`${SITE}/blog/`, latest(en), "0.6")];
+  if (es.length) entries.push(entry(`${SITE}/es/blog/`, latest(es), "0.5"));
+  for (const p of published) entries.push(entry(`${SITE}${postPath(p)}/`, p.date, "0.6"));
+  xml = xml.replace(/\s*<\/urlset>\s*$/, `\n${entries.join("\n")}\n</urlset>\n`);
+  fs.writeFileSync(smPath, xml, "utf8");
+  console.log(`OK sitemap blog entries=${entries.length}`);
+}
+
+// --- Country pages: static shell with related-article links in raw HTML ---
+// React's createRoot replaces #root content on mount, so this only affects raw HTML.
+function writeCountryRelated(shell, posts) {
+  const published = posts.filter((p) => !p.draft);
+  const byCountry = new Map();
+  for (const p of published) {
+    for (const c of p.countries || []) {
+      if (!/^[a-z0-9-]+$/.test(c)) continue;
+      if (!byCountry.has(c)) byCountry.set(c, []);
+      byCountry.get(c).push(p);
+    }
+  }
+  for (const [id, list] of byCountry) {
+    const items = list
+      .slice()
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .map(
+        (p) =>
+          `<li><a href="${postPath(p)}/" hreflang="${escapeHtml(p.lang || "en")}">${escapeHtml(p.title)}</a></li>`,
+      )
+      .join("");
+    const block =
+      `<div id="country-ssg" data-country-prerender="true">` +
+      `<nav aria-label="Related articles"><h2>Related articles</h2><ul>${items}</ul></nav></div>`;
+    let html = shell.replace(
+      /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
+      `<link rel="canonical" href="${SITE}/country/${id}" />`,
+    );
+    html = html.replace(/<div id="root"><\/div>/, `<div id="root">${block}</div>`);
+    const dir = path.join(DIST, "country", id);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), html, "utf8");
+  }
+  console.log(`OK country related pages=${byCountry.size}`);
 }
 
 const mode = process.argv[2] || "all";
