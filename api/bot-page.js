@@ -1,3 +1,6 @@
+// Country pages: dist/country/<slug>/index.html is prerendered by scripts/prerender-blog.mjs
+// (title/description/og/canonical/H1 from client/src/data/country-seo-overrides.json + template),
+// so bots get the same per-country head as the static route.
 // Serves HTML to non-search-engine bot UAs (routed here by vercel.json `has: user-agent`)
 // (no DB logging). The response must be byte-identical to what the static route serves:
 //   filesystem (dist/<path>/index.html, dist/index.html for "/") -> SPA fallback (dist/index.html)
