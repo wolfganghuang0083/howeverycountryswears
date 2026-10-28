@@ -2,7 +2,7 @@
  * Anglo related-reading + soft Book CTA on HOT country hubs.
  * Handoff: kdp-s1/traffic/blog-drafts/2026-09-24_HECS_Anglo_related_on_hot_country_pages.md
  *
- * IA: max 2 related blog cards + 1 Book CTA. Do NOT link Wave A #25/#27/#29/#30.
+ * IA: max 2 related blog cards + 1 Book CTA. Wave A (#24/#25/#27/#29/#31) is live and may be linked (old "do not link" rule void, 2026-10-26).
  * Only `status: "live"` hubs render; `pending` = queued until sitemap-confirmed.
  */
 

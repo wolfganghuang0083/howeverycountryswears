@@ -1,3 +1,4 @@
+import countrySeoOverrides from "@/data/country-seo-overrides.json";
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
@@ -119,7 +120,8 @@ export default function CountryPage() {
     if (country) {
       document.title = isZhTw
         ? `${country.name} 髒話 — 10 個片語含發音 | 全球髒話文化指南`
-        : `${country.name} Swear Words — 10 Phrases with Pronunciation | How Every Country Swears`;
+        : ((countrySeoOverrides as Record<string, { title?: string }>)[country.slug]?.title ??
+          `${country.name} Swear Words & Insults: Meaning, Risk & Context`);
     }
     const hash = window.location.hash;
     if (hash) {

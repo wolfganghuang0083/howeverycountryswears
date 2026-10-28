@@ -873,6 +873,8 @@ function writeHtml(posts) {
     canonical: `${SITE}/es/blog/`,
     lang: "es",
   });
+  writeBlogSitemap(posts);
+  writeCountryRelated(shell, posts);
   console.log(`OK blog html posts=${posts.length}`);
 }
 
@@ -932,6 +934,112 @@ function writeIndexHtml(shell, posts, { dir, pathPrefix, canonical, lang }) {
   });
   fs.writeFileSync(path.join(dir, "index.html"), indexHtml, "utf8");
   console.log(`wrote ${path.relative(ROOT, path.join(dir, "index.html"))}`);
+}
+
+
+// --- Sitemap: append all published blog posts (en + es) with trailing slash + lastmod ---
+function writeBlogSitemap(posts) {
+  const smPath = path.join(DIST, "sitemap.xml");
+  if (!fs.existsSync(smPath)) {
+    console.log("skip sitemap: dist/sitemap.xml missing");
+    return;
+  }
+  let xml = fs.readFileSync(smPath, "utf8");
+  // Drop any existing blog entries (e.g. legacy no-slash /blog) to avoid duplicates.
+  xml = xml.replace(
+    /\s*<url>\s*<loc>https:\/\/howeverycountryswears\.com\/(?:es\/)?blog(?:\/[^<]*)?<\/loc>[\s\S]*?<\/url>/g,
+    "",
+  );
+  const published = posts.filter((p) => !p.draft);
+  const latest = (list) =>
+    list.map((p) => p.date).filter(Boolean).sort().slice(-1)[0] || "";
+  const entry = (loc, lastmod, priority) =>
+    `  <url>\n    <loc>${escapeHtml(loc)}</loc>\n` +
+    (lastmod ? `    <lastmod>${escapeHtml(lastmod)}</lastmod>\n` : "") +
+    `    <priority>${priority}</priority>\n  </url>`;
+  const en = published.filter((p) => (p.lang || "en") === "en");
+  const es = published.filter((p) => p.lang === "es");
+  const entries = [entry(`${SITE}/blog/`, latest(en), "0.6")];
+  if (es.length) entries.push(entry(`${SITE}/es/blog/`, latest(es), "0.5"));
+  for (const p of published) entries.push(entry(`${SITE}${postPath(p)}/`, p.date, "0.6"));
+  xml = xml.replace(/\s*<\/urlset>\s*$/, `\n${entries.join("\n")}\n</urlset>\n`);
+  fs.writeFileSync(smPath, xml, "utf8");
+  console.log(`OK sitemap blog entries=${entries.length}`);
+}
+
+// --- Country pages: per-country title/description/og + H1 + culture + related links in raw HTML ---
+// React's createRoot replaces #root content on mount, so the body block only affects raw HTML.
+export function countrySeo(country, overrides) {
+  const o = overrides[country.slug] || {};
+  return {
+    title: o.title || `${country.name} Swear Words & Insults: Meaning, Risk & Context`,
+    description:
+      o.description ||
+      `What ${country.name} swear words and insults actually mean, how risky they are, and the cultural context behind them. Recognition guide, not a script.`,
+  };
+}
+
+function setMeta(html, attr, key, content) {
+  const re = new RegExp(`<meta\\s+${attr}="${key}"\\s+content="[^"]*"\\s*/?>`, "i");
+  const tag = `<meta ${attr}="${key}" content="${escapeHtml(content)}" />`;
+  return re.test(html) ? html.replace(re, tag) : html.replace(/<\/head>/i, `${tag}\n</head>`);
+}
+
+function writeCountryRelated(shell, posts) {
+  const data = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "client", "src", "data", "countries.json"), "utf8"),
+  );
+  const overrides = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "client", "src", "data", "country-seo-overrides.json"), "utf8"),
+  );
+  const published = posts.filter((p) => !p.draft);
+  let n = 0;
+  for (const c of data.countries || []) {
+    if (!/^[a-z0-9-]+$/.test(c.slug || "")) continue;
+    const { title, description } = countrySeo(c, overrides);
+    const canonical = `${SITE}/country/${c.slug}`;
+    const related = published
+      .filter((p) => (p.countries || []).includes(c.slug))
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 3);
+    const culture = c.cultural_context || c.culture || "";
+    const relatedBlock = related.length
+      ? `<nav aria-label="Related articles"><h2>Related articles</h2><ul>` +
+        related
+          .map(
+            (p) =>
+              `<li><a href="${postPath(p)}/">${escapeHtml(p.title)}</a>` +
+              (p.description ? `<p>${escapeHtml(p.description)}</p>` : "") +
+              `</li>`,
+          )
+          .join("") +
+        `</ul></nav>`
+      : "";
+    const block =
+      `<div id="country-ssg" data-country-prerender="true"><article>` +
+      `<h1>${escapeHtml(title)}</h1>` +
+      `<p>${escapeHtml(description)}</p>` +
+      (culture ? `<section><h2>Swearing Culture</h2><p>${escapeHtml(culture)}</p></section>` : "") +
+      relatedBlock +
+      `</article></div>`;
+    let html = shell.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+    html = html.replace(
+      /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
+      `<link rel="canonical" href="${canonical}" />`,
+    );
+    html = setMeta(html, "name", "description", description);
+    html = setMeta(html, "property", "og:title", title);
+    html = setMeta(html, "property", "og:description", description);
+    html = setMeta(html, "property", "og:url", canonical);
+    html = setMeta(html, "name", "twitter:title", title);
+    html = setMeta(html, "name", "twitter:description", description);
+    html = html.replace(/<div id="root"><\/div>/, `<div id="root">${block}</div>`);
+    const dir = path.join(DIST, "country", c.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), html, "utf8");
+    n++;
+  }
+  console.log(`OK country pages=${n}`);
 }
 
 const mode = process.argv[2] || "all";
