@@ -1,3 +1,7 @@
+/**
+ * 已不使用：正式站 tRPC 以 api/_lib/routers.ts 為準（api/trpc/[...trpc].ts import），
+ * 此檔未被任何檔案 import；程序名稱與正式站不同，勿依此測試。
+ */
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure, adminProcedure } from "./trpc";
