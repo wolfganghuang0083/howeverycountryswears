@@ -934,6 +934,136 @@ function writeIndexHtml(shell, posts, { dir, pathPrefix, canonical, lang }) {
   console.log(`wrote ${path.relative(ROOT, path.join(dir, "index.html"))}`);
 }
 
+// ---------------------------------------------------------------------------
+// Wave A country pages: static HTML for crawlers (raw HTML carries the links).
+// Mirrors client/src/components/SameCountryBlogRelated.tsx (WAVE_A_GUIDES):
+// own guide pinned first + same-country posts, "around the map" guides, method essay.
+// React's createRoot replaces #root on load, so humans still get the full SPA.
+// ---------------------------------------------------------------------------
+const WAVE_A_GUIDES = [
+  { country: "united-kingdom", slug: "united-kingdom-swears-recognition-guide-3", label: "United Kingdom" },
+  { country: "united-states", slug: "united-states-swears-recognition-guide-5", label: "United States" },
+  { country: "australia", slug: "australia-swears-recognition-guide-2", label: "Australia" },
+  { country: "germany", slug: "germany-swears-recognition-guide-2", label: "Germany" },
+  { country: "netherlands", slug: "netherlands-swears-recognition-guide-4", label: "Netherlands" },
+];
+
+function liveEn(posts, slug) {
+  const p = posts.find((x) => x.slug === slug);
+  if (!p || p.draft || (p.lang || "en") !== "en") return undefined;
+  return p;
+}
+
+function countryLinkItem(p, label) {
+  return (
+    `<li>` +
+    (label ? `<span class="tag">${escapeHtml(label)}</span> ` : "") +
+    `<a href="${escapeHtml(postPath(p))}/"><strong>${escapeHtml(p.title)}</strong></a>` +
+    (p.description ? `<br/><span>${escapeHtml(p.description)}</span>` : "") +
+    `</li>`
+  );
+}
+
+function writeWaveACountryHtml(shell, posts) {
+  const method = liveEn(posts, METHOD_SLUG);
+  let n = 0;
+  for (const g of WAVE_A_GUIDES) {
+    const own = liveEn(posts, g.slug);
+    if (!own) continue;
+    const sameCountry = posts.filter(
+      (p) =>
+        !p.draft &&
+        (p.lang || "en") === "en" &&
+        p.slug !== own.slug &&
+        (p.countries || []).includes(g.country),
+    );
+    const shown = [own, ...sameCountry].slice(0, 3);
+    const shownSlugs = new Set(shown.map((p) => p.slug));
+    const around = WAVE_A_GUIDES.filter((x) => x.country !== g.country)
+      .map((x) => ({ post: liveEn(posts, x.slug), label: x.label }))
+      .filter((x) => x.post && !shownSlugs.has(x.post.slug));
+
+    const body =
+      `<main class="country-ssg" data-country-ssg="${escapeHtml(g.country)}">` +
+      `<h1>${escapeHtml(g.label)} Swear Words — 10 Phrases with Pronunciation</h1>` +
+      `<p>Cultural context, pronunciation and risk ratings for ${escapeHtml(g.label)} profanity. ` +
+      `<a href="/blog/">HECS Blog</a> · <a href="/">All 100 countries</a></p>` +
+      `<section aria-label="You may also be interested in" data-same-country-blog="${escapeHtml(g.country)}">` +
+      `<h2>You may also be interested in:</h2>` +
+      `<ul>\n${shown.map((p) => countryLinkItem(p)).join("\n")}\n</ul>` +
+      `</section>` +
+      (around.length || method
+        ? `<section aria-label="More recognition guides from around the map" data-wave-a-related>` +
+          `<h2>More recognition guides from around the map</h2>` +
+          `<ul>\n${around.map((x) => countryLinkItem(x.post, x.label)).join("\n")}\n</ul>` +
+          (method && !shownSlugs.has(method.slug)
+            ? `<p>How we read all of these: <a href="${escapeHtml(postPath(method))}/">${escapeHtml(method.title)}</a></p>`
+            : "") +
+          `</section>`
+        : "") +
+      `</main>`;
+
+    const url = `${SITE}/country/${g.country}`;
+    const html = injectIntoShell(shell, {
+      title: `${g.label} Swear Words — 10 Phrases with Pronunciation | How Every Country Swears`,
+      description: `${g.label} swear words and insults with pronunciation, cultural context and risk ratings — plus HECS recognition guides from around the map.`,
+      canonical: url,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: `${g.label} Swear Words`,
+        url,
+        hasPart: [...shown, ...around.map((x) => x.post)].map((p) => ({
+          "@type": "BlogPosting",
+          headline: p.title,
+          url: `${SITE}${postPath(p)}/`,
+        })),
+      },
+      bodyInner: body,
+      hreflang: "",
+      draft: false,
+    });
+    const dir = path.join(DIST, "country", g.country);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), html, "utf8");
+    console.log(`wrote dist/country/${g.country}/index.html`);
+    n++;
+  }
+  console.log(`OK wave-a country html=${n}`);
+}
+
+// ---------------------------------------------------------------------------
+// sitemap.xml: static base (client/public/sitemap.xml, copied by Vite) + every
+// published (draft:false) blog post, canonical trailing-slash URL, lastmod = date.
+// Drafts never enter the sitemap.
+// ---------------------------------------------------------------------------
+function writeSitemap(posts) {
+  const base = path.join(ROOT, "client", "public", "sitemap.xml");
+  let xml = fs.readFileSync(base, "utf8");
+  // Drop any hand-added post entries so the build output is the single source.
+  xml = xml.replace(
+    /\s*<url>\s*<loc>https:\/\/howeverycountryswears\.com\/(?:es\/)?blog\/[^<]+\/<\/loc>[\s\S]*?<\/url>/g,
+    "",
+  );
+  const published = posts.filter((p) => !p.draft);
+  const isDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d || ""));
+  const entries = published
+    .map((p) => {
+      const loc = `${SITE}${postPath(p)}/`;
+      return (
+        `  <url>\n    <loc>${escapeHtml(loc)}</loc>\n` +
+        (isDate(p.date) ? `    <lastmod>${p.date}</lastmod>\n` : "") +
+        `    <priority>0.6</priority>\n  </url>`
+      );
+    })
+    .join("\n");
+  xml = xml.replace(/\s*<\/urlset>\s*$/, `\n${entries}\n</urlset>\n`);
+  fs.mkdirSync(DIST, { recursive: true });
+  fs.writeFileSync(path.join(DIST, "sitemap.xml"), xml, "utf8");
+  const total = (xml.match(/<loc>/g) || []).length;
+  console.log(`OK sitemap urls=${total} (blog posts=${published.length})`);
+}
+
 const mode = process.argv[2] || "all";
 const posts = loadPosts();
 if (mode === "manifest" || mode === "all") writeManifest(posts);
@@ -942,5 +1072,8 @@ if (mode === "html" || mode === "all") {
     console.log("skip html: dist/index.html not present yet");
   } else {
     writeHtml(posts);
+    const shell = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
+    writeWaveACountryHtml(shell, posts);
+    writeSitemap(posts);
   }
 }
