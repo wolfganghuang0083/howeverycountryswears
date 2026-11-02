@@ -19,6 +19,7 @@ import {
   isLockedContent,
 } from "@/lib/data";
 import { getRecommendations } from "@/lib/recommendations";
+import { getCountryMeta, applyHeadMeta, SITE_ORIGIN } from "@/lib/countryMeta";
 import { useParams, Link } from "wouter";
 import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, MapPin, Lock, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
@@ -115,11 +116,20 @@ export default function CountryPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [slug, canViewContent]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Per-country <title>/description/og (English) from data/country-meta.json; zh-tw keeps its own title.
+  // Static HTML for crawlers gets the same values from scripts/prerender-country-meta.mjs.
   useEffect(() => {
-    if (country) {
-      document.title = isZhTw
-        ? `${country.name} 髒話 — 10 個片語含發音 | 全球髒話文化指南`
-        : `${country.name} Swear Words — 10 Phrases with Pronunciation | How Every Country Swears`;
+    if (!country || isZhTw) return;
+    const meta = getCountryMeta(country.slug, country.name);
+    return applyHeadMeta({
+      ...meta,
+      canonical: locale === "en" ? `${SITE_ORIGIN}/country/${country.slug}` : undefined,
+    });
+  }, [country?.slug, isZhTw, locale]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (country && isZhTw) {
+      document.title = `${country.name} 髒話 — 10 個片語含發音 | 全球髒話文化指南`;
     }
     const hash = window.location.hash;
     if (hash) {
@@ -135,9 +145,7 @@ export default function CountryPage() {
       window.scrollTo(0, 0);
     }
     return () => {
-      document.title = isZhTw
-        ? '全球髒話文化指南 — 1,000 個片語，100 個國家'
-        : 'How Every Country Swears \u2014 1,000 Phrases, 100 Countries';
+      if (isZhTw) document.title = '全球髒話文化指南 — 1,000 個片語，100 個國家';
     };
   }, [slug, country, isZhTw]);
 

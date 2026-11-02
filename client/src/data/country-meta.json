@@ -1,0 +1,21 @@
+{
+  "_comment": "Per-country <title>/<meta description> for /country/<slug>. Keys in overrides are country slugs; missing fields fall back to the defaults ({name} = country name). Used by CountryPage.tsx (client) and scripts/prerender-country-meta.mjs (static HTML for crawlers). Plain text only; HTML escaping happens at render time.",
+  "defaults": {
+    "title": "{name} Swear Words — 10 Phrases with Pronunciation | How Every Country Swears",
+    "description": "{name} swear words and insults with pronunciation, meanings, risk ratings and cultural context. A recognition guide from How Every Country Swears."
+  },
+  "overrides": {
+    "samoa": {
+      "title": "Samoan Swear Words & Insults: Meaning, Risk & Respect",
+      "description": "What Samoan insults actually mean, how risky they are, and why church, family and fa'aSamoa respect change the weight. Recognition guide, not a script."
+    },
+    "nepal": {
+      "title": "Nepali Swear Words & Insults: Meaning, Risk & Context",
+      "description": "What Nepali insults mean, how hard they land, and why caste, family honor and respect for elders change the weight. Recognition guide, not a script."
+    },
+    "sri-lanka": {
+      "title": "Sri Lankan Swear Words: Sinhala & Tamil Insults Explained",
+      "description": "Sri Lanka swears in Sinhala and Tamil. See meanings, risk ratings and the family and respect context that sets the weight. Recognition, not permission."
+    }
+  }
+}
