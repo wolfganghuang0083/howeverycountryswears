@@ -17,6 +17,15 @@ export function isCountryInlineCtaSlug(
   return (cta.slugs as string[]).includes(slug);
 }
 
+const AMAZON_AFFILIATE_TAG = "aitoolverify-20";
+
+/** New country book card only: existing UTMs + site-wide affiliate tag. */
+export function buildInlineBookHref(slug: string, asin = cta.book.asin || BOOK_CTA_ASIN): string {
+  const href = new URL(buildBookCtaHref(slug, asin));
+  href.searchParams.set("tag", AMAZON_AFFILIATE_TAG);
+  return href.toString();
+}
+
 type CommonProps = {
   slug: string;
   enabled?: boolean;
@@ -58,7 +67,7 @@ export function CountryInlineNewsletter({
  */
 export function CountryInlineBookCta({ slug, enabled = true }: CommonProps) {
   if (!enabled || !isCountryInlineCtaSlug(slug)) return null;
-  const href = buildBookCtaHref(slug, cta.book.asin || BOOK_CTA_ASIN);
+  const href = buildInlineBookHref(slug, cta.book.asin || BOOK_CTA_ASIN);
   return (
     <section
       className="py-10"

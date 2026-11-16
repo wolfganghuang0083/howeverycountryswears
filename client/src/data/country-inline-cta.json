@@ -2,13 +2,13 @@
   "slugs": ["fiji", "afghanistan", "uzbekistan", "sri-lanka"],
   "newsletter": {
     "title": "Before you repeat it, read the room.",
-    "button": "Get the weekly risk map",
+    "button": "Get the risk map emails",
     "finePrint": "Free. No spam. Unsubscribe anytime.",
     "body": {
-      "fiji": "One short email a week: how a word's weight shifts between iTaukei Fijian, Fiji Hindi, village and city.",
-      "afghanistan": "One short email a week: why honor, family and Dari/Pashto register change how hard a word lands.",
-      "uzbekistan": "One short email a week: how Uzbek and Russian swearing trade places, and where respect for elders draws the line.",
-      "sri-lanka": "One short email a week: how Sinhala and Tamil insults carry family and respect, and why recognition is not permission."
+      "fiji": "Short emails on how a word's weight shifts between iTaukei Fijian, Fiji Hindi, village and city.",
+      "afghanistan": "Short emails on why honor, family and Dari/Pashto register change how hard a word lands.",
+      "uzbekistan": "Short emails on how Uzbek and Russian swearing trade places, and where respect for elders draws the line.",
+      "sri-lanka": "Short emails on how Sinhala and Tamil insults carry family and respect, and why recognition is not permission."
     }
   },
   "book": {

@@ -15,6 +15,8 @@ type Props = {
   countrySlug: string;
   /** EN-only for this module; hide on zh-tw if false. Default true for EN hubs. */
   enabled?: boolean;
+  /** Hide only the soft Book CTA; related cards / method chip stay. Default false. */
+  hideBookCta?: boolean;
 };
 
 function RelatedCard({
@@ -45,14 +47,14 @@ function RelatedCard({
  * Related reading (≤2) + soft Book CTA for selected country hubs.
  * Renders only when config status is `live` (fiji / new-zealand).
  */
-export default function CountryHubRelated({ countrySlug, enabled = true }: Props) {
+export default function CountryHubRelated({ countrySlug, enabled = true, hideBookCta = false }: Props) {
   if (!enabled) return null;
   const cfg = getLiveCountryHubRelated(countrySlug);
   if (!cfg) return null;
 
   const cards = resolveRelatedCards(cfg.relatedCardIds);
   const book = cfg.bookCta ?? DEFAULT_BOOK_CTA;
-  const bookHref = buildBookCtaHref(countrySlug, book.asin);
+  const bookHref = hideBookCta ? "" : buildBookCtaHref(countrySlug, book.asin);
   const methodChip = cfg.methodChipId
     ? COUNTRY_HUB_RELATED_CARDS[cfg.methodChipId]
     : null;
@@ -82,6 +84,7 @@ export default function CountryHubRelated({ countrySlug, enabled = true }: Props
             </div>
           ) : null}
 
+          {!hideBookCta ? (
           <aside
             aria-label={book.heading}
             className="rounded-xl border-2 border-[#1a1a1a] bg-[#FAFAFA] shadow-[4px_4px_0px_#1a1a1a] p-5 md:p-6 text-center"
@@ -112,6 +115,7 @@ export default function CountryHubRelated({ countrySlug, enabled = true }: Props
               {book.buttonLabel}
             </a>
           </aside>
+          ) : null}
         </div>
       </div>
     </section>

@@ -113,6 +113,7 @@ function buildBookCtaHref(slug, asin) {
     utm_source: "hecs_country",
     utm_medium: "book_cta",
     utm_campaign: `${slug}_hub`,
+    tag: "aitoolverify-20",
   });
   return `https://www.amazon.com/dp/${asin}?${params.toString()}`;
 }

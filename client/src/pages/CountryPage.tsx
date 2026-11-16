@@ -627,7 +627,11 @@ export default function CountryPage() {
       />
 
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
-      <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
+      <CountryHubRelated
+        countrySlug={country.slug}
+        enabled={!isZhTw}
+        hideBookCta={isCountryInlineCtaSlug(country.slug)}
+      />
 
 
       {/* Navigation */}
