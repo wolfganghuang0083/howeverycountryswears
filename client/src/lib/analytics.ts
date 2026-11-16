@@ -150,6 +150,7 @@ export type PurchaseClickOpts = {
   destination?: string;
   content_id?: string;
   page_type?: string;
+  placement?: string;
 };
 
 /** User clicks Amazon / book purchase CTA — dual-fires book_cta_click */
@@ -162,6 +163,7 @@ export function trackPurchaseClick(
   const page_type = opts?.page_type ?? getPageTypeFromPath();
   const extra: Record<string, unknown> = {};
   if (opts?.content_id) extra.content_id = opts.content_id;
+  if (opts?.placement) extra.placement = opts.placement;
 
   trackEvent("purchase_click", {
     context,
@@ -439,11 +441,13 @@ export function trackNewsletterSubscribeSubmit(params: {
   country?: string;
   locale?: string;
   source_path: string;
+  placement?: string;
 }) {
   trackEvent("newsletter_subscribe_submit", {
     country: params.country,
     locale: params.locale,
     source_path: params.source_path,
+    ...(params.placement ? { placement: params.placement } : {}),
   });
 }
 
@@ -453,12 +457,14 @@ export function trackNewsletterCtaClick(params: {
   cta_id: string;
   page_type?: string;
   country?: string;
+  placement?: string;
 }) {
   trackEvent("newsletter_cta_click", {
     surface: params.surface,
     cta_id: params.cta_id,
     page_type: params.page_type ?? getPageTypeFromPath(),
     country: params.country,
+    ...(params.placement ? { placement: params.placement } : {}),
   });
 }
 
@@ -479,12 +485,14 @@ export function trackNewsletterSignup(params: {
   cta_id: string;
   method?: string;
   country?: string;
+  placement?: string;
 }) {
   trackEvent("newsletter_signup", {
     surface: params.surface,
     cta_id: params.cta_id,
     method: params.method ?? "email",
     country: params.country,
+    ...(params.placement ? { placement: params.placement } : {}),
   });
 }
 

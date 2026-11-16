@@ -36,6 +36,9 @@ type Props = {
   showBookLink?: boolean;
   bookLinkLabel?: string;
   className?: string;
+  submitLabel?: string;
+  privacy?: string;
+  placement?: string;
 };
 
 const PRIVACY = "Free. Unsubscribe anytime. We never sell your email.";
@@ -65,6 +68,9 @@ export default function JoinFree({
   showBookLink = false,
   bookLinkLabel = "Prefer the full guide? Get the book on Kindle →",
   className = "",
+  submitLabel,
+  privacy,
+  placement,
 }: Props) {
   const isAudio = false; // audio_unlock removed; SignupModal owns pronunciation unlock
   void mode;
@@ -117,6 +123,7 @@ export default function JoinFree({
         country,
         locale,
         source_path: sourcePath || (typeof window !== "undefined" ? window.location.pathname : "/"),
+        placement,
       });
       // audio_unlock mode deprecated — use SignupModal (verified account).
       if (consented) {
@@ -125,6 +132,7 @@ export default function JoinFree({
           cta_id: ctaId,
           method: "email",
           country: surface === "country" || surface === "graycard" ? country : undefined,
+          placement,
         });
       }
       if (data && "previewConfirmUrl" in data && data.previewConfirmUrl) {
@@ -172,6 +180,7 @@ export default function JoinFree({
       cta_id: ctaId,
       page_type: getPageTypeFromPath(),
       country: surface === "country" || surface === "graycard" ? country : undefined,
+      placement,
     });
     const marketingConsent = isAudio ? optIn : true;
     mutation.mutate({
@@ -184,7 +193,7 @@ export default function JoinFree({
   };
 
   const bookHref = `/go/book?surface=${encodeURIComponent(surface)}&cta_id=${encodeURIComponent(ctaId + "_book")}`;
-  const submitLabel = isAudio ? "Unlock audio" : "Join free";
+  const resolvedSubmitLabel = submitLabel ?? (isAudio ? "Unlock audio" : "Join free");
 
   const formInner = (
     <>
@@ -284,7 +293,7 @@ export default function JoinFree({
                     Saving…
                   </>
                 ) : (
-                  submitLabel
+                  resolvedSubmitLabel
                 )}
               </button>
             </div>
@@ -299,7 +308,7 @@ export default function JoinFree({
                 <span>{NEWSLETTER_OPTIN}</span>
               </label>
             ) : (
-              <p className="text-xs text-[#888]">{PRIVACY}</p>
+              <p className="text-xs text-[#888]">{privacy ?? PRIVACY}</p>
             )}
           </form>
           {error ? (

@@ -1,0 +1,20 @@
+{
+  "slugs": ["fiji", "afghanistan", "uzbekistan", "sri-lanka"],
+  "newsletter": {
+    "title": "Before you repeat it, read the room.",
+    "button": "Get the weekly risk map",
+    "finePrint": "Free. No spam. Unsubscribe anytime.",
+    "body": {
+      "fiji": "One short email a week: how a word's weight shifts between iTaukei Fijian, Fiji Hindi, village and city.",
+      "afghanistan": "One short email a week: why honor, family and Dari/Pashto register change how hard a word lands.",
+      "uzbekistan": "One short email a week: how Uzbek and Russian swearing trade places, and where respect for elders draws the line.",
+      "sri-lanka": "One short email a week: how Sinhala and Tamil insults carry family and respect, and why recognition is not permission."
+    }
+  },
+  "book": {
+    "title": "How Every Country Swears — the Kindle edition",
+    "body": "1,000 phrases from 100 countries with meaning, risk level and cultural context — built for recognizing what you hear, not for collecting lines to say.",
+    "button": "See it on Amazon",
+    "asin": "B0GSGZ3ZJZ"
+  }
+}

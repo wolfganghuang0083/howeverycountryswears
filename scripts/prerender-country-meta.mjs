@@ -26,6 +26,7 @@ const ROOT = path.resolve(__dirname, "..");
 const DIST = path.join(ROOT, "dist");
 const DATA = path.join(ROOT, "client", "src", "data");
 const SITE = "https://howeverycountryswears.com";
+const INLINE_CTA = JSON.parse(fs.readFileSync(path.join(DATA, "country-inline-cta.json"), "utf8"));
 // Mirror of client/src/lib/data.ts (PREVIEW_COUNTRIES + isLockedContent: part >= 8 is book-locked).
 const PREVIEW_COUNTRIES = ["egypt", "kenya", "mexico", "samoa"];
 const GUIDE_SLUGS = ["recognition-not-permission-study-profanity", "how-to-read-hecs-country-page"];
@@ -96,25 +97,81 @@ function readHead(html) {
 const li = (href, text, extra = "") =>
   `<li><a href="${esc(href)}">${esc(text)}</a>${extra ? ` — ${esc(extra)}` : ""}</li>`;
 
+function phraseItem(c, k) {
+  return (
+    `<li><a href="/phrase/${esc(c.slug)}-${esc(k.number)}"><strong>${esc(k.phrase)}</strong></a>` +
+    (k.ipa ? ` <span class="ipa">${esc(k.ipa)}</span>` : "") +
+    (k.literal ? ` — “${esc(k.literal)}”` : "") +
+    `<br/><span>${esc(k.type)}${k.register ? ` · ${esc(k.register)}` : ""}${k.risk ? ` · Risk: ${esc(k.risk)}` : ""}</span>` +
+    (k.feels_like ? `<br/><span>${esc(k.feels_like)}</span>` : "") +
+    `</li>`
+  );
+}
+
+function buildBookCtaHref(slug, asin) {
+  const params = new URLSearchParams({
+    utm_source: "hecs_country",
+    utm_medium: "book_cta",
+    utm_campaign: `${slug}_hub`,
+  });
+  return `https://www.amazon.com/dp/${asin}?${params.toString()}`;
+}
+
+function newsletterCtaSection(slug) {
+  if (!INLINE_CTA.slugs.includes(slug)) return "";
+  const body = INLINE_CTA.newsletter.body[slug];
+  if (!body) return "";
+  const n = INLINE_CTA.newsletter;
+  return (
+    `<section aria-label="Newsletter" data-country-newsletter="${esc(slug)}" data-placement="country_inline">` +
+    `<h2>${esc(n.title)}</h2>` +
+    `<p>${esc(body)}</p>` +
+    `<form>` +
+    `<label for="country-newsletter-email-${esc(slug)}">Email</label>` +
+    `<input id="country-newsletter-email-${esc(slug)}" type="email" name="email" required placeholder="you@example.com" />` +
+    `<button type="submit">${esc(n.button)}</button>` +
+    `</form>` +
+    `<p>${esc(n.finePrint)}</p>` +
+    `</section>`
+  );
+}
+
+function bookCtaSection(slug) {
+  if (!INLINE_CTA.slugs.includes(slug)) return "";
+  const b = INLINE_CTA.book;
+  const href = buildBookCtaHref(slug, b.asin);
+  return (
+    `<section aria-label="${esc(b.title)}" data-country-book-cta="${esc(slug)}" data-placement="country_bottom">` +
+    `<h2>${esc(b.title)}</h2>` +
+    `<p>${esc(b.body)}</p>` +
+    `<p><a href="${esc(href)}" rel="noopener">` +
+    `${esc(b.button)}</a></p>` +
+    `</section>`
+  );
+}
+
 function phrasesSection(c) {
   const locked = isLocked(c);
   const cards = locked ? c.cards.slice(0, 3) : c.cards;
-  const items = cards
-    .map(
-      (k) =>
-        `<li><a href="/phrase/${esc(c.slug)}-${esc(k.number)}"><strong>${esc(k.phrase)}</strong></a>` +
-        (k.ipa ? ` <span class="ipa">${esc(k.ipa)}</span>` : "") +
-        (k.literal ? ` — “${esc(k.literal)}”` : "") +
-        `<br/><span>${esc(k.type)}${k.register ? ` · ${esc(k.register)}` : ""}${k.risk ? ` · Risk: ${esc(k.risk)}` : ""}</span>` +
-        (k.feels_like ? `<br/><span>${esc(k.feels_like)}</span>` : "") +
-        `</li>`,
-    )
-    .join("\n");
-  return (
+  const heading =
     `<section aria-label="Phrases" data-country-phrases="${esc(c.slug)}">` +
     `<h2>${locked ? `Preview: 3 of 10 phrases from ${esc(c.name)}` : `10 phrases from ${esc(c.name)}`}</h2>` +
-    (locked ? `<p>The other 7 are in the book. <a href="/get-the-book">Get the book</a></p>` : "") +
-    `<ol>\n${items}\n</ol></section>`
+    (locked ? `<p>The other 7 are in the book. <a href="/get-the-book">Get the book</a></p>` : "");
+  const newsletter = newsletterCtaSection(c.slug);
+  const book = bookCtaSection(c.slug);
+  if (!newsletter && !book) {
+    const items = cards.map((k) => phraseItem(c, k)).join("\n");
+    return heading + `<ol>\n${items}\n</ol></section>`;
+  }
+  const first = cards.slice(0, 3).map((k) => phraseItem(c, k)).join("\n");
+  const rest = cards.slice(3).map((k) => phraseItem(c, k)).join("\n");
+  return (
+    heading +
+    `<ol>\n${first}\n</ol>` +
+    newsletter +
+    (rest ? `<ol>\n${rest}\n</ol>` : "") +
+    book +
+    `</section>`
   );
 }
 
