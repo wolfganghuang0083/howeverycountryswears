@@ -1,6 +1,11 @@
 import Layout from "@/components/Layout";
 import PhraseCard from "@/components/PhraseCard";
 import CountryHubRelated from "@/components/CountryHubRelated";
+import {
+  CountryInlineBookCta,
+  CountryInlineNewsletter,
+  isCountryInlineCtaSlug,
+} from "@/components/CountryInlineCta";
 import SameCountryBlogRelated from "@/components/SameCountryBlogRelated";
 import SignupModal from "@/components/SignupModal";
 import CountrySpecimenSignup, {
@@ -452,6 +457,11 @@ export default function CountryPage() {
                     />
                   </motion.div>
                   </div>
+                  {i === 2 && !isZhTw && isCountryInlineCtaSlug(country.slug) && (
+                    <div className="lg:col-span-2">
+                      <CountryInlineNewsletter slug={country.slug} locale={locale} />
+                    </div>
+                  )}
                   {/* Contextual CTA after the 5th card */}
                   {i === 4 && (
                     <motion.div
@@ -499,6 +509,8 @@ export default function CountryPage() {
           </div>
         </div>
       </section>
+
+      {!isZhTw && <CountryInlineBookCta slug={country.slug} />}
 
       {/* Friendly Fire Warning */}
       {country.friendly_fire_warning && (
@@ -615,7 +627,11 @@ export default function CountryPage() {
       />
 
       {/* Related reading + soft Book CTA (config-driven hubs: fiji, new-zealand) */}
-      <CountryHubRelated countrySlug={country.slug} enabled={!isZhTw} />
+      <CountryHubRelated
+        countrySlug={country.slug}
+        enabled={!isZhTw}
+        hideBookCta={isCountryInlineCtaSlug(country.slug)}
+      />
 
 
       {/* Navigation */}
